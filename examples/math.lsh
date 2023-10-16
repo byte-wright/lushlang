@@ -1,0 +1,8 @@
+x = 12
+y = 13
+
+z = x * -y + 3
+
+z = 2 * (x + z)
+
+println("number is", z)

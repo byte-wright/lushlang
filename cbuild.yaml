@@ -1,0 +1,29 @@
+exclude-on-startup:
+  - ^.git/
+  - test/node_modules
+
+operations:
+  # antlr
+  antlr-generate-trigger:
+    type: fs-trigger
+    pattern: ^internal/parser/Lush.g4$
+    action: antlr-generate-throttle
+
+  antlr-generate-throttle:
+    type: throttle
+    delay: 500
+    action: antlr-generate
+
+  antlr-generate:
+    type: exec
+    command: java
+    args:
+      [
+        -jar,
+        bin/antlr-4.13.1-complete.jar,
+        -no-listener,
+        -visitor,
+        -Dlanguage=Go,
+        internal/parser/Lush.g4,
+      ]
+

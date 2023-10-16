@@ -1,0 +1,32 @@
+project = $CI_PROJECT_NAME
+
+isSuccess = $CI_JOB_STATUS == "success"
+isFailure = $CI_JOB_STATUS == "failure"
+
+isMain = $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+pmTest = !isMain && hasPrefix($CI_COMMIT_BRANCH, "projectmonitor/")
+pmMerge = isMain && hasPrefix($CI_COMMIT_TITLE, "Mergerequest from projectmonitor/")
+
+if pmTest {
+  println("we run a merge request pipeline")
+  operation = trimPrefix($CI_COMMIT_BRANCH, "projectmonitor/")
+  operation = operation[0:indexOf(operation, "-")]
+
+  if operation != "" {
+    msg = isSuccess ? "ready" : "error"
+    println("set status", msg)
+  }
+}
+
+if pmMerge {
+  println("we merged a pipeline into main")
+
+  operation = trimPrefix($CI_COMMIT_TITLE, "Mergerequest from projectmonitor/")
+  operation = operation[0:indexOf(operation, "-")]
+
+  if operation != "" {
+    msg = isSuccess ? "ok" : "error"
+    println("set status", msg)
+  }
+}
