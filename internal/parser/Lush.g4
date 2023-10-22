@@ -53,7 +53,7 @@ atom
 
 func
     : ID LPAREN (
-        expression (COMMA expression)*
+        expression (COMMA expression)* COMMA?
     )? RPAREN
     ;
 
@@ -108,4 +108,4 @@ STRING
     ;
 NUMBER: [0-9]+;
 
-fragment ESCAPED_VALUE: '\\' [nt\\'"];
+fragment ESCAPED_VALUE: '\\' [nt\\"];

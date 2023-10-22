@@ -3,7 +3,7 @@ package ast
 import "strconv"
 
 type Number struct {
-	Value float64
+	Value int
 }
 
 func (n *Number) print() string {

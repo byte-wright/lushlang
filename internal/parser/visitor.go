@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/byte-wright/lush/internal/ast"
 )
@@ -221,10 +222,31 @@ func (v *Visitor) VisitEnvVar(ctx *EnvVarContext) any {
 	}
 }
 
+var strEscapes = []struct {
+	k string
+	v string
+}{{
+	k: "\\n",
+	v: "\n",
+}, {
+	k: "\\t",
+	v: "\t",
+}, {
+	k: "\\\\",
+	v: "\\",
+}, {
+	k: "\\\"",
+	v: "\"",
+}}
+
 func (v *Visitor) VisitValue(ctx *ValueContext) any {
 	if ctx.String_() != nil {
 		txt := ctx.String_().GetText()
 		txt = txt[1 : len(txt)-1]
+
+		for _, e := range strEscapes {
+			txt = strings.ReplaceAll(txt, e.k, e.v)
+		}
 
 		return &ast.String{
 			Value: txt,
@@ -238,7 +260,7 @@ func (v *Visitor) VisitValue(ctx *ValueContext) any {
 		}
 
 		return &ast.Number{
-			Value: float64(v),
+			Value: v,
 		}
 	}
 

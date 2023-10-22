@@ -3,6 +3,8 @@ y = 13
 
 z = x * -y + 3
 
-z = 2 * (x + z)
+zz = 2 * (x + z)
 
-println("number is", z)
+println("number is", z, zz)
+println(12 % 8, "=", 4)
+println(2 * 3 + 4, "=", 10)
