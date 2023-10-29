@@ -146,20 +146,44 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "$(( " + b.atom(at.Left) + " % " + b.atom(at.Right) + " ))"
 
 	case *bcode.Equal:
-		b.print("[ " + b.atom(at.Left) + " == " + b.atom(at.Right) + " ]")
-		return "${!lsh_bool_$?}"
+		b.print("[ " + b.atom(at.Left) + " -eq " + b.atom(at.Right) + " ]")
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		return "${!lsh_i}"
 
 	case *bcode.NotEqual:
-		b.print("! [ " + b.atom(at.Left) + " == " + b.atom(at.Right) + " ]")
-		return "${!lsh_bool_$?}"
+		b.print("! [ " + b.atom(at.Left) + " -eq " + b.atom(at.Right) + " ]")
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		return "${!lsh_i}"
+
+	case *bcode.LessThan:
+		b.print("[ " + b.atom(at.Left) + " -lt " + b.atom(at.Right) + " ]")
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		return "${!lsh_i}"
+
+	case *bcode.LessThanEqual:
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		b.print("[ " + b.atom(at.Left) + " -le " + b.atom(at.Right) + " ]")
+		return "${!lsh_i}"
+
+	case *bcode.GreaterThan:
+		b.print("[ " + b.atom(at.Left) + " -gt " + b.atom(at.Right) + " ]")
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		return "${!lsh_i}"
+
+	case *bcode.GreaterThanEqual:
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		b.print("[ " + b.atom(at.Left) + " -ge " + b.atom(at.Right) + " ]")
+		return "${!lsh_i}"
 
 	case *bcode.And:
 		b.print("[ " + b.atom(at.Left) + " == true ] && [ " + b.atom(at.Right) + " == true ]")
-		return "${!lsh_bool_$?}"
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		return "${!lsh_i}"
 
 	case *bcode.Not:
 		b.print("[ " + b.atom(at.Expression) + " == false ]")
-		return "${!lsh_bool_$?}"
+		b.print("local lsh_i=\"lsh_bool_$?\"")
+		return "${!lsh_i}"
 
 	case *bcode.Slice:
 		b.print("substring " + b.atom(at.Value) + " " + at.From.Print() + " " + at.To.Print())

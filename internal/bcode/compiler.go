@@ -116,6 +116,30 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 
 		return block.setTmp(&Equal{Left: a, Right: b})
 
+	case *ast.LessThan:
+		a := c.evalExpression(block, x.A)
+		b := c.evalExpression(block, x.B)
+
+		return block.setTmp(&LessThan{Left: a, Right: b})
+
+	case *ast.LessThanEqual:
+		a := c.evalExpression(block, x.A)
+		b := c.evalExpression(block, x.B)
+
+		return block.setTmp(&LessThanEqual{Left: a, Right: b})
+
+	case *ast.GreaterThan:
+		a := c.evalExpression(block, x.A)
+		b := c.evalExpression(block, x.B)
+
+		return block.setTmp(&GreaterThan{Left: a, Right: b})
+
+	case *ast.GreaterThanEqual:
+		a := c.evalExpression(block, x.A)
+		b := c.evalExpression(block, x.B)
+
+		return block.setTmp(&GreaterThanEqual{Left: a, Right: b})
+
 	case *ast.NotEqual:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
