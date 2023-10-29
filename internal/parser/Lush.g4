@@ -40,7 +40,7 @@ expression
     | expression LAND expression
     | expression LOR expression
     | ternary = expression QUESTION expression COLON expression
-    | slice = expression LSQ expression COLON expression RSQ
+    | slice = expression LSQ from=expression? COLON to=expression? RSQ
     ;
 
 atom

@@ -97,6 +97,24 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 		}
 	}
 
+	// slice
+	if ctx.GetSlice() != nil {
+		var from ast.Expression
+		if ctx.from != nil {
+			from = ctx.from.Accept(v).(ast.Expression)
+		}
+
+		var to ast.Expression
+		if ctx.to != nil {
+			to = ctx.to.Accept(v).(ast.Expression)
+		}
+		return &ast.Slice{
+			Value: a,
+			From:  from,
+			To:    to,
+		}
+	}
+
 	b := ctx.Expression(1).Accept(v).(ast.Expression)
 
 	// mul ops
@@ -158,16 +176,6 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 			Condition: a,
 			True:      b,
 			False:     c,
-		}
-	}
-
-	// slice
-	if ctx.GetSlice() != nil {
-		c := ctx.Expression(2).Accept(v).(ast.Expression)
-		return &ast.Slice{
-			Value: a,
-			From:  b,
-			To:    c,
 		}
 	}
 

@@ -17,6 +17,15 @@ func (a *Add) Print() string {
 	return a.Left.Print() + " + " + a.Right.Print()
 }
 
+type Sub struct {
+	Left  Value
+	Right Value
+}
+
+func (s *Sub) Print() string {
+	return s.Left.Print() + " - " + s.Right.Print()
+}
+
 type Minus struct {
 	Expression Value
 }
@@ -32,6 +41,15 @@ type Mul struct {
 
 func (m *Mul) Print() string {
 	return m.Left.Print() + " * " + m.Right.Print()
+}
+
+type Div struct {
+	Left  Value
+	Right Value
+}
+
+func (d *Div) Print() string {
+	return d.Left.Print() + " / " + d.Right.Print()
 }
 
 type Mod struct {

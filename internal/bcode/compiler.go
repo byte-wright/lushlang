@@ -70,22 +70,34 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 
 		return block.setTmp(&Add{Left: a, Right: b})
 
+	case *ast.Sub:
+		a := c.evalExpression(block, x.A)
+		b := c.evalExpression(block, x.B)
+
+		return block.setTmp(&Sub{Left: a, Right: b})
+
+	case *ast.Minus:
+		a := c.evalExpression(block, x.Expression)
+
+		return block.setTmp(&Minus{Expression: a})
+
 	case *ast.Mul:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
 		return block.setTmp(&Mul{Left: a, Right: b})
 
+	case *ast.Div:
+		a := c.evalExpression(block, x.A)
+		b := c.evalExpression(block, x.B)
+
+		return block.setTmp(&Div{Left: a, Right: b})
+
 	case *ast.Mod:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
 		return block.setTmp(&Mod{Left: a, Right: b})
-
-	case *ast.Minus:
-		a := c.evalExpression(block, x.Expression)
-
-		return block.setTmp(&Minus{Expression: a})
 
 	case *ast.And:
 		a := c.evalExpression(block, x.A)
@@ -117,8 +129,37 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 		return c.evalSlice(block, x)
 
 	case *ast.Ternary:
-		// TODO
-		return &VarValue{Name: "ternary"}
+		v := c.prog.Main.nextTmp()
+
+		cond := block.setTmp(c.evalExpression(block, x.Condition))
+
+		ifTrue := &If{
+			Condition: cond,
+			Block:     &Block{tmpVar: c.prog},
+		}
+
+		ifTrue.Block.add(&Assignment{
+			Name:  v.Name,
+			Value: c.evalExpression(ifTrue.Block, x.True),
+		})
+
+		block.add(ifTrue)
+
+		notCond := block.setTmp(&Not{Expression: cond})
+
+		ifFalse := &If{
+			Condition: notCond,
+			Block:     &Block{tmpVar: c.prog},
+		}
+
+		ifFalse.Block.add(&Assignment{
+			Name:  v.Name,
+			Value: c.evalExpression(ifFalse.Block, x.False),
+		})
+
+		block.add(ifFalse)
+
+		return v
 
 	case *ast.Func:
 		f := &Func{
@@ -136,8 +177,23 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 
 func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	value := c.evalExpression(block, s.Value)
-	from := c.evalExpression(block, s.From)
-	to := c.evalExpression(block, s.To)
+
+	var from Value
+	if s.From != nil {
+		from = c.evalExpression(block, s.From)
+	} else {
+		from = &NumberValue{Value: 0}
+	}
+
+	var to Value
+	if s.To != nil {
+		to = c.evalExpression(block, s.To)
+	} else {
+		to = block.setTmp(&Func{
+			Name:       "len",
+			Parameters: []Atom{value},
+		})
+	}
 
 	return block.setTmp(&Slice{
 		Value: value,

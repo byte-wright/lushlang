@@ -49,7 +49,7 @@ func TestExample(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// fmt.Println(bc.Print())
+		fmt.Println(bc.Print())
 
 		bs := bash.Translate(bc)
 		// fmt.Println(bs)

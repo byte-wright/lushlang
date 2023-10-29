@@ -26,23 +26,47 @@ func Translate(p *bcode.Program) string {
 
 func (b *bash) translate() {
 	b.print("#!/bin/bash")
-	b.print(`println() {
-  for arg in "$@"; do
-    printf "%s " "$arg"
+	b.print(`
+	
+lsh_bool_0=true
+lsh_bool_1=false
+
+println() {
+  for (( i=1; i<=$#; i++ )); do
+    if [ $i -gt 1 ]; then
+      printf " "
+    fi
+    printf -- "%s" "${!i}"
   done
   printf "\n"
 }
 
 hasPrefix() {
   if [[ "$1" == "$2"* ]]; then
-    lsh__funcretparam=0
+    lsh__funcretparam=true
   else
-    lsh__funcretparam=1
+    lsh__funcretparam=false
+  fi
+}
+
+hasSuffix() {
+  if [[ "$1" == *"$2" ]]; then
+    lsh__funcretparam=true
+  else
+    lsh__funcretparam=false
   fi
 }
 
 trimPrefix() {
-	lsh__funcretparam="${1#$2}"
+	lsh__funcretparam="${1#"$2"}"
+}
+
+trimSuffix() {
+  lsh__funcretparam="${1%"$2"}"
+}
+
+len() {
+  lsh__funcretparam=${#1}
 }
 
 indexOf() {
@@ -78,6 +102,7 @@ func (b *bash) block(block *bcode.Block) {
 		switch cmd := c.(type) {
 		case *bcode.Assignment:
 			b.print("local " + cmd.Name + "=" + b.atom(cmd.Value))
+
 		case *bcode.Func:
 			params := []string{}
 
@@ -88,7 +113,7 @@ func (b *bash) block(block *bcode.Block) {
 			b.print(cmd.Name + " " + strings.Join(params, " "))
 
 		case *bcode.If:
-			b.print("if [ " + b.atom(cmd.Condition) + " == 0 ]; then")
+			b.print("if [ " + b.atom(cmd.Condition) + " == true ]; then")
 
 			b.block(cmd.Block)
 
@@ -105,30 +130,36 @@ func (b *bash) atom(a bcode.Atom) string {
 	case *bcode.Add:
 		return "$(( " + b.atom(at.Left) + " + " + b.atom(at.Right) + " ))"
 
+	case *bcode.Sub:
+		return "$(( " + b.atom(at.Left) + " - " + b.atom(at.Right) + " ))"
+
 	case *bcode.Minus:
 		return "$(( -" + b.atom(at.Expression) + " ))"
 
 	case *bcode.Mul:
 		return "$(( " + b.atom(at.Left) + " * " + b.atom(at.Right) + " ))"
 
+	case *bcode.Div:
+		return "$(( " + b.atom(at.Left) + " / " + b.atom(at.Right) + " ))"
+
 	case *bcode.Mod:
 		return "$(( " + b.atom(at.Left) + " % " + b.atom(at.Right) + " ))"
 
 	case *bcode.Equal:
 		b.print("[ " + b.atom(at.Left) + " == " + b.atom(at.Right) + " ]")
-		return "$?"
+		return "${!lsh_bool_$?}"
 
 	case *bcode.NotEqual:
 		b.print("! [ " + b.atom(at.Left) + " == " + b.atom(at.Right) + " ]")
-		return "$?"
+		return "${!lsh_bool_$?}"
 
 	case *bcode.And:
-		b.print("[ " + b.atom(at.Left) + " == \"0\" ] && [ " + b.atom(at.Right) + " == \"0\" ]")
-		return "$?"
+		b.print("[ " + b.atom(at.Left) + " == true ] && [ " + b.atom(at.Right) + " == true ]")
+		return "${!lsh_bool_$?}"
 
 	case *bcode.Not:
-		b.print("[ " + b.atom(at.Expression) + " == \"1\" ]")
-		return "$?"
+		b.print("[ " + b.atom(at.Expression) + " == false ]")
+		return "${!lsh_bool_$?}"
 
 	case *bcode.Slice:
 		b.print("substring " + b.atom(at.Value) + " " + at.From.Print() + " " + at.To.Print())

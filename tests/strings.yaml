@@ -1,0 +1,30 @@
+order: 3
+name: Strings
+tests:
+  - name: prefix/suffix
+    description: Prefix/suffix operations match against strings and not globs.
+    code: |
+      println(hasPrefix("fooBar", "foo"), hasPrefix("fooBar", "no"))
+      println(trimPrefix("fooBar", "foo"), trimPrefix("fooBar", "no"))
+      println(hasSuffix("fooBar", "Bar"), hasSuffix("fooBar", "no"))
+      println(trimSuffix("fooBar", "Bar"), trimSuffix("fooBar", "no"))
+      println(hasPrefix("abc", "*b"), trimPrefix("abc", "*b"))
+      println(hasSuffix("abc", "b*"), trimSuffix("abc", "b*"))
+    expected: |
+      true false
+      Bar fooBar
+      true false
+      foo fooBar
+      false abc
+      false abc
+
+  - name: substring
+    description: To get a substring slice notation can be used.
+    code: |
+      println("abcdef"[0:3], "abcdef"[:3])
+      println("abcdef"[3:6], "abcdef"[3:])
+    expected: |
+      abc abc
+      def def
+
+

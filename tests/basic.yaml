@@ -1,0 +1,12 @@
+order: 1
+name: Basics
+tests:
+  - name: Hello world
+    description: |
+      println can have multiple arguments, they will be printed
+      with a space in between and a newline at the end.
+    code: |
+      world = "World"
+      println("Hello", world)
+    expected: "Hello World\n"
+

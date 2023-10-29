@@ -7,5 +7,5 @@ type Ternary struct {
 }
 
 func (t *Ternary) print() string {
-	return "(" + t.Condition.print() + " : " + t.True.print() + " : " + t.False.print() + ")"
+	return "(" + t.Condition.print() + " ? " + t.True.print() + " : " + t.False.print() + ")"
 }

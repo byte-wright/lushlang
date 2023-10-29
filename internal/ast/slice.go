@@ -7,5 +7,13 @@ type Slice struct {
 }
 
 func (s *Slice) print() string {
-	return "(" + s.Value.print() + ")[" + s.From.print() + ":" + s.To.print() + "]"
+	f := ""
+	if s.From != nil {
+		f = s.From.print()
+	}
+	t := ""
+	if s.To != nil {
+		t = s.To.print()
+	}
+	return "(" + s.Value.print() + ")[" + f + ":" + t + "]"
 }
