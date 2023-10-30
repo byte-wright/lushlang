@@ -50,6 +50,11 @@ func (b *Block) Print(indent int) string {
 			r += cmd.Block.Print(indent + 2)
 			r += ind + "}\n"
 
+		case *While:
+			r += ind + "while " + cmd.Condition.Print() + " {\n"
+			r += cmd.Block.Print(indent + 2)
+			r += ind + "}\n"
+
 		default:
 			panic(fmt.Sprintf("unknown command %T", c))
 		}

@@ -20,6 +20,10 @@ func (v *BaseLushVisitor) VisitIf(ctx *IfContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitFor(ctx *ForContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitBlock(ctx *BlockContext) interface{} {
 	return v.VisitChildren(ctx)
 }

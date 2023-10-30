@@ -32,7 +32,8 @@ lsh_bool_0=true
 lsh_bool_1=false
 
 println() {
-  for (( i=1; i<=$#; i++ )); do
+	local i=1
+  for (( ; i<=$#; i++ )); do
     if [ $i -gt 1 ]; then
       printf " "
     fi
@@ -118,6 +119,13 @@ func (b *bash) block(block *bcode.Block) {
 			b.block(cmd.Block)
 
 			b.print("fi")
+
+		case *bcode.While:
+			b.print("while [ " + b.atom(cmd.Condition) + " == true ]; do")
+
+			b.block(cmd.Block)
+
+			b.print("done")
 
 		default:
 			fmt.Println(fmt.Sprintf("no valid statement %T", c))

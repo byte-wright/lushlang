@@ -7,9 +7,12 @@ statement
     : assignment
     | funcStatement
     | if
+    | for
     ;
 
 if: IF expression block;
+
+for: FOR assignment SEMICOLON expression SEMICOLON assignment block;
 
 block: LCUR (statement)* RCUR;
 
@@ -74,6 +77,7 @@ WHITESPACE: [ \r\n\t]+ -> skip;
 TRUE: 'true';
 FALSE: 'false';
 IF: 'if';
+FOR: 'for';
 
 LAND: '&&';
 LOR: '||';
@@ -102,6 +106,7 @@ RSQ: ']';
 COMMA: ',';
 QUESTION: '?';
 COLON: ':';
+SEMICOLON: ';';
 
 ENVVAR: '$' [a-zA-Z_0-0]+;
 

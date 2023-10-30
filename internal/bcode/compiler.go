@@ -44,6 +44,9 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 		case *ast.If:
 			c.evalIfStatement(b, st)
 
+		case *ast.For:
+			c.evalForStatement(b, st)
+
 		default:
 			panic(fmt.Sprintf("no valid statement %T", st))
 		}
@@ -251,4 +254,25 @@ func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
 	c.evalBlock(ifs.Block, ifst.If)
 
 	block.add(ifs)
+}
+
+func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
+	result := c.evalExpression(block, forst.Initial.Expression)
+	block.set(forst.Initial.Name, result)
+
+	condVar := block.setTmp(c.evalExpression(block, forst.Condition))
+
+	while := &While{
+		Condition: condVar,
+		Block:     &Block{tmpVar: c.prog},
+	}
+
+	c.evalBlock(while.Block, forst.Body)
+
+	tCond := c.evalExpression(while.Block, forst.Each.Expression)
+	while.Block.set(forst.Each.Name, tCond)
+
+	while.Block.set(condVar.Name, c.evalExpression(while.Block, forst.Condition))
+
+	block.add(while)
 }

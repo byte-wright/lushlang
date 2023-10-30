@@ -10,7 +10,9 @@ import (
 	"testing"
 
 	"github.com/akabio/expect"
-	"github.com/byte-wright/lush"
+	"github.com/byte-wright/lush/internal/bash"
+	"github.com/byte-wright/lush/internal/bcode"
+	"github.com/byte-wright/lush/internal/parser"
 	"gopkg.in/yaml.v2"
 )
 
@@ -77,23 +79,28 @@ func TestAll(t *testing.T) {
 			for _, tc := range suite.Tests {
 				if !only || tc.Only {
 					t.Run(tc.Name, func(t *testing.T) {
-						ast, bcode, bashCode, errs := lush.ToBashDebug(tc.Code, tc.Name)
-						if errs != nil {
-							t.Fatal(errs)
-						}
-
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(ast), 0o700)
+						prog, err := parser.Parse(string(tc.Code), tc.Name)
 						if err != nil {
 							t.Fatal(err)
 						}
 
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bcode), 0o700)
+						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(prog.Print()), 0o700)
+						if err != nil {
+							t.Fatal(err)
+						}
+
+						bc, err := bcode.Compile(prog)
+						if err != nil {
+							t.Fatal(err)
+						}
+
+						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bc.Print()), 0o700)
 						if err != nil {
 							t.Fatal(err)
 						}
 
 						file := filepath.Join(folder, asFile(tc.Name, "sh"))
-						err = os.WriteFile(file, []byte(bashCode), 0o700)
+						err = os.WriteFile(file, []byte(bash.Translate(bc)), 0o700)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -107,7 +114,7 @@ func TestAll(t *testing.T) {
 						cmd.Stderr = stderrBuf
 
 						// Run the command
-						err := cmd.Run()
+						err = cmd.Run()
 						if err != nil {
 							t.Fatal(err)
 						}

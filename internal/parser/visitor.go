@@ -37,11 +37,17 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 	if ctx.Assignment() != nil {
 		return ctx.Assignment().Accept(v)
 	}
+
 	if ctx.FuncStatement() != nil {
 		return ctx.FuncStatement().Accept(v)
 	}
+
 	if ctx.If_() != nil {
 		return ctx.If_().Accept(v)
+	}
+
+	if ctx.For_() != nil {
+		return ctx.For_().Accept(v)
 	}
 
 	panic("invalid statement")
@@ -51,6 +57,15 @@ func (v *Visitor) VisitIf(ctx *IfContext) any {
 	return &ast.If{
 		Condition: ctx.Expression().Accept(v).(ast.Expression),
 		If:        ctx.Block().Accept(v).(*ast.Block),
+	}
+}
+
+func (v *Visitor) VisitFor(ctx *ForContext) any {
+	return &ast.For{
+		Initial:   ctx.AllAssignment()[0].Accept(v).(*ast.Assignment),
+		Condition: ctx.Expression().Accept(v).(ast.Expression),
+		Each:      ctx.AllAssignment()[1].Accept(v).(*ast.Assignment),
+		Body:      ctx.Block().Accept(v).(*ast.Block),
 	}
 }
 

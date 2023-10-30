@@ -17,6 +17,9 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#if.
 	VisitIf(ctx *IfContext) interface{}
 
+	// Visit a parse tree produced by LushParser#for.
+	VisitFor(ctx *ForContext) interface{}
+
 	// Visit a parse tree produced by LushParser#block.
 	VisitBlock(ctx *BlockContext) interface{}
 
