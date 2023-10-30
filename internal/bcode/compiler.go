@@ -58,6 +58,9 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 	case *ast.String:
 		return &StringValue{Value: x.Value}
 
+	case *ast.Bool:
+		return &BoolValue{Value: x.Value}
+
 	case *ast.Var:
 		return &VarValue{Name: x.Name}
 

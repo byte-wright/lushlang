@@ -1,0 +1,15 @@
+order: 2
+name: Boolean operations
+tests:
+  - name: Basic operations
+    description: Normal precende
+    code: |
+      t = true
+      f = false
+      println("t && f =", t && f)
+      println("t && t =", t && t)
+      println("f && f =", f && f)
+    expected: |
+      t && f = false
+      t && t = true
+      f && f = false

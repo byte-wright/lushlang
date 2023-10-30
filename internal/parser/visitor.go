@@ -183,8 +183,35 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 }
 
 func (v *Visitor) VisitAtom(ctx *AtomContext) any {
-	if ctx.Value() != nil {
-		return ctx.Value().Accept(v)
+	if ctx.String_() != nil {
+		txt := ctx.String_().GetText()
+		txt = txt[1 : len(txt)-1]
+
+		for _, e := range strEscapes {
+			txt = strings.ReplaceAll(txt, e.k, e.v)
+		}
+
+		return &ast.String{
+			Value: txt,
+		}
+	}
+
+	if ctx.Number() != nil {
+		v, err := strconv.Atoi(ctx.Number().GetText())
+		if err != nil {
+			panic(err)
+		}
+
+		return &ast.Number{
+			Value: v,
+		}
+	}
+
+	if ctx.Bool_() != nil {
+		v := ctx.Bool_().GetText() == "true"
+		return &ast.Bool{
+			Value: v,
+		}
 	}
 
 	if ctx.EnvVar() != nil {
@@ -246,31 +273,3 @@ var strEscapes = []struct {
 	k: "\\\"",
 	v: "\"",
 }}
-
-func (v *Visitor) VisitValue(ctx *ValueContext) any {
-	if ctx.String_() != nil {
-		txt := ctx.String_().GetText()
-		txt = txt[1 : len(txt)-1]
-
-		for _, e := range strEscapes {
-			txt = strings.ReplaceAll(txt, e.k, e.v)
-		}
-
-		return &ast.String{
-			Value: txt,
-		}
-	}
-
-	if ctx.Number() != nil {
-		v, err := strconv.Atoi(ctx.Number().GetText())
-		if err != nil {
-			panic(err)
-		}
-
-		return &ast.Number{
-			Value: v,
-		}
-	}
-
-	panic("invalid value")
-}

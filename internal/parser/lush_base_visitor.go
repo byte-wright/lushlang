@@ -52,14 +52,14 @@ func (v *BaseLushVisitor) VisitEnvVar(ctx *EnvVarContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseLushVisitor) VisitValue(ctx *ValueContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseLushVisitor) VisitString(ctx *StringContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
 func (v *BaseLushVisitor) VisitNumber(ctx *NumberContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitBool(ctx *BoolContext) interface{} {
 	return v.VisitChildren(ctx)
 }

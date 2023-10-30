@@ -195,6 +195,9 @@ func (b *bash) atom(a bcode.Atom) string {
 	case *bcode.StringValue:
 		return "'" + at.Value + "'"
 
+	case *bcode.BoolValue:
+		return strconv.FormatBool(at.Value)
+
 	case *bcode.VarValue:
 		return "\"$" + at.Name + "\""
 

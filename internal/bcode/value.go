@@ -37,3 +37,11 @@ type StringValue struct {
 func (s *StringValue) Print() string {
 	return "\"" + s.Value + "\""
 }
+
+type BoolValue struct {
+	Value bool
+}
+
+func (b *BoolValue) Print() string {
+	return strconv.FormatBool(b.Value)
+}

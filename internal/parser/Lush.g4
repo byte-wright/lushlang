@@ -44,7 +44,9 @@ expression
     ;
 
 atom
-    : value
+    : string
+    | number
+    | bool
     | envVar
     | var
     | func
@@ -61,13 +63,17 @@ var: ID;
 
 envVar: ENVVAR;
 
-value: string | number;
-
 string: STRING;
 
 number: NUMBER;
 
+bool: TRUE | FALSE;
+
 WHITESPACE: [ \r\n\t]+ -> skip;
+
+TRUE: 'true';
+FALSE: 'false';
+IF: 'if';
 
 LAND: '&&';
 LOR: '||';
@@ -86,7 +92,6 @@ GTE: '>=';
 EQ: '==';
 NEQ: '!=';
 
-IF: 'if';
 
 LPAREN: '(';
 RPAREN: ')';

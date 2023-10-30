@@ -41,12 +41,12 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#envVar.
 	VisitEnvVar(ctx *EnvVarContext) interface{}
 
-	// Visit a parse tree produced by LushParser#value.
-	VisitValue(ctx *ValueContext) interface{}
-
 	// Visit a parse tree produced by LushParser#string.
 	VisitString(ctx *StringContext) interface{}
 
 	// Visit a parse tree produced by LushParser#number.
 	VisitNumber(ctx *NumberContext) interface{}
+
+	// Visit a parse tree produced by LushParser#bool.
+	VisitBool(ctx *BoolContext) interface{}
 }
