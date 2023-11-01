@@ -130,6 +130,17 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 		}
 	}
 
+	// index
+	if ctx.GetIndex() != nil {
+		value := ctx.index.Accept(v).(ast.Expression)
+		position := ctx.position.Accept(v).(ast.Expression)
+
+		return &ast.Index{
+			Value:    value,
+			Position: position,
+		}
+	}
+
 	b := ctx.Expression(1).Accept(v).(ast.Expression)
 
 	// mul ops
@@ -245,6 +256,10 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 		return &ast.Group{Expression: ctx.GetGroup().Accept(v).(ast.Expression)}
 	}
 
+	if ctx.Array() != nil {
+		return ctx.Array().Accept(v)
+	}
+
 	panic("invalid atom")
 }
 
@@ -269,6 +284,17 @@ func (v *Visitor) VisitEnvVar(ctx *EnvVarContext) any {
 	id = id[1:]
 	return &ast.EnvVar{
 		Name: id,
+	}
+}
+
+func (v *Visitor) VisitArray(ctx *ArrayContext) any {
+	exps := []ast.Expression{}
+	for _, exp := range ctx.AllExpression() {
+		exps = append(exps, exp.Accept(v).(ast.Expression))
+	}
+
+	return &ast.Array{
+		Values: exps,
 	}
 }
 

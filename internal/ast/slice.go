@@ -17,3 +17,12 @@ func (s *Slice) print() string {
 	}
 	return "(" + s.Value.print() + ")[" + f + ":" + t + "]"
 }
+
+type Index struct {
+	Value    Expression
+	Position Expression
+}
+
+func (i *Index) print() string {
+	return "(" + i.Value.print() + ")[" + i.Position.print() + "]"
+}

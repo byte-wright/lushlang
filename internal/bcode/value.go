@@ -1,6 +1,9 @@
 package bcode
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 type Value interface {
 	Atom
@@ -44,4 +47,17 @@ type BoolValue struct {
 
 func (b *BoolValue) Print() string {
 	return strconv.FormatBool(b.Value)
+}
+
+type ArrayValue struct {
+	Values []Atom
+}
+
+func (a *ArrayValue) Print() string {
+	ps := []string{}
+	for _, p := range a.Values {
+		ps = append(ps, p.Print())
+	}
+
+	return "[" + strings.Join(ps, ", ") + "]"
 }

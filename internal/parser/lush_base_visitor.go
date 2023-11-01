@@ -67,3 +67,7 @@ func (v *BaseLushVisitor) VisitNumber(ctx *NumberContext) interface{} {
 func (v *BaseLushVisitor) VisitBool(ctx *BoolContext) interface{} {
 	return v.VisitChildren(ctx)
 }
+
+func (v *BaseLushVisitor) VisitArray(ctx *ArrayContext) interface{} {
+	return v.VisitChildren(ctx)
+}

@@ -44,6 +44,7 @@ expression
     | expression LOR expression
     | ternary = expression QUESTION expression COLON expression
     | slice = expression LSQ from=expression? COLON to=expression? RSQ
+    | index = expression LSQ position=expression RSQ
     ;
 
 atom
@@ -54,6 +55,7 @@ atom
     | var
     | func
     | LPAREN group = expression RPAREN
+    | array
     ;
 
 func
@@ -71,6 +73,8 @@ string: STRING;
 number: NUMBER;
 
 bool: TRUE | FALSE;
+
+array: LSQ (expression (COMMA expression)*)? RSQ;
 
 WHITESPACE: [ \r\n\t]+ -> skip;
 

@@ -25,3 +25,18 @@ type String struct {
 func (s *String) print() string {
 	return "\"" + s.Value + "\""
 }
+
+type Array struct {
+	Values []Expression
+}
+
+func (a *Array) print() string {
+	r := "["
+	for i, xp := range a.Values {
+		if i > 0 {
+			r += ", "
+		}
+		r += xp.print()
+	}
+	return r + "]"
+}

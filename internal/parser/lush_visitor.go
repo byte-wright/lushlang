@@ -52,4 +52,7 @@ type LushVisitor interface {
 
 	// Visit a parse tree produced by LushParser#bool.
 	VisitBool(ctx *BoolContext) interface{}
+
+	// Visit a parse tree produced by LushParser#array.
+	VisitArray(ctx *ArrayContext) interface{}
 }

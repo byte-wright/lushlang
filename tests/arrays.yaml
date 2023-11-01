@@ -1,0 +1,11 @@
+order: 3
+name: Arrays
+tests:
+  - name: declaration
+    description: Arrays are declared like [a, b, c]
+    code: |
+      names = ["albert", "boris", "chad"]
+      println(names[2], names[1], names[0])
+    expected: |
+      chad boris albert
+

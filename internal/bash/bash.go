@@ -26,6 +26,13 @@ func Translate(p *bcode.Program) string {
 
 func (b *bash) translate() {
 	b.print("#!/bin/bash")
+
+	b.print("function main() {")
+
+	b.block(b.p.Main)
+
+	b.print("}")
+
 	b.print(`
 	
 lsh_bool_0=true
@@ -85,12 +92,6 @@ substring() {
 }
 
 `)
-
-	b.print("function main() {")
-
-	b.block(b.p.Main)
-
-	b.print("}")
 
 	b.print("main $@")
 }
@@ -197,6 +198,9 @@ func (b *bash) atom(a bcode.Atom) string {
 		b.print("substring " + b.atom(at.Value) + " " + at.From.Print() + " " + at.To.Print())
 		return "\"$lsh__funcretparam\""
 
+	case *bcode.Index:
+		return "\"${" + at.Value.Name + "[" + b.atom(at.Position) + "]}\""
+
 	case *bcode.NumberValue:
 		return strconv.Itoa(at.Value)
 
@@ -221,6 +225,15 @@ func (b *bash) atom(a bcode.Atom) string {
 
 		b.print(at.Name + " " + strings.Join(params, " "))
 		return "\"$lsh__funcretparam\""
+
+	case *bcode.ArrayValue:
+		params := []string{}
+
+		for _, p := range at.Values {
+			params = append(params, b.atom(p))
+		}
+
+		return "(" + strings.Join(params, " ") + ")"
 
 	default:
 		fmt.Println(fmt.Sprintf("no valid atom %T", at))

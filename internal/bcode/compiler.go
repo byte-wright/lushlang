@@ -158,6 +158,9 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 	case *ast.Slice:
 		return c.evalSlice(block, x)
 
+	case *ast.Index:
+		return c.evalIndex(block, x)
+
 	case *ast.Ternary:
 		v := c.prog.Main.nextTmp()
 
@@ -200,8 +203,17 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 		}
 		return block.setTmp(f)
 
+	case *ast.Array:
+		a := &ArrayValue{
+			Values: []Atom{},
+		}
+		for _, p := range x.Values {
+			a.Values = append(a.Values, c.evalExpression(block, p))
+		}
+		return block.setTmp(a)
+
 	default:
-		panic(fmt.Sprintf("no valid expression %T", x))
+		panic(fmt.Sprintf("no valid ast expression %T", x))
 	}
 }
 
@@ -229,6 +241,13 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 		Value: value,
 		From:  from,
 		To:    to,
+	})
+}
+
+func (c *Compiler) evalIndex(block *Block, s *ast.Index) Atom {
+	return block.setTmp(&Index{
+		Value:    c.evalExpression(block, s.Value).(*VarValue),
+		Position: c.evalExpression(block, s.Position),
 	})
 }
 
