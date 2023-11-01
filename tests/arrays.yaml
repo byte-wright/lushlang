@@ -9,3 +9,10 @@ tests:
     expected: |
       chad boris albert
 
+  - name: join array
+    description: The join method joins an array by converting each element to a string.
+    code: |
+      names = ["albert", "boris", "chad"]
+      println(join(names, ", "))
+    expected: |
+      albert, boris, chad

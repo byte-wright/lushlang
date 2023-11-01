@@ -4,7 +4,7 @@ import "strings"
 
 type Func struct {
 	Name       string
-	Parameters []Atom
+	Parameters []Value
 }
 
 func (*Func) Type() Type {

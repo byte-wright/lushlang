@@ -246,7 +246,7 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	} else {
 		to = block.setTmp(&Func{
 			Name:       "len",
-			Parameters: []Atom{value},
+			Parameters: []Value{value},
 		})
 	}
 
