@@ -2,6 +2,7 @@ package bash
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -9,14 +10,16 @@ import (
 )
 
 type bash struct {
-	p      *bcode.Program
-	lines  []string
-	indent int
+	p         *bcode.Program
+	lines     []string
+	indent    int
+	usedFuncs map[string]bool
 }
 
 func Translate(p *bcode.Program) string {
 	b := &bash{
-		p: p,
+		p:         p,
+		usedFuncs: map[string]bool{},
 	}
 
 	b.translate()
@@ -34,79 +37,22 @@ func (b *bash) translate() {
 	b.print("}")
 
 	b.print(`
-	
 lsh_bool_0=true
 lsh_bool_1=false
-
-lsh__println() {
-	local i=1
-	for (( ; i<=$#; i++ )); do
-		if [ $i -gt 1 ]; then
-			printf " "
-		fi
-		printf -- "%s" "${!i}"
-	done
-	printf "\n"
-}
-
-
-lsh__join() {
-	local i=2
-	local v=""
-	local di=$(($1+2))
-	for (( i=2;i<$di;i++ )); do
-		if [ $i -eq 2 ]; then
-			v="${!i}"
-		else
-			v="$v${!di}${!i}"
-		fi
-	done
-	lsh__funcretparam="${v}"
-}
-
-lsh__hasPrefix() {
-	if [[ "$1" == "$2"* ]]; then
-		lsh__funcretparam=true
-	else
-		lsh__funcretparam=false
-	fi
-}
-
-lsh__hasSuffix() {
-	if [[ "$1" == *"$2" ]]; then
-		lsh__funcretparam=true
-	else
-		lsh__funcretparam=false
-	fi
-}
-
-lsh__trimPrefix() {
-	lsh__funcretparam="${1#"$2"}"
-}
-
-lsh__trimSuffix() {
-	lsh__funcretparam="${1%"$2"}"
-}
-
-lsh__len() {
-	lsh__funcretparam=${#1}
-}
-
-lsh__indexOf() {
-	local pos=$(awk -v a="$1" -v b="$2" 'BEGIN{print index(a,b)}')
-	if [ "$pos" -eq 0 ]; then
-	lsh__funcretparam=-1
-	else
-		lsh__funcretparam=$((pos - 1))
-	fi
-}
-
-lsh__substring() {
-	local i2=$(($3-$2))
-	lsh__funcretparam="${1:$2:$i2}"
-}
-
 `)
+
+	ufncs := []string{}
+	for fn := range b.usedFuncs {
+		ufncs = append(ufncs, fn)
+	}
+
+	sort.Strings(ufncs)
+
+	for _, fn := range ufncs {
+		b.print("lsh__" + fn + "() {")
+		b.print(funcs[fn].code)
+		b.print("}\n")
+	}
 
 	b.print("main $@")
 }
@@ -121,6 +67,7 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
+			b.useFunc(cmd.Name)
 			b.print("lsh__" + cmd.Name + " " + b.mkFuncParams(cmd))
 
 		case *bcode.If:
@@ -138,7 +85,7 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("done")
 
 		default:
-			fmt.Println(fmt.Sprintf("no valid statement %T", c))
+			fmt.Printf("no valid statement %T\n", c)
 		}
 	}
 }
@@ -204,6 +151,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!lsh_i}"
 
 	case *bcode.Slice:
+		b.useFunc("substring")
 		b.print("lsh__substring " + b.atom(at.Value) + " " + at.From.Print() + " " + at.To.Print())
 		return "\"$lsh__funcretparam\""
 
@@ -229,6 +177,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "\"$" + at.Name + "\""
 
 	case *bcode.Func:
+		b.useFunc(at.Name)
 		b.print("lsh__" + at.Name + " " + b.mkFuncParams(at))
 		return "\"$lsh__funcretparam\""
 
@@ -265,6 +214,10 @@ func (b *bash) mkFuncParams(f *bcode.Func) string {
 	}
 
 	return strings.Join(params, " ")
+}
+
+func (b *bash) useFunc(name string) {
+	b.usedFuncs[name] = true
 }
 
 func (b *bash) print(line string) {
