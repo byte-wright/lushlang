@@ -3,6 +3,6 @@ package bcode
 type Command interface{}
 
 type Assignment struct {
-	Name  string
+	Var   *VarValue
 	Value Atom
 }

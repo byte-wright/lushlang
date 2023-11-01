@@ -7,6 +7,10 @@ type Func struct {
 	Parameters []Atom
 }
 
+func (*Func) Type() Type {
+	return &BasicType{Type: String}
+}
+
 func (f *Func) Print() string {
 	ps := []string{}
 	for _, p := range f.Parameters {

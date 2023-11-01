@@ -9,24 +9,24 @@ type Value interface {
 	Atom
 }
 
-type VarValue struct {
-	Name string
-}
-
-func (v *VarValue) Print() string {
-	return v.Name
-}
-
 type EnvVarValue struct {
 	Name string
 }
 
-func (v *EnvVarValue) Print() string {
-	return "$" + v.Name
+func (e *EnvVarValue) Type() Type {
+	return &BasicType{Type: String}
+}
+
+func (e *EnvVarValue) Print() string {
+	return "$" + e.Name
 }
 
 type NumberValue struct {
 	Value int
+}
+
+func (n *NumberValue) Type() Type {
+	return &BasicType{Type: Int}
 }
 
 func (n *NumberValue) Print() string {
@@ -37,6 +37,10 @@ type StringValue struct {
 	Value string
 }
 
+func (s *StringValue) Type() Type {
+	return &BasicType{Type: String}
+}
+
 func (s *StringValue) Print() string {
 	return "\"" + s.Value + "\""
 }
@@ -45,12 +49,20 @@ type BoolValue struct {
 	Value bool
 }
 
+func (b *BoolValue) Type() Type {
+	return &BasicType{Type: Bool}
+}
+
 func (b *BoolValue) Print() string {
 	return strconv.FormatBool(b.Value)
 }
 
 type ArrayValue struct {
 	Values []Atom
+}
+
+func (a *ArrayValue) Type() Type {
+	return &ArrayType{Type: &BasicType{Type: String}}
 }
 
 func (a *ArrayValue) Print() string {

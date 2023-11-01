@@ -103,7 +103,7 @@ func (b *bash) block(block *bcode.Block) {
 	for _, c := range block.Commands {
 		switch cmd := c.(type) {
 		case *bcode.Assignment:
-			b.print("local " + cmd.Name + "=" + b.atom(cmd.Value))
+			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
 			params := []string{}
@@ -211,6 +211,9 @@ func (b *bash) atom(a bcode.Atom) string {
 		return strconv.FormatBool(at.Value)
 
 	case *bcode.VarValue:
+		if at.Type().IsArray() {
+			return "(\"${" + at.Name + "[@]}\")"
+		}
 		return "\"$" + at.Name + "\""
 
 	case *bcode.EnvVarValue:

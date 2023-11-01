@@ -23,7 +23,10 @@ func Compile(program *ast.Program) (*Program, error) {
 }
 
 func (c *Compiler) evalProgram() {
-	c.prog.Main = &Block{tmpVar: c.prog}
+	c.prog.Main = &Block{
+		tmpVar: c.prog,
+		vars:   map[string]*VarValue{},
+	}
 	c.evalBlock(c.prog.Main, c.ast.Root)
 }
 
@@ -33,7 +36,7 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 		case *ast.Assignment:
 			result := c.evalExpression(b, st.Expression)
 
-			b.set(st.Name, result)
+			b.set(&VarValue{Name: st.Name, T: result.Type()}, result)
 
 		case *ast.Block:
 			c.evalBlock(b, st)
@@ -65,7 +68,12 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 		return &BoolValue{Value: x.Value}
 
 	case *ast.Var:
-		return &VarValue{Name: x.Name}
+		current := block.getVisibleVar(x.Name)
+		if current == nil {
+			panic(fmt.Sprintf("var not defined %v", x.Name))
+		}
+
+		return current
 
 	case *ast.EnvVar:
 		return &EnvVarValue{Name: x.Name}
@@ -162,32 +170,37 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 		return c.evalIndex(block, x)
 
 	case *ast.Ternary:
-		v := c.prog.Main.nextTmp()
+		trueBlock := block.subBlock()
+		trueValue := c.evalExpression(trueBlock, x.True)
+
+		falseBlock := block.subBlock()
+		falseValue := c.evalExpression(falseBlock, x.False)
+
+		v := c.prog.Main.nextTmp(trueValue.Type())
 
 		cond := block.setTmp(c.evalExpression(block, x.Condition))
+		notCond := block.setTmp(&Not{Expression: cond})
 
 		ifTrue := &If{
 			Condition: cond,
-			Block:     &Block{tmpVar: c.prog},
+			Block:     trueBlock,
 		}
 
 		ifTrue.Block.add(&Assignment{
-			Name:  v.Name,
-			Value: c.evalExpression(ifTrue.Block, x.True),
+			Var:   v,
+			Value: trueValue,
 		})
 
 		block.add(ifTrue)
 
-		notCond := block.setTmp(&Not{Expression: cond})
-
 		ifFalse := &If{
 			Condition: notCond,
-			Block:     &Block{tmpVar: c.prog},
+			Block:     falseBlock,
 		}
 
 		ifFalse.Block.add(&Assignment{
-			Name:  v.Name,
-			Value: c.evalExpression(ifFalse.Block, x.False),
+			Var:   v,
+			Value: falseValue,
 		})
 
 		block.add(ifFalse)
@@ -267,7 +280,7 @@ func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
 
 	ifs := &If{
 		Condition: condVar,
-		Block:     &Block{tmpVar: c.prog},
+		Block:     block.subBlock(),
 	}
 
 	c.evalBlock(ifs.Block, ifst.If)
@@ -277,21 +290,21 @@ func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
 
 func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
 	result := c.evalExpression(block, forst.Initial.Expression)
-	block.set(forst.Initial.Name, result)
+	block.set(&VarValue{Name: forst.Initial.Name, T: result.Type()}, result)
 
 	condVar := block.setTmp(c.evalExpression(block, forst.Condition))
 
 	while := &While{
 		Condition: condVar,
-		Block:     &Block{tmpVar: c.prog},
+		Block:     block.subBlock(),
 	}
 
 	c.evalBlock(while.Block, forst.Body)
 
 	tCond := c.evalExpression(while.Block, forst.Each.Expression)
-	while.Block.set(forst.Each.Name, tCond)
+	while.Block.set(&VarValue{Name: forst.Each.Name, T: tCond.Type()}, tCond)
 
-	while.Block.set(condVar.Name, c.evalExpression(while.Block, forst.Condition))
+	while.Block.set(condVar, c.evalExpression(while.Block, forst.Condition))
 
 	block.add(while)
 }
