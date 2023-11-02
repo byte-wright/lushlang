@@ -7,7 +7,11 @@ type Func struct {
 	Parameters []Value
 }
 
-func (*Func) Type() Type {
+func (f *Func) Type() Type {
+	if f.Name == "append" {
+		return f.Parameters[0].Type()
+	}
+
 	return &BasicType{Type: String}
 }
 

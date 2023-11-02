@@ -2,6 +2,7 @@ package bash
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -67,6 +68,11 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
+			if cmd.Name == "append" {
+				log.Println("append is a nop when not using the result")
+				continue
+			}
+
 			b.useFunc(cmd.Name)
 			b.print("lsh__" + cmd.Name + " " + b.mkFuncParams(cmd))
 
@@ -186,6 +192,17 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "\"$" + at.Name + "\""
 
 	case *bcode.Func:
+		if at.Name == "append" {
+			params := []string{}
+
+			for _, p := range at.Parameters[1:] {
+				params = append(params, b.atom(p))
+			}
+			arr := at.Parameters[0].(*bcode.VarValue)
+
+			return `("${` + arr.Name + `}" ` + strings.Join(params, " ") + `)`
+		}
+
 		b.useFunc(at.Name)
 		b.print("lsh__" + at.Name + " " + b.mkFuncParams(at))
 		return "\"$lsh__funcretparam\""

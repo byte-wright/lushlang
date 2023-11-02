@@ -13,6 +13,15 @@ tests:
       chad boris albert
       16
 
+  - name: append
+    description: Add elements to an array
+    code: |
+      names = ["albert"]
+      names = append(names, "boris", "chad")
+      println(join(names, "-"))
+    expected: |
+      albert-boris-chad
+
   - name: join array
     description: The join method joins an array into a string.
     code: |
