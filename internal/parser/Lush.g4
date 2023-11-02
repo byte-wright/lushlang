@@ -23,6 +23,8 @@ funcStatement: func;
 expression
     : atom
     | unary_op = (MINUS | NOT) expression
+    | slice = expression LSQ from=expression? COLON to=expression? RSQ
+    | index = expression LSQ position=expression RSQ
     | expression mul_op = (
         MUL
         | DIV
@@ -43,8 +45,6 @@ expression
     | expression LAND expression
     | expression LOR expression
     | ternary = expression QUESTION expression COLON expression
-    | slice = expression LSQ from=expression? COLON to=expression? RSQ
-    | index = expression LSQ position=expression RSQ
     ;
 
 atom

@@ -6,8 +6,12 @@ tests:
     code: |
       names = ["albert", "boris", "chad"]
       println(names[2], names[1], names[0])
+
+      numbers = [2, 4, 6]
+      println(numbers[1] + numbers[2] * numbers[0])
     expected: |
       chad boris albert
+      16
 
   - name: join array
     description: The join method joins an array into a string.
@@ -23,5 +27,8 @@ tests:
       names = ["albert", "boris", "chad", "dario", "elmir"]
       sliced = names[1:4]
       println(join(sliced, ", "))
+
+      println(join(["a", "r", "g", "h", "o"][2:4], "_"))
     expected: |
       boris, chad, dario
+      g_h

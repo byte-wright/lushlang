@@ -88,17 +88,17 @@ func lushParserInit() {
 		68, 5, 31, 0, 0, 68, 69, 5, 32, 0, 0, 69, 70, 3, 14, 7, 0, 70, 11, 1, 0,
 		0, 0, 71, 72, 3, 18, 9, 0, 72, 13, 1, 0, 0, 0, 73, 74, 6, 7, -1, 0, 74,
 		78, 3, 16, 8, 0, 75, 76, 7, 0, 0, 0, 76, 78, 3, 14, 7, 9, 77, 73, 1, 0,
-		0, 0, 77, 75, 1, 0, 0, 0, 78, 117, 1, 0, 0, 0, 79, 80, 10, 8, 0, 0, 80,
-		81, 7, 1, 0, 0, 81, 116, 3, 14, 7, 9, 82, 83, 10, 7, 0, 0, 83, 84, 7, 2,
-		0, 0, 84, 116, 3, 14, 7, 8, 85, 86, 10, 6, 0, 0, 86, 87, 7, 3, 0, 0, 87,
-		116, 3, 14, 7, 7, 88, 89, 10, 5, 0, 0, 89, 90, 5, 6, 0, 0, 90, 116, 3,
-		14, 7, 6, 91, 92, 10, 4, 0, 0, 92, 93, 5, 7, 0, 0, 93, 116, 3, 14, 7, 5,
-		94, 95, 10, 3, 0, 0, 95, 96, 5, 27, 0, 0, 96, 97, 3, 14, 7, 0, 97, 98,
-		5, 28, 0, 0, 98, 99, 3, 14, 7, 4, 99, 116, 1, 0, 0, 0, 100, 101, 10, 2,
+		0, 0, 77, 75, 1, 0, 0, 0, 78, 117, 1, 0, 0, 0, 79, 80, 10, 6, 0, 0, 80,
+		81, 7, 1, 0, 0, 81, 116, 3, 14, 7, 7, 82, 83, 10, 5, 0, 0, 83, 84, 7, 2,
+		0, 0, 84, 116, 3, 14, 7, 6, 85, 86, 10, 4, 0, 0, 86, 87, 7, 3, 0, 0, 87,
+		116, 3, 14, 7, 5, 88, 89, 10, 3, 0, 0, 89, 90, 5, 6, 0, 0, 90, 116, 3,
+		14, 7, 4, 91, 92, 10, 2, 0, 0, 92, 93, 5, 7, 0, 0, 93, 116, 3, 14, 7, 3,
+		94, 95, 10, 1, 0, 0, 95, 96, 5, 27, 0, 0, 96, 97, 3, 14, 7, 0, 97, 98,
+		5, 28, 0, 0, 98, 99, 3, 14, 7, 2, 99, 116, 1, 0, 0, 0, 100, 101, 10, 8,
 		0, 0, 101, 103, 5, 24, 0, 0, 102, 104, 3, 14, 7, 0, 103, 102, 1, 0, 0,
 		0, 103, 104, 1, 0, 0, 0, 104, 105, 1, 0, 0, 0, 105, 107, 5, 28, 0, 0, 106,
 		108, 3, 14, 7, 0, 107, 106, 1, 0, 0, 0, 107, 108, 1, 0, 0, 0, 108, 109,
-		1, 0, 0, 0, 109, 116, 5, 25, 0, 0, 110, 111, 10, 1, 0, 0, 111, 112, 5,
+		1, 0, 0, 0, 109, 116, 5, 25, 0, 0, 110, 111, 10, 7, 0, 0, 111, 112, 5,
 		24, 0, 0, 112, 113, 3, 14, 7, 0, 113, 114, 5, 25, 0, 0, 114, 116, 1, 0,
 		0, 0, 115, 79, 1, 0, 0, 0, 115, 82, 1, 0, 0, 0, 115, 85, 1, 0, 0, 0, 115,
 		88, 1, 0, 0, 0, 115, 91, 1, 0, 0, 0, 115, 94, 1, 0, 0, 0, 115, 100, 1,
@@ -1347,14 +1347,14 @@ type IExpressionContext interface {
 	// SetRel_op sets the rel_op token.
 	SetRel_op(antlr.Token)
 
-	// GetTernary returns the ternary rule contexts.
-	GetTernary() IExpressionContext
-
 	// GetSlice returns the slice rule contexts.
 	GetSlice() IExpressionContext
 
 	// GetIndex returns the index rule contexts.
 	GetIndex() IExpressionContext
+
+	// GetTernary returns the ternary rule contexts.
+	GetTernary() IExpressionContext
 
 	// GetFrom returns the from rule contexts.
 	GetFrom() IExpressionContext
@@ -1365,14 +1365,14 @@ type IExpressionContext interface {
 	// GetPosition returns the position rule contexts.
 	GetPosition() IExpressionContext
 
-	// SetTernary sets the ternary rule contexts.
-	SetTernary(IExpressionContext)
-
 	// SetSlice sets the slice rule contexts.
 	SetSlice(IExpressionContext)
 
 	// SetIndex sets the index rule contexts.
 	SetIndex(IExpressionContext)
+
+	// SetTernary sets the ternary rule contexts.
+	SetTernary(IExpressionContext)
 
 	// SetFrom sets the from rule contexts.
 	SetFrom(IExpressionContext)
@@ -1413,9 +1413,9 @@ type IExpressionContext interface {
 type ExpressionContext struct {
 	antlr.BaseParserRuleContext
 	parser   antlr.Parser
-	ternary  IExpressionContext
 	slice    IExpressionContext
 	index    IExpressionContext
+	ternary  IExpressionContext
 	unary_op antlr.Token
 	mul_op   antlr.Token
 	add_op   antlr.Token
@@ -1468,11 +1468,11 @@ func (s *ExpressionContext) SetAdd_op(v antlr.Token) { s.add_op = v }
 
 func (s *ExpressionContext) SetRel_op(v antlr.Token) { s.rel_op = v }
 
-func (s *ExpressionContext) GetTernary() IExpressionContext { return s.ternary }
-
 func (s *ExpressionContext) GetSlice() IExpressionContext { return s.slice }
 
 func (s *ExpressionContext) GetIndex() IExpressionContext { return s.index }
+
+func (s *ExpressionContext) GetTernary() IExpressionContext { return s.ternary }
 
 func (s *ExpressionContext) GetFrom() IExpressionContext { return s.from }
 
@@ -1480,11 +1480,11 @@ func (s *ExpressionContext) GetTo() IExpressionContext { return s.to }
 
 func (s *ExpressionContext) GetPosition() IExpressionContext { return s.position }
 
-func (s *ExpressionContext) SetTernary(v IExpressionContext) { s.ternary = v }
-
 func (s *ExpressionContext) SetSlice(v IExpressionContext) { s.slice = v }
 
 func (s *ExpressionContext) SetIndex(v IExpressionContext) { s.index = v }
+
+func (s *ExpressionContext) SetTernary(v IExpressionContext) { s.ternary = v }
 
 func (s *ExpressionContext) SetFrom(v IExpressionContext) { s.from = v }
 
@@ -1726,8 +1726,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(79)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 6)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 6)", ""))
 					goto errorExit
 				}
 				{
@@ -1750,7 +1750,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(81)
-					p.expression(9)
+					p.expression(7)
 				}
 
 			case 2:
@@ -1758,8 +1758,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(82)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 7)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 5)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 5)", ""))
 					goto errorExit
 				}
 				{
@@ -1782,7 +1782,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(84)
-					p.expression(8)
+					p.expression(6)
 				}
 
 			case 3:
@@ -1790,8 +1790,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(85)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 6)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 6)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 4)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 4)", ""))
 					goto errorExit
 				}
 				{
@@ -1814,7 +1814,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(87)
-					p.expression(7)
+					p.expression(5)
 				}
 
 			case 4:
@@ -1822,8 +1822,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(88)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 5)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 5)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 3)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 3)", ""))
 					goto errorExit
 				}
 				{
@@ -1836,7 +1836,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(90)
-					p.expression(6)
+					p.expression(4)
 				}
 
 			case 5:
@@ -1844,8 +1844,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(91)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 4)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 4)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 2)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
 					goto errorExit
 				}
 				{
@@ -1858,7 +1858,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(93)
-					p.expression(5)
+					p.expression(3)
 				}
 
 			case 6:
@@ -1867,8 +1867,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(94)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 3)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 3)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 1)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 1)", ""))
 					goto errorExit
 				}
 				{
@@ -1893,7 +1893,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(98)
-					p.expression(4)
+					p.expression(2)
 				}
 
 			case 7:
@@ -1902,8 +1902,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(100)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 2)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
 					goto errorExit
 				}
 				{
@@ -1971,8 +1971,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(110)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 1)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 1)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 7)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
 					goto errorExit
 				}
 				{
@@ -3295,28 +3295,28 @@ func (p *LushParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex in
 func (p *LushParser) Expression_Sempred(localctx antlr.RuleContext, predIndex int) bool {
 	switch predIndex {
 	case 0:
-		return p.Precpred(p.GetParserRuleContext(), 8)
-
-	case 1:
-		return p.Precpred(p.GetParserRuleContext(), 7)
-
-	case 2:
 		return p.Precpred(p.GetParserRuleContext(), 6)
 
-	case 3:
+	case 1:
 		return p.Precpred(p.GetParserRuleContext(), 5)
 
-	case 4:
+	case 2:
 		return p.Precpred(p.GetParserRuleContext(), 4)
 
-	case 5:
+	case 3:
 		return p.Precpred(p.GetParserRuleContext(), 3)
 
-	case 6:
+	case 4:
 		return p.Precpred(p.GetParserRuleContext(), 2)
 
-	case 7:
+	case 5:
 		return p.Precpred(p.GetParserRuleContext(), 1)
+
+	case 6:
+		return p.Precpred(p.GetParserRuleContext(), 8)
+
+	case 7:
+		return p.Precpred(p.GetParserRuleContext(), 7)
 
 	default:
 		panic("No predicate with index: " + fmt.Sprint(predIndex))
