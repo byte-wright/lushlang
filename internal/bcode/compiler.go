@@ -233,6 +233,12 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	value := c.evalExpression(block, s.Value)
 
+	// we want a varValue for slice operation
+	varValue, isVar := value.(*VarValue)
+	if !isVar {
+		varValue = block.setTmp(value)
+	}
+
 	var from Value
 	if s.From != nil {
 		from = c.evalExpression(block, s.From)
@@ -251,7 +257,7 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	}
 
 	return block.setTmp(&Slice{
-		Value: value,
+		Value: varValue,
 		From:  from,
 		To:    to,
 	})

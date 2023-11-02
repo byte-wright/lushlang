@@ -3,22 +3,13 @@ package bcode
 import "fmt"
 
 type Slice struct {
-	Value Atom
+	Value *VarValue
 	From  Atom
 	To    Atom
 }
 
 func (s *Slice) Type() Type {
-	t := s.Value.Type()
-
-	switch tp := t.(type) {
-	case *BasicType:
-		if tp.Type == String {
-			return &BasicType{Type: String}
-		}
-	}
-
-	panic(fmt.Sprintf("invalid type to slice %T", t))
+	return s.Value.Type()
 }
 
 func (s *Slice) Print() string {
@@ -35,7 +26,7 @@ func (i *Index) Type() Type {
 
 	switch tp := t.(type) {
 	case *ArrayType:
-		return tp.Type
+		return tp.ElementType
 	}
 
 	panic(fmt.Sprintf("invalid type to index %T", t))

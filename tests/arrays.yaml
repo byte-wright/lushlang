@@ -10,9 +10,18 @@ tests:
       chad boris albert
 
   - name: join array
-    description: The join method joins an array by converting each element to a string.
+    description: The join method joins an array into a string.
     code: |
       names = ["albert", "boris", "chad"]
       println(join(names, ", "))
     expected: |
       albert, boris, chad
+
+  - name: slice array
+    description: Arrays can be sliced
+    code: |
+      names = ["albert", "boris", "chad", "dario", "elmir"]
+      sliced = names[1:4]
+      println(join(sliced, ", "))
+    expected: |
+      boris, chad, dario

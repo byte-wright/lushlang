@@ -11,6 +11,7 @@ const (
 
 type Type interface {
 	IsArray() bool
+	Print() string
 }
 
 type BasicType struct {
@@ -21,12 +22,28 @@ func (b *BasicType) IsArray() bool {
 	return false
 }
 
+func (b *BasicType) Print() string {
+	switch b.Type {
+	case String:
+		return "string"
+	case Int:
+		return "int"
+	case Bool:
+		return "bool"
+	}
+	return "none"
+}
+
 type ArrayType struct {
-	Type
+	ElementType Type
 }
 
 func (a *ArrayType) IsArray() bool {
 	return true
+}
+
+func (a *ArrayType) Print() string {
+	return "[]" + a.ElementType.Print()
 }
 
 type VarValue struct {
@@ -39,5 +56,5 @@ func (v *VarValue) Type() Type {
 }
 
 func (v *VarValue) Print() string {
-	return v.Name
+	return v.Name + ":" + v.Type().Print()
 }

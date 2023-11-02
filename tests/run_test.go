@@ -84,7 +84,7 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(prog.Print()), 0o700)
+						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(prog.Print()), 0o600)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -94,7 +94,7 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bc.Print()), 0o700)
+						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bc.Print()), 0o600)
 						if err != nil {
 							t.Fatal(err)
 						}

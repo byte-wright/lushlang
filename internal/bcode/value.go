@@ -62,7 +62,7 @@ type ArrayValue struct {
 }
 
 func (a *ArrayValue) Type() Type {
-	return &ArrayType{Type: &BasicType{Type: String}}
+	return &ArrayType{ElementType: &BasicType{Type: String}}
 }
 
 func (a *ArrayValue) Print() string {

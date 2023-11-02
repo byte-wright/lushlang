@@ -151,9 +151,18 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!lsh_i}"
 
 	case *bcode.Slice:
-		b.useFunc("substring")
-		b.print("lsh__substring " + b.atom(at.Value) + " " + at.From.Print() + " " + at.To.Print())
-		return "\"$lsh__funcretparam\""
+		switch tp := at.Value.Type().(type) {
+		case *bcode.BasicType:
+			if tp.Type == bcode.String {
+				b.useFunc("substring")
+				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
+				return "\"$lsh__funcretparam\""
+			}
+
+		case *bcode.ArrayType:
+			return "(\"${" + at.Value.Name + "[@]:" + b.atom(at.From) + ":$(( " + b.atom(at.To) + "-" + b.atom(at.From) + " ))}\")"
+		}
+		panic(fmt.Sprintf("invalid slice type %T", at.Value.Type()))
 
 	case *bcode.Index:
 		return "\"${" + at.Value.Name + "[" + b.atom(at.Position) + "]}\""
