@@ -12,7 +12,10 @@ statement
 
 if: IF expression block;
 
-for: FOR assignment SEMICOLON expression SEMICOLON assignment block;
+for
+    : FOR assignment SEMICOLON expression SEMICOLON
+        assignment block
+    ;
 
 block: LCUR (statement)* RCUR;
 
@@ -23,8 +26,9 @@ funcStatement: func;
 expression
     : atom
     | unary_op = (MINUS | NOT) expression
-    | slice = expression LSQ from=expression? COLON to=expression? RSQ
-    | index = expression LSQ position=expression RSQ
+    | slice = expression LSQ from = expression? COLON to =
+        expression? RSQ
+    | index = expression LSQ position = expression RSQ
     | expression mul_op = (
         MUL
         | DIV
@@ -44,7 +48,8 @@ expression
     ) expression
     | expression LAND expression
     | expression LOR expression
-    | ternary = expression QUESTION expression COLON expression
+    | ternary = expression QUESTION expression COLON
+        expression
     ;
 
 atom
@@ -74,7 +79,18 @@ number: NUMBER;
 
 bool: TRUE | FALSE;
 
-array: LSQ (expression (COMMA expression)*)? RSQ;
+array
+    : LSQ (
+        expression (COMMA expression)*
+    )? RSQ
+    | LSQ RSQ type
+    ;
+
+type
+    : STRING_TYPE
+    | INT_TYPE
+    | BOOL_TYPE
+    ;
 
 WHITESPACE: [ \r\n\t]+ -> skip;
 
@@ -82,6 +98,9 @@ TRUE: 'true';
 FALSE: 'false';
 IF: 'if';
 FOR: 'for';
+STRING_TYPE: 'string';
+INT_TYPE: 'int';
+BOOL_TYPE: 'bool';
 
 LAND: '&&';
 LOR: '||';
@@ -99,7 +118,6 @@ GT: '>';
 GTE: '>=';
 EQ: '==';
 NEQ: '!=';
-
 
 LPAREN: '(';
 RPAREN: ')';

@@ -3,6 +3,8 @@ package bcode
 import (
 	"strconv"
 	"strings"
+
+	"github.com/byte-wright/lush/internal/common"
 )
 
 type Value interface {
@@ -14,7 +16,7 @@ type EnvVarValue struct {
 }
 
 func (e *EnvVarValue) Type() Type {
-	return &BasicType{Type: String}
+	return &BasicType{Type: common.String}
 }
 
 func (e *EnvVarValue) Print() string {
@@ -26,7 +28,7 @@ type NumberValue struct {
 }
 
 func (n *NumberValue) Type() Type {
-	return &BasicType{Type: Int}
+	return &BasicType{Type: common.Int}
 }
 
 func (n *NumberValue) Print() string {
@@ -38,7 +40,7 @@ type StringValue struct {
 }
 
 func (s *StringValue) Type() Type {
-	return &BasicType{Type: String}
+	return &BasicType{Type: common.String}
 }
 
 func (s *StringValue) Print() string {
@@ -50,7 +52,7 @@ type BoolValue struct {
 }
 
 func (b *BoolValue) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (b *BoolValue) Print() string {
@@ -59,10 +61,15 @@ func (b *BoolValue) Print() string {
 
 type ArrayValue struct {
 	Values []Atom
+	Tp     common.PrimitiveType
 }
 
 func (a *ArrayValue) Type() Type {
-	return &ArrayType{ElementType: &BasicType{Type: String}}
+	if a.Tp != common.None {
+		return &ArrayType{ElementType: &BasicType{Type: a.Tp}}
+	}
+
+	return &ArrayType{ElementType: a.Values[0].Type()}
 }
 
 func (a *ArrayValue) Print() string {

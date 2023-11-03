@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/byte-wright/lush/internal/ast"
+	"github.com/byte-wright/lush/internal/common"
 )
 
 type Visitor struct {
@@ -293,8 +294,14 @@ func (v *Visitor) VisitArray(ctx *ArrayContext) any {
 		exps = append(exps, exp.Accept(v).(ast.Expression))
 	}
 
+	tp := common.None
+	if ctx.Type_() != nil {
+		tp = common.PrimitiveTypeFor(ctx.Type_().GetText())
+	}
+
 	return &ast.Array{
 		Values: exps,
+		Type:   tp,
 	}
 }
 

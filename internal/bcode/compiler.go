@@ -219,10 +219,12 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 	case *ast.Array:
 		a := &ArrayValue{
 			Values: []Atom{},
+			Tp:     x.Type,
 		}
 		for _, p := range x.Values {
 			a.Values = append(a.Values, c.evalExpression(block, p))
 		}
+
 		return block.setTmp(a)
 
 	default:

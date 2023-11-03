@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/byte-wright/lush/internal/bcode"
+	"github.com/byte-wright/lush/internal/common"
 )
 
 type bash struct {
@@ -159,7 +160,7 @@ func (b *bash) atom(a bcode.Atom) string {
 	case *bcode.Slice:
 		switch tp := at.Value.Type().(type) {
 		case *bcode.BasicType:
-			if tp.Type == bcode.String {
+			if tp.Type == common.String {
 				b.useFunc("substring")
 				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
 				return "\"$lsh__funcretparam\""
@@ -177,7 +178,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		return strconv.Itoa(at.Value)
 
 	case *bcode.StringValue:
-		return "'" + at.Value + "'"
+		return "'" + strings.ReplaceAll(at.Value, "'", "'\\''") + "'"
 
 	case *bcode.BoolValue:
 		return strconv.FormatBool(at.Value)
@@ -200,7 +201,13 @@ func (b *bash) atom(a bcode.Atom) string {
 			}
 			arr := at.Parameters[0].(*bcode.VarValue)
 
-			return `("${` + arr.Name + `}" ` + strings.Join(params, " ") + `)`
+			b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
+			b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
+			b.print("else")
+			b.print(`  local lsh__tmp_array=("${` + arr.Name + `}" ` + strings.Join(params, " ") + `)`)
+			b.print("fi")
+
+			return `("${lsh__tmp_array[@]}")`
 		}
 
 		b.useFunc(at.Name)

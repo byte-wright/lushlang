@@ -71,3 +71,7 @@ func (v *BaseLushVisitor) VisitBool(ctx *BoolContext) interface{} {
 func (v *BaseLushVisitor) VisitArray(ctx *ArrayContext) interface{} {
 	return v.VisitChildren(ctx)
 }
+
+func (v *BaseLushVisitor) VisitType(ctx *TypeContext) interface{} {
+	return v.VisitChildren(ctx)
+}

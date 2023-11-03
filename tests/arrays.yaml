@@ -9,26 +9,29 @@ tests:
 
       numbers = [2, 4, 6]
       println(numbers[1] + numbers[2] * numbers[0])
+
+      println(join(append([]string, "foo", "bar"), "."))
     expected: |
       chad boris albert
       16
+      foo.bar
 
   - name: append
     description: Add elements to an array
     code: |
       names = ["albert"]
-      names = append(names, "boris", "chad")
+      names = append(names, "boris", "chad", "the mil'le\"r")
       println(join(names, "-"))
     expected: |
-      albert-boris-chad
+      albert-boris-chad-the mil'le"r
 
   - name: join array
     description: The join method joins an array into a string.
     code: |
-      names = ["albert", "boris", "chad"]
+      names = ["albert", "boris", "chad", "the mil'le\"r"]
       println(join(names, ", "))
     expected: |
-      albert, boris, chad
+      albert, boris, chad, the mil'le"r
 
   - name: slice array
     description: Arrays can be sliced

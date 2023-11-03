@@ -1,12 +1,14 @@
 package bcode
 
+import "github.com/byte-wright/lush/internal/common"
+
 type And struct {
 	Left  Value
 	Right Value
 }
 
 func (a *And) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (a *And) Print() string {
@@ -18,7 +20,7 @@ type Not struct {
 }
 
 func (n *Not) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (n *Not) Print() string {

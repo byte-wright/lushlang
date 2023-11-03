@@ -1,12 +1,14 @@
 package bcode
 
+import "github.com/byte-wright/lush/internal/common"
+
 type Equal struct {
 	Left  Value
 	Right Value
 }
 
 func (*Equal) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (e *Equal) Print() string {
@@ -19,7 +21,7 @@ type LessThan struct {
 }
 
 func (*LessThan) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (l *LessThan) Print() string {
@@ -32,7 +34,7 @@ type LessThanEqual struct {
 }
 
 func (*LessThanEqual) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (l *LessThanEqual) Print() string {
@@ -45,7 +47,7 @@ type GreaterThan struct {
 }
 
 func (*GreaterThan) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (g *GreaterThan) Print() string {
@@ -58,7 +60,7 @@ type GreaterThanEqual struct {
 }
 
 func (*GreaterThanEqual) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (g *GreaterThanEqual) Print() string {
@@ -71,7 +73,7 @@ type NotEqual struct {
 }
 
 func (*NotEqual) Type() Type {
-	return &BasicType{Type: Bool}
+	return &BasicType{Type: common.Bool}
 }
 
 func (n *NotEqual) Print() string {

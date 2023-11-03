@@ -55,4 +55,7 @@ type LushVisitor interface {
 
 	// Visit a parse tree produced by LushParser#array.
 	VisitArray(ctx *ArrayContext) interface{}
+
+	// Visit a parse tree produced by LushParser#type.
+	VisitType(ctx *TypeContext) interface{}
 }

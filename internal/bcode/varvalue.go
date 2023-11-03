@@ -1,13 +1,6 @@
 package bcode
 
-type PrimitiveType int
-
-const (
-	None   PrimitiveType = 0
-	String PrimitiveType = 1
-	Int    PrimitiveType = 2
-	Bool   PrimitiveType = 3
-)
+import "github.com/byte-wright/lush/internal/common"
 
 type Type interface {
 	IsArray() bool
@@ -15,7 +8,7 @@ type Type interface {
 }
 
 type BasicType struct {
-	Type PrimitiveType
+	Type common.PrimitiveType
 }
 
 func (b *BasicType) IsArray() bool {
@@ -24,11 +17,11 @@ func (b *BasicType) IsArray() bool {
 
 func (b *BasicType) Print() string {
 	switch b.Type {
-	case String:
+	case common.String:
 		return "string"
-	case Int:
+	case common.Int:
 		return "int"
-	case Bool:
+	case common.Bool:
 		return "bool"
 	}
 	return "none"

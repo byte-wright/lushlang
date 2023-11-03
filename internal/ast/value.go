@@ -1,6 +1,10 @@
 package ast
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/byte-wright/lush/internal/common"
+)
 
 type Number struct {
 	Value int
@@ -28,6 +32,7 @@ func (s *String) print() string {
 
 type Array struct {
 	Values []Expression
+	Type   common.PrimitiveType
 }
 
 func (a *Array) print() string {

@@ -1,6 +1,10 @@
 package bcode
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/byte-wright/lush/internal/common"
+)
 
 type Func struct {
 	Name       string
@@ -12,7 +16,7 @@ func (f *Func) Type() Type {
 		return f.Parameters[0].Type()
 	}
 
-	return &BasicType{Type: String}
+	return &BasicType{Type: common.String}
 }
 
 func (f *Func) Print() string {
