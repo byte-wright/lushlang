@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/byte-wright/lush/internal/common"
 )
 
 type tmpVar interface {
@@ -42,7 +44,7 @@ func (b *Block) setTmp(val Atom) *VarValue {
 	return v
 }
 
-func (b *Block) nextTmp(t Type) *VarValue {
+func (b *Block) nextTmp(t common.Type) *VarValue {
 	return &VarValue{
 		Name: "var_" + strconv.Itoa(b.tmpVar.nextVar()),
 		T:    t,

@@ -1,8 +1,10 @@
 package bcode
 
+import "github.com/byte-wright/lush/internal/common"
+
 type Atom interface {
 	Print() string
-	Type() Type
+	Type() common.Type
 }
 
 type Op interface {
@@ -14,7 +16,7 @@ type Add struct {
 	Right Value
 }
 
-func (a *Add) Type() Type {
+func (a *Add) Type() common.Type {
 	return a.Left.Type()
 }
 
@@ -27,7 +29,7 @@ type Sub struct {
 	Right Value
 }
 
-func (s *Sub) Type() Type {
+func (s *Sub) Type() common.Type {
 	return s.Left.Type()
 }
 
@@ -39,7 +41,7 @@ type Minus struct {
 	Expression Value
 }
 
-func (m *Minus) Type() Type {
+func (m *Minus) Type() common.Type {
 	return m.Expression.Type()
 }
 
@@ -52,7 +54,7 @@ type Mul struct {
 	Right Value
 }
 
-func (m *Mul) Type() Type {
+func (m *Mul) Type() common.Type {
 	return m.Left.Type()
 }
 
@@ -65,7 +67,7 @@ type Div struct {
 	Right Value
 }
 
-func (d *Div) Type() Type {
+func (d *Div) Type() common.Type {
 	return d.Left.Type()
 }
 
@@ -78,7 +80,7 @@ type Mod struct {
 	Right Value
 }
 
-func (m *Mod) Type() Type {
+func (m *Mod) Type() common.Type {
 	return m.Left.Type()
 }
 

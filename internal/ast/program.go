@@ -9,6 +9,12 @@ type Program struct {
 func (p *Program) Print() string {
 	lines := []string{}
 
+	for _, fd := range p.Root.FuncDefs {
+		sls := fd.print()
+		lines = append(lines, sls...)
+		lines = append(lines, "")
+	}
+
 	for _, st := range p.Root.Statements {
 		ls := st.print()
 		lines = append(lines, ls...)

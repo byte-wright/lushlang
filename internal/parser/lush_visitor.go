@@ -14,6 +14,12 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#statement.
 	VisitStatement(ctx *StatementContext) interface{}
 
+	// Visit a parse tree produced by LushParser#funcDef.
+	VisitFuncDef(ctx *FuncDefContext) interface{}
+
+	// Visit a parse tree produced by LushParser#param.
+	VisitParam(ctx *ParamContext) interface{}
+
 	// Visit a parse tree produced by LushParser#if.
 	VisitIf(ctx *IfContext) interface{}
 
@@ -58,4 +64,7 @@ type LushVisitor interface {
 
 	// Visit a parse tree produced by LushParser#type.
 	VisitType(ctx *TypeContext) interface{}
+
+	// Visit a parse tree produced by LushParser#primitiveType.
+	VisitPrimitiveType(ctx *PrimitiveTypeContext) interface{}
 }

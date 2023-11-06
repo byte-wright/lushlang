@@ -32,6 +32,12 @@ func Translate(p *bcode.Program) string {
 func (b *bash) translate() {
 	b.print("#!/bin/bash")
 
+	for _, gd := range b.p.Funcs {
+		b.print("function lsh__" + gd.Name + "() {")
+		b.block(gd.Body)
+		b.print("}")
+	}
+
 	b.print("function main() {")
 
 	b.block(b.p.Main)
@@ -51,9 +57,23 @@ lsh_bool_1=false
 	sort.Strings(ufncs)
 
 	for _, fn := range ufncs {
-		b.print("lsh__" + fn + "() {")
-		b.print(funcs[fn].code)
-		b.print("}\n")
+		iFunc, isInternal := funcs[fn]
+		if isInternal {
+			b.print("lsh__" + fn + "() {")
+			b.print(iFunc.code)
+			b.print("}\n")
+
+			continue
+		}
+
+		_, isDefined := b.p.FuncsByName[fn]
+		if isDefined {
+			// we added them already
+			continue
+		}
+
+		panic("func not found " + fn)
+
 	}
 
 	b.print("main $@")
@@ -159,14 +179,14 @@ func (b *bash) atom(a bcode.Atom) string {
 
 	case *bcode.Slice:
 		switch tp := at.Value.Type().(type) {
-		case *bcode.BasicType:
+		case *common.BasicType:
 			if tp.Type == common.String {
 				b.useFunc("substring")
 				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
 				return "\"$lsh__funcretparam\""
 			}
 
-		case *bcode.ArrayType:
+		case *common.ArrayType:
 			return "(\"${" + at.Value.Name + "[@]:" + b.atom(at.From) + ":$(( " + b.atom(at.To) + "-" + b.atom(at.From) + " ))}\")"
 		}
 		panic(fmt.Sprintf("invalid slice type %T", at.Value.Type()))

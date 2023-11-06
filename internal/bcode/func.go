@@ -11,12 +11,12 @@ type Func struct {
 	Parameters []Value
 }
 
-func (f *Func) Type() Type {
+func (f *Func) Type() common.Type {
 	if f.Name == "append" {
 		return f.Parameters[0].Type()
 	}
 
-	return &BasicType{Type: common.String}
+	return &common.BasicType{Type: common.String}
 }
 
 func (f *Func) Print() string {

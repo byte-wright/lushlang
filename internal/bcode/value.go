@@ -15,8 +15,8 @@ type EnvVarValue struct {
 	Name string
 }
 
-func (e *EnvVarValue) Type() Type {
-	return &BasicType{Type: common.String}
+func (e *EnvVarValue) Type() common.Type {
+	return &common.BasicType{Type: common.String}
 }
 
 func (e *EnvVarValue) Print() string {
@@ -27,8 +27,8 @@ type NumberValue struct {
 	Value int
 }
 
-func (n *NumberValue) Type() Type {
-	return &BasicType{Type: common.Int}
+func (n *NumberValue) Type() common.Type {
+	return &common.BasicType{Type: common.Int}
 }
 
 func (n *NumberValue) Print() string {
@@ -39,8 +39,8 @@ type StringValue struct {
 	Value string
 }
 
-func (s *StringValue) Type() Type {
-	return &BasicType{Type: common.String}
+func (s *StringValue) Type() common.Type {
+	return &common.BasicType{Type: common.String}
 }
 
 func (s *StringValue) Print() string {
@@ -51,8 +51,8 @@ type BoolValue struct {
 	Value bool
 }
 
-func (b *BoolValue) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (b *BoolValue) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (b *BoolValue) Print() string {
@@ -64,12 +64,12 @@ type ArrayValue struct {
 	Tp     common.PrimitiveType
 }
 
-func (a *ArrayValue) Type() Type {
+func (a *ArrayValue) Type() common.Type {
 	if a.Tp != common.None {
-		return &ArrayType{ElementType: &BasicType{Type: a.Tp}}
+		return &common.ArrayType{ElementType: &common.BasicType{Type: a.Tp}}
 	}
 
-	return &ArrayType{ElementType: a.Values[0].Type()}
+	return &common.ArrayType{ElementType: a.Values[0].Type()}
 }
 
 func (a *ArrayValue) Print() string {

@@ -1,6 +1,10 @@
 package bcode
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/byte-wright/lush/internal/common"
+)
 
 type Slice struct {
 	Value *VarValue
@@ -8,7 +12,7 @@ type Slice struct {
 	To    Atom
 }
 
-func (s *Slice) Type() Type {
+func (s *Slice) Type() common.Type {
 	return s.Value.Type()
 }
 
@@ -21,11 +25,11 @@ type Index struct {
 	Position Atom
 }
 
-func (i *Index) Type() Type {
+func (i *Index) Type() common.Type {
 	t := i.Value.Type()
 
 	switch tp := t.(type) {
-	case *ArrayType:
+	case *common.ArrayType:
 		return tp.ElementType
 	}
 

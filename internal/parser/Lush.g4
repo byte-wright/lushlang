@@ -1,7 +1,7 @@
 grammar Lush
     ;
 
-program: (statement)* EOF;
+program: (statement | funcDef)* EOF;
 
 statement
     : assignment
@@ -9,6 +9,10 @@ statement
     | if
     | for
     ;
+
+funcDef: FUNC ID LPAREN (param (COMMA param)*)? RPAREN block;
+
+param: ID type;
 
 if: IF expression block;
 
@@ -83,10 +87,13 @@ array
     : LSQ (
         expression (COMMA expression)*
     )? RSQ
-    | LSQ RSQ type
+    | LSQ RSQ primitiveType
     ;
 
-type
+type: primitiveType
+    | LSQ RSQ arrayType = type;
+
+primitiveType
     : STRING_TYPE
     | INT_TYPE
     | BOOL_TYPE
@@ -101,6 +108,7 @@ FOR: 'for';
 STRING_TYPE: 'string';
 INT_TYPE: 'int';
 BOOL_TYPE: 'bool';
+FUNC: 'func';
 
 LAND: '&&';
 LOR: '||';

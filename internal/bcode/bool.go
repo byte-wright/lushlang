@@ -7,8 +7,8 @@ type And struct {
 	Right Value
 }
 
-func (a *And) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (a *And) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (a *And) Print() string {
@@ -19,8 +19,8 @@ type Not struct {
 	Expression Value
 }
 
-func (n *Not) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (n *Not) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (n *Not) Print() string {

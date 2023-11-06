@@ -2,6 +2,7 @@ package bcode
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/byte-wright/lush/internal/ast"
 )
@@ -13,8 +14,10 @@ type Compiler struct {
 
 func Compile(program *ast.Program) (*Program, error) {
 	a := &Compiler{
-		prog: &Program{},
-		ast:  program,
+		prog: &Program{
+			FuncsByName: map[string]*FuncDef{},
+		},
+		ast: program,
 	}
 
 	a.evalProgram()
@@ -28,6 +31,35 @@ func (c *Compiler) evalProgram() {
 		vars:   map[string]*VarValue{},
 	}
 	c.evalBlock(c.prog.Main, c.ast.Root)
+
+	for _, fd := range c.ast.Root.FuncDefs {
+		block := &Block{
+			parent: c.prog.Main,
+			tmpVar: c.prog,
+			vars:   map[string]*VarValue{},
+		}
+
+		params := []*Param{}
+
+		paramIndex := 1
+		for _, p := range fd.Params {
+			params = append(params, &Param{Name: p.Name, Type: p.Type})
+			block.set(&VarValue{Name: p.Name, T: p.Type}, &EnvVarValue{Name: strconv.Itoa(paramIndex)})
+
+			paramIndex++
+		}
+
+		c.evalBlock(block, fd.Body)
+
+		funcDef := &FuncDef{
+			Name:   fd.Name,
+			Body:   block,
+			Params: params,
+		}
+
+		c.prog.Funcs = append(c.prog.Funcs, funcDef)
+		c.prog.FuncsByName[funcDef.Name] = funcDef
+	}
 }
 
 func (c *Compiler) evalBlock(b *Block, block *ast.Block) {

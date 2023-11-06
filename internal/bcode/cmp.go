@@ -7,8 +7,8 @@ type Equal struct {
 	Right Value
 }
 
-func (*Equal) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (*Equal) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (e *Equal) Print() string {
@@ -20,8 +20,8 @@ type LessThan struct {
 	Right Value
 }
 
-func (*LessThan) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (*LessThan) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (l *LessThan) Print() string {
@@ -33,8 +33,8 @@ type LessThanEqual struct {
 	Right Value
 }
 
-func (*LessThanEqual) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (*LessThanEqual) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (l *LessThanEqual) Print() string {
@@ -46,8 +46,8 @@ type GreaterThan struct {
 	Right Value
 }
 
-func (*GreaterThan) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (*GreaterThan) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (g *GreaterThan) Print() string {
@@ -59,8 +59,8 @@ type GreaterThanEqual struct {
 	Right Value
 }
 
-func (*GreaterThanEqual) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (*GreaterThanEqual) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (g *GreaterThanEqual) Print() string {
@@ -72,8 +72,8 @@ type NotEqual struct {
 	Right Value
 }
 
-func (*NotEqual) Type() Type {
-	return &BasicType{Type: common.Bool}
+func (*NotEqual) Type() common.Type {
+	return &common.BasicType{Type: common.Bool}
 }
 
 func (n *NotEqual) Print() string {

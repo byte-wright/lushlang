@@ -1,0 +1,14 @@
+order: 1
+name: Basics
+tests:
+  - name: Simple procedure
+    code: |
+      func printSum(a int, b int) {
+        println(a , "+", b, "=", a + b)
+      }
+      printSum(3, 7)
+      printSum(1, -5)
+    expected: |
+      3 + 7 = 10
+      1 + -5 = -4
+

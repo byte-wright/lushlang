@@ -31,6 +31,11 @@ func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 		v.Program.Root.Statements = append(v.Program.Root.Statements, statement.(ast.Statement))
 	}
 
+	for _, fd := range ctx.AllFuncDef() {
+		funcDef := fd.Accept(v)
+		v.Program.Root.FuncDefs = append(v.Program.Root.FuncDefs, funcDef.(*ast.FuncDef))
+	}
+
 	return v.Program
 }
 
@@ -52,6 +57,27 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 	}
 
 	panic("invalid statement")
+}
+
+func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
+	params := []*ast.Param{}
+
+	for _, p := range ctx.AllParam() {
+		params = append(params, p.Accept(v).(*ast.Param))
+	}
+
+	return &ast.FuncDef{
+		Name:   ctx.ID().GetText(),
+		Params: params,
+		Body:   ctx.Block().Accept(v).(*ast.Block),
+	}
+}
+
+func (v *Visitor) VisitParam(ctx *ParamContext) any {
+	return &ast.Param{
+		Name: ctx.ID().GetText(),
+		Type: ctx.Type_().Accept(v).(common.Type),
+	}
 }
 
 func (v *Visitor) VisitIf(ctx *IfContext) any {
@@ -295,14 +321,30 @@ func (v *Visitor) VisitArray(ctx *ArrayContext) any {
 	}
 
 	tp := common.None
-	if ctx.Type_() != nil {
-		tp = common.PrimitiveTypeFor(ctx.Type_().GetText())
+	if ctx.PrimitiveType() != nil {
+		tp = ctx.PrimitiveType().Accept(v).(common.PrimitiveType)
 	}
 
 	return &ast.Array{
 		Values: exps,
 		Type:   tp,
 	}
+}
+
+func (v *Visitor) VisitType(ctx *TypeContext) any {
+	if ctx.GetArrayType() != nil {
+		return &common.ArrayType{
+			ElementType: &common.BasicType{
+				Type: ctx.GetArrayType().Accept(v).(common.PrimitiveType),
+			},
+		}
+	}
+
+	return &common.BasicType{Type: ctx.PrimitiveType().Accept(v).(common.PrimitiveType)}
+}
+
+func (v *Visitor) VisitPrimitiveType(ctx *PrimitiveTypeContext) any {
+	return common.PrimitiveTypeFor(ctx.GetText())
 }
 
 var strEscapes = []struct {
