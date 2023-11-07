@@ -82,8 +82,11 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 		case *ast.For:
 			c.evalForStatement(b, st)
 
+		case *ast.ReturnStatement:
+			c.evalReturnStatement(b, st)
+
 		default:
-			panic(fmt.Sprintf("no valid statement %T", st))
+			panic(fmt.Sprintf("no valid statement in basm transpiler %T", st))
 		}
 	}
 }
@@ -347,4 +350,11 @@ func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
 	while.Block.set(condVar, c.evalExpression(while.Block, forst.Condition))
 
 	block.add(while)
+}
+
+func (c *Compiler) evalReturnStatement(block *Block, ret *ast.ReturnStatement) {
+	val := block.setTmp(c.evalExpression(block, ret.Expression))
+	block.add(&Return{
+		Value: val,
+	})
 }

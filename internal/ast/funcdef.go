@@ -16,19 +16,30 @@ func (p *Param) print() string {
 }
 
 type FuncDef struct {
-	Params []*Param
-	Name   string
-	Body   *Block
+	Name    string
+	Params  []*Param
+	Returns []common.Type
+	Body    *Block
 }
 
 func (f *FuncDef) print() []string {
-	ls := []string{}
 	params := []string{}
-
 	for _, p := range f.Params {
 		params = append(params, p.print())
 	}
-	ls = append(ls, "func "+f.Name+"("+strings.Join(params, ", ")+") {")
+
+	retParams := []string{}
+	for _, ret := range f.Returns {
+		retParams = append(retParams, ret.Print())
+	}
+
+	retParam := ""
+	if len(retParams) > 0 {
+		retParam = " " + strings.Join(retParams, ", ")
+	}
+
+	ls := []string{}
+	ls = append(ls, "func "+f.Name+"("+strings.Join(params, ", ")+")"+retParam+" {")
 
 	for _, l := range f.Body.printBare() {
 		ls = append(ls, "  "+l)

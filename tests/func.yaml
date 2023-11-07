@@ -12,3 +12,14 @@ tests:
       3 + 7 = 10
       1 + -5 = -4
 
+
+  - name: Simple function
+    code: |
+      func sum(a int, b int) int {
+        return a + b
+      }
+      println("3 + 7 =", sum(3, 7))
+      println("1 + -5 =", sum(1, -5))
+    expected: |
+      3 + 7 = 10
+      1 + -5 = -4

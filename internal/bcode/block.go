@@ -94,8 +94,11 @@ func (b *Block) Print(indent int) string {
 			r += cmd.Block.Print(indent + 2)
 			r += ind + "}\n"
 
+		case *Return:
+			r += ind + "return " + cmd.Value.Print() + "\n"
+
 		default:
-			panic(fmt.Sprintf("unknown command %T", c))
+			panic(fmt.Sprintf("invalid command %T in bash transpiler", c))
 		}
 	}
 	return r

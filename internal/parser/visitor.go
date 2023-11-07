@@ -56,7 +56,11 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 		return ctx.For_().Accept(v)
 	}
 
-	panic("invalid statement")
+	if ctx.ReturnStatement() != nil {
+		return ctx.ReturnStatement().Accept(v)
+	}
+
+	panic("invalid statement in parser")
 }
 
 func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
@@ -66,10 +70,16 @@ func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
 		params = append(params, p.Accept(v).(*ast.Param))
 	}
 
+	returns := []common.Type{}
+	if ctx.GetReturn_() != nil {
+		returns = append(returns, ctx.GetReturn_().Accept(v).(common.Type))
+	}
+
 	return &ast.FuncDef{
-		Name:   ctx.ID().GetText(),
-		Params: params,
-		Body:   ctx.Block().Accept(v).(*ast.Block),
+		Name:    ctx.ID().GetText(),
+		Params:  params,
+		Returns: returns,
+		Body:    ctx.Block().Accept(v).(*ast.Block),
 	}
 }
 
@@ -93,6 +103,12 @@ func (v *Visitor) VisitFor(ctx *ForContext) any {
 		Condition: ctx.Expression().Accept(v).(ast.Expression),
 		Each:      ctx.AllAssignment()[1].Accept(v).(*ast.Assignment),
 		Body:      ctx.Block().Accept(v).(*ast.Block),
+	}
+}
+
+func (v *Visitor) VisitReturnStatement(ctx *ReturnStatementContext) any {
+	return &ast.ReturnStatement{
+		Expression: ctx.Expression().Accept(v).(ast.Expression),
 	}
 }
 

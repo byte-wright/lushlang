@@ -9,3 +9,7 @@ type While struct {
 	Condition *VarValue
 	Block     *Block
 }
+
+type Return struct {
+	Value *VarValue
+}

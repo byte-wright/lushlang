@@ -8,9 +8,10 @@ statement
     | funcStatement
     | if
     | for
+    | returnStatement
     ;
 
-funcDef: FUNC ID LPAREN (param (COMMA param)*)? RPAREN block;
+funcDef: FUNC ID LPAREN (param (COMMA param)*)? RPAREN return = type? block;
 
 param: ID type;
 
@@ -20,6 +21,8 @@ for
     : FOR assignment SEMICOLON expression SEMICOLON
         assignment block
     ;
+
+returnStatement: RETURN expression;
 
 block: LCUR (statement)* RCUR;
 
@@ -109,6 +112,7 @@ STRING_TYPE: 'string';
 INT_TYPE: 'int';
 BOOL_TYPE: 'bool';
 FUNC: 'func';
+RETURN: 'return';
 
 LAND: '&&';
 LOR: '||';

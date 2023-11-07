@@ -111,8 +111,12 @@ func (b *bash) block(block *bcode.Block) {
 
 			b.print("done")
 
+		case *bcode.Return:
+			b.print("lsh__funcretparam=" + b.atom(cmd.Value))
+			b.print("return")
+
 		default:
-			fmt.Printf("no valid statement %T\n", c)
+			fmt.Printf("no valid statement in bash transpiler %T\n", c)
 		}
 	}
 }
