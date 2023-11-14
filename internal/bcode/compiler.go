@@ -242,6 +242,14 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		return []Value{v}
 
 	case *ast.Func:
+		switch x.Name {
+		case "len":
+			val := c.evalExpression(block, x.Parameters[0])
+			return []Value{&Len{
+				Parameter: block.asVar(val[0]),
+			}}
+		}
+
 		fSig := getSignature(c.ast, x.Name)
 
 		ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
@@ -309,15 +317,8 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	if s.To != nil {
 		to = c.evalExpression(block, s.To)[0]
 	} else {
-		val := value[0]
-		vVal, isVar := val.(*VarValue)
-		if !isVar {
-			vVal = block.setTmp(val)
-		}
-
 		to = block.setTmp(&Len{
-			Name:      "len",
-			Parameter: vVal,
+			Parameter: block.asVar(value[0]),
 		})
 	}
 

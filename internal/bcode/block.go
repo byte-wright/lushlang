@@ -57,6 +57,16 @@ func (b *Block) setTmps(vals ...Atom) []Value {
 	return vars
 }
 
+// asVar takes a value and returns it if it's already a variable
+// if not it assigns it to a variable and returns that variable.
+func (b *Block) asVar(val Value) *VarValue {
+	vVal, isVar := val.(*VarValue)
+	if isVar {
+		return vVal
+	}
+	return b.setTmp(val)
+}
+
 func (b *Block) nextTmp(t common.Type) *VarValue {
 	return &VarValue{
 		Name: "var_" + strconv.Itoa(b.tmpVar.nextVar()),

@@ -5,7 +5,6 @@ import (
 )
 
 type Len struct {
-	Name      string
 	Parameter *VarValue
 }
 

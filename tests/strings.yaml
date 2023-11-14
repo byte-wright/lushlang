@@ -28,3 +28,12 @@ tests:
       def def
 
 
+  - name: len
+    description: Count characters in a string
+    code: |
+      println("abcdef", len("abcdef"))
+      println("", len(""))
+    expected: |
+      abcdef 6
+       0
+
