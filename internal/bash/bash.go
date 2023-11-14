@@ -100,7 +100,7 @@ func (b *bash) block(block *bcode.Block) {
 				b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
 				b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
 				b.print("else")
-				b.print(`  local lsh__tmp_array=("${` + arr.Name + `}" ` + strings.Join(params, " ") + `)`)
+				b.print(`  local lsh__tmp_array=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
 				b.print("fi")
 				b.print("local " + cmd.Return[0].Name + `=("${lsh__tmp_array[@]}")`)
 
@@ -214,7 +214,9 @@ func (b *bash) atom(a bcode.Atom) string {
 		panic(fmt.Sprintf("invalid slice type %T", at.Value.Type()))
 
 	case *bcode.Len:
-
+		if at.Parameter.Type().IsArray() {
+			return "\"${#" + at.Parameter.Name + "[@]}\""
+		}
 		return "\"${#" + at.Parameter.Name + "}\""
 
 	case *bcode.Index:

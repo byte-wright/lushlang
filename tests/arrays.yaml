@@ -19,11 +19,11 @@ tests:
   - name: append
     description: Add elements to an array
     code: |
-      names = ["albert"]
+      names = ["albert", "anke"]
       names = append(names, "boris", "chad", "the mil'le\"r")
       println(join(names, "-"))
     expected: |
-      albert-boris-chad-the mil'le"r
+      albert-anke-boris-chad-the mil'le"r
 
   - name: join array
     description: The join method joins an array into a string.
@@ -44,3 +44,13 @@ tests:
     expected: |
       boris, chad, dario
       g_h
+
+  - name: array length
+    description: Arrays can be sliced
+    code: |
+      names = ["albert", "boris", "chad", "dario", "elmir"]
+      println(len(names))
+      println(len(append(names, "fifi")))
+    expected: |
+      5
+      6
