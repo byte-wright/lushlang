@@ -1,9 +1,15 @@
 package ast
 
+import "strings"
+
 type ReturnStatement struct {
-	Expression Expression
+	Expressions []Expression
 }
 
 func (r *ReturnStatement) print() []string {
-	return []string{"return " + r.Expression.print()}
+	xps := []string{}
+	for _, x := range r.Expressions {
+		xps = append(xps, x.print())
+	}
+	return []string{"return " + strings.Join(xps, ", ")}
 }

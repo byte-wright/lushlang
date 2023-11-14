@@ -2,7 +2,6 @@ package bash
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -89,13 +88,30 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
+
 			if cmd.Name == "append" {
-				log.Println("append is a nop when not using the result")
+				params := []string{}
+
+				for _, p := range cmd.Parameters[1:] {
+					params = append(params, b.atom(p))
+				}
+				arr := cmd.Parameters[0].(*bcode.VarValue)
+
+				b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
+				b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
+				b.print("else")
+				b.print(`  local lsh__tmp_array=("${` + arr.Name + `}" ` + strings.Join(params, " ") + `)`)
+				b.print("fi")
+				b.print("local " + cmd.Return[0].Name + `=("${lsh__tmp_array[@]}")`)
+
 				continue
 			}
 
 			b.useFunc(cmd.Name)
 			b.print("lsh__" + cmd.Name + " " + b.mkFuncParams(cmd))
+			for i, rpn := range cmd.Return {
+				b.print("local " + rpn.Name + "=\"$lsh__funcretparam_" + strconv.Itoa(i) + "\"")
+			}
 
 		case *bcode.If:
 			b.print("if [ " + b.atom(cmd.Condition) + " == true ]; then")
@@ -112,7 +128,9 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("done")
 
 		case *bcode.Return:
-			b.print("lsh__funcretparam=" + b.atom(cmd.Value))
+			for i, val := range cmd.Values {
+				b.print("lsh__funcretparam_" + strconv.Itoa(i) + "=" + b.atom(val))
+			}
 			b.print("return")
 
 		default:
@@ -187,13 +205,17 @@ func (b *bash) atom(a bcode.Atom) string {
 			if tp.Type == common.String {
 				b.useFunc("substring")
 				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
-				return "\"$lsh__funcretparam\""
+				return "\"$lsh__funcretparam_0\""
 			}
 
 		case *common.ArrayType:
 			return "(\"${" + at.Value.Name + "[@]:" + b.atom(at.From) + ":$(( " + b.atom(at.To) + "-" + b.atom(at.From) + " ))}\")"
 		}
 		panic(fmt.Sprintf("invalid slice type %T", at.Value.Type()))
+
+	case *bcode.Len:
+
+		return "\"${#" + at.Parameter.Name + "}\""
 
 	case *bcode.Index:
 		return "\"${" + at.Value.Name + "[" + b.atom(at.Position) + "]}\""
@@ -215,28 +237,6 @@ func (b *bash) atom(a bcode.Atom) string {
 
 	case *bcode.EnvVarValue:
 		return "\"$" + at.Name + "\""
-
-	case *bcode.Func:
-		if at.Name == "append" {
-			params := []string{}
-
-			for _, p := range at.Parameters[1:] {
-				params = append(params, b.atom(p))
-			}
-			arr := at.Parameters[0].(*bcode.VarValue)
-
-			b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
-			b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
-			b.print("else")
-			b.print(`  local lsh__tmp_array=("${` + arr.Name + `}" ` + strings.Join(params, " ") + `)`)
-			b.print("fi")
-
-			return `("${lsh__tmp_array[@]}")`
-		}
-
-		b.useFunc(at.Name)
-		b.print("lsh__" + at.Name + " " + b.mkFuncParams(at))
-		return "\"$lsh__funcretparam\""
 
 	case *bcode.ArrayValue:
 		params := []string{}

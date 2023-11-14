@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/byte-wright/lush/internal/ast"
+	"github.com/byte-wright/lush/internal/common"
 )
 
 type Compiler struct {
@@ -66,9 +67,7 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 	for _, s := range block.Statements {
 		switch st := s.(type) {
 		case *ast.Assignment:
-			result := c.evalExpression(b, st.Expression)
-
-			b.set(&VarValue{Name: st.Name, T: result.Type()}, result)
+			c.evalAssignment(b, st)
 
 		case *ast.Block:
 			c.evalBlock(b, st)
@@ -91,16 +90,16 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 	}
 }
 
-func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
+func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 	switch x := exp.(type) {
 	case *ast.Number:
-		return &NumberValue{Value: int(x.Value)}
+		return []Value{&NumberValue{Value: int(x.Value)}}
 
 	case *ast.String:
-		return &StringValue{Value: x.Value}
+		return []Value{&StringValue{Value: x.Value}}
 
 	case *ast.Bool:
-		return &BoolValue{Value: x.Value}
+		return []Value{&BoolValue{Value: x.Value}}
 
 	case *ast.Var:
 		current := block.getVisibleVar(x.Name)
@@ -108,101 +107,101 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 			panic(fmt.Sprintf("var not defined %v", x.Name))
 		}
 
-		return current
+		return []Value{current}
 
 	case *ast.EnvVar:
-		return &EnvVarValue{Name: x.Name}
+		return []Value{&EnvVarValue{Name: x.Name}}
 
 	case *ast.Add:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&Add{Left: a, Right: b})
+		return block.setTmps(&Add{Left: a[0], Right: b[0]})
 
 	case *ast.Sub:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&Sub{Left: a, Right: b})
+		return block.setTmps(&Sub{Left: a[0], Right: b[0]})
 
 	case *ast.Minus:
 		a := c.evalExpression(block, x.Expression)
 
-		return block.setTmp(&Minus{Expression: a})
+		return block.setTmps(&Minus{Expression: a[0]})
 
 	case *ast.Mul:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&Mul{Left: a, Right: b})
+		return block.setTmps(&Mul{Left: a[0], Right: b[0]})
 
 	case *ast.Div:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&Div{Left: a, Right: b})
+		return block.setTmps(&Div{Left: a[0], Right: b[0]})
 
 	case *ast.Mod:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&Mod{Left: a, Right: b})
+		return block.setTmps(&Mod{Left: a[0], Right: b[0]})
 
 	case *ast.And:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&And{Left: a, Right: b})
+		return block.setTmps(&And{Left: a[0], Right: b[0]})
 
 	case *ast.Not:
 		a := c.evalExpression(block, x.Expression)
 
-		return block.setTmp(&Not{Expression: a})
+		return block.setTmps(&Not{Expression: a[0]})
 
 	case *ast.Equal:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&Equal{Left: a, Right: b})
+		return block.setTmps(&Equal{Left: a[0], Right: b[0]})
 
 	case *ast.LessThan:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&LessThan{Left: a, Right: b})
+		return block.setTmps(&LessThan{Left: a[0], Right: b[0]})
 
 	case *ast.LessThanEqual:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&LessThanEqual{Left: a, Right: b})
+		return block.setTmps(&LessThanEqual{Left: a[0], Right: b[0]})
 
 	case *ast.GreaterThan:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&GreaterThan{Left: a, Right: b})
+		return block.setTmps(&GreaterThan{Left: a[0], Right: b[0]})
 
 	case *ast.GreaterThanEqual:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&GreaterThanEqual{Left: a, Right: b})
+		return block.setTmps(&GreaterThanEqual{Left: a[0], Right: b[0]})
 
 	case *ast.NotEqual:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
 
-		return block.setTmp(&NotEqual{Left: a, Right: b})
+		return block.setTmps(&NotEqual{Left: a[0], Right: b[0]})
 
 	case *ast.Group:
 		return c.evalExpression(block, x.Expression)
 
 	case *ast.Slice:
-		return c.evalSlice(block, x)
+		return []Value{c.evalSlice(block, x)}
 
 	case *ast.Index:
-		return c.evalIndex(block, x)
+		return []Value{c.evalIndex(block, x)}
 
 	case *ast.Ternary:
 		trueBlock := block.subBlock()
@@ -211,9 +210,9 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 		falseBlock := block.subBlock()
 		falseValue := c.evalExpression(falseBlock, x.False)
 
-		v := c.prog.Main.nextTmp(trueValue.Type())
+		v := c.prog.Main.nextTmp(trueValue[0].Type())
 
-		cond := block.setTmp(c.evalExpression(block, x.Condition))
+		cond := block.setTmp(c.evalExpression(block, x.Condition)[0])
 		notCond := block.setTmp(&Not{Expression: cond})
 
 		ifTrue := &If{
@@ -223,7 +222,7 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 
 		ifTrue.Block.add(&Assignment{
 			Var:   v,
-			Value: trueValue,
+			Value: trueValue[0],
 		})
 
 		block.add(ifTrue)
@@ -235,21 +234,31 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 
 		ifFalse.Block.add(&Assignment{
 			Var:   v,
-			Value: falseValue,
+			Value: falseValue[0],
 		})
 
 		block.add(ifFalse)
 
-		return v
+		return []Value{v}
 
 	case *ast.Func:
+		fSig := getSignature(c.ast, x.Name)
+
+		ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
+			return block.nextTmp(t)
+		})
+
 		f := &Func{
-			Name: x.Name,
+			Name:   x.Name,
+			Return: ret,
 		}
 		for _, p := range x.Parameters {
-			f.Parameters = append(f.Parameters, c.evalExpression(block, p))
+			f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
 		}
-		return block.setTmp(f)
+
+		block.add(f)
+
+		return common.Map(f.Return, func(i *VarValue) Value { return i })
 
 	case *ast.Array:
 		a := &ArrayValue{
@@ -257,13 +266,26 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) Value {
 			Tp:     x.Type,
 		}
 		for _, p := range x.Values {
-			a.Values = append(a.Values, c.evalExpression(block, p))
+			a.Values = append(a.Values, common.Map(c.evalExpression(block, p), func(x Value) Atom { return x })...)
 		}
 
-		return block.setTmp(a)
+		return []Value{block.setTmp(a)}
 
 	default:
 		panic(fmt.Sprintf("no valid ast expression %T", x))
+	}
+}
+
+func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
+	results := []Value{}
+	for _, exp := range ass.Expressions {
+		results = append(results, c.evalExpression(b, exp)...)
+	}
+
+	fmt.Println(len(ass.Expressions), len(results))
+
+	for i, name := range ass.Names {
+		b.set(&VarValue{Name: name, T: results[i].Type()}, results[i])
 	}
 }
 
@@ -271,25 +293,31 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	value := c.evalExpression(block, s.Value)
 
 	// we want a varValue for slice operation
-	varValue, isVar := value.(*VarValue)
+	varValue, isVar := value[0].(*VarValue)
 	if !isVar {
-		varValue = block.setTmp(value)
+		varValue = block.setTmp(value[0])
 	}
 
 	var from Value
 	if s.From != nil {
-		from = c.evalExpression(block, s.From)
+		from = c.evalExpression(block, s.From)[0]
 	} else {
 		from = &NumberValue{Value: 0}
 	}
 
 	var to Value
 	if s.To != nil {
-		to = c.evalExpression(block, s.To)
+		to = c.evalExpression(block, s.To)[0]
 	} else {
-		to = block.setTmp(&Func{
-			Name:       "len",
-			Parameters: []Value{value},
+		val := value[0]
+		vVal, isVar := val.(*VarValue)
+		if !isVar {
+			vVal = block.setTmp(val)
+		}
+
+		to = block.setTmp(&Len{
+			Name:      "len",
+			Parameter: vVal,
 		})
 	}
 
@@ -302,8 +330,8 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 
 func (c *Compiler) evalIndex(block *Block, s *ast.Index) Atom {
 	return block.setTmp(&Index{
-		Value:    c.evalExpression(block, s.Value).(*VarValue),
-		Position: c.evalExpression(block, s.Position),
+		Value:    c.evalExpression(block, s.Value)[0].(*VarValue),
+		Position: c.evalExpression(block, s.Position)[0],
 	})
 }
 
@@ -312,14 +340,14 @@ func (c *Compiler) evalFuncStatement(block *Block, f *ast.FuncStatement) {
 		Name: f.Func.Name,
 	}
 	for _, p := range f.Func.Parameters {
-		fnc.Parameters = append(fnc.Parameters, c.evalExpression(block, p))
+		fnc.Parameters = append(fnc.Parameters, c.evalExpression(block, p)[0])
 	}
 
 	block.add(fnc)
 }
 
 func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
-	condVar := block.setTmp(c.evalExpression(block, ifst.Condition))
+	condVar := block.setTmp(c.evalExpression(block, ifst.Condition)[0])
 
 	ifs := &If{
 		Condition: condVar,
@@ -332,10 +360,9 @@ func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
 }
 
 func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
-	result := c.evalExpression(block, forst.Initial.Expression)
-	block.set(&VarValue{Name: forst.Initial.Name, T: result.Type()}, result)
+	c.evalAssignment(block, forst.Initial)
 
-	condVar := block.setTmp(c.evalExpression(block, forst.Condition))
+	condVar := block.setTmp(c.evalExpression(block, forst.Condition)[0])
 
 	while := &While{
 		Condition: condVar,
@@ -344,17 +371,21 @@ func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
 
 	c.evalBlock(while.Block, forst.Body)
 
-	tCond := c.evalExpression(while.Block, forst.Each.Expression)
-	while.Block.set(&VarValue{Name: forst.Each.Name, T: tCond.Type()}, tCond)
+	c.evalAssignment(while.Block, forst.Each)
 
-	while.Block.set(condVar, c.evalExpression(while.Block, forst.Condition))
+	while.Block.set(condVar, c.evalExpression(while.Block, forst.Condition)[0])
 
 	block.add(while)
 }
 
 func (c *Compiler) evalReturnStatement(block *Block, ret *ast.ReturnStatement) {
-	val := block.setTmp(c.evalExpression(block, ret.Expression))
+	values := []*VarValue{}
+
+	for _, x := range ret.Expressions {
+		values = append(values, block.setTmp(c.evalExpression(block, x)[0]))
+	}
+
 	block.add(&Return{
-		Value: val,
+		Values: values,
 	})
 }

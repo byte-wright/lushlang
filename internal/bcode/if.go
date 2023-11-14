@@ -11,5 +11,5 @@ type While struct {
 }
 
 type Return struct {
-	Value *VarValue
+	Values []*VarValue
 }

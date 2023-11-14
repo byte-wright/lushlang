@@ -11,7 +11,7 @@ statement
     | returnStatement
     ;
 
-funcDef: FUNC ID LPAREN (param (COMMA param)*)? RPAREN return = type? block;
+funcDef: FUNC ID LPAREN (param (COMMA param)*)? RPAREN (type (COMMA type)*)? block;
 
 param: ID type;
 
@@ -22,11 +22,11 @@ for
         assignment block
     ;
 
-returnStatement: RETURN expression;
+returnStatement: RETURN (expression (COMMA expression)*);
 
 block: LCUR (statement)* RCUR;
 
-assignment: ID ASSIGN expression;
+assignment: ID (COMMA ID)* ASSIGN expression (COMMA expression)*;
 
 funcStatement: func;
 

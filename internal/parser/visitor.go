@@ -71,8 +71,8 @@ func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
 	}
 
 	returns := []common.Type{}
-	if ctx.GetReturn_() != nil {
-		returns = append(returns, ctx.GetReturn_().Accept(v).(common.Type))
+	for _, tp := range ctx.AllType_() {
+		returns = append(returns, tp.Accept(v).(common.Type))
 	}
 
 	return &ast.FuncDef{
@@ -107,8 +107,13 @@ func (v *Visitor) VisitFor(ctx *ForContext) any {
 }
 
 func (v *Visitor) VisitReturnStatement(ctx *ReturnStatementContext) any {
+	xps := []ast.Expression{}
+	for _, x := range ctx.AllExpression() {
+		xps = append(xps, x.Accept(v).(ast.Expression))
+	}
+
 	return &ast.ReturnStatement{
-		Expression: ctx.Expression().Accept(v).(ast.Expression),
+		Expressions: xps,
 	}
 }
 
@@ -123,11 +128,16 @@ func (v *Visitor) VisitBlock(ctx *BlockContext) any {
 }
 
 func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
-	name := ctx.ID().GetText()
-	exp := ctx.Expression().Accept(v)
+	names := []string{}
+	for _, id := range ctx.AllID() {
+		names = append(names, id.GetText())
+	}
+
 	return &ast.Assignment{
-		Name:       name,
-		Expression: exp.(ast.Expression),
+		Names: names,
+		Expressions: common.Map(ctx.AllExpression(), func(x IExpressionContext) ast.Expression {
+			return x.Accept(v).(ast.Expression)
+		}),
 	}
 }
 

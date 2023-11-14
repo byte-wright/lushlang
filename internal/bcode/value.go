@@ -80,3 +80,7 @@ func (a *ArrayValue) Print() string {
 
 	return "[" + strings.Join(ps, ", ") + "]"
 }
+
+type MultiValue struct {
+	Values []Value
+}

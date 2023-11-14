@@ -23,3 +23,13 @@ tests:
     expected: |
       3 + 7 = 10
       1 + -5 = -4
+
+  - name: Multiple return params
+    code: |
+      func sum(a int, b int) int, bool {
+        return a + b, a > b
+      }
+      s, gt = sum(3, 6)
+      println(s, gt)
+    expected: |
+      9 false

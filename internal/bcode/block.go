@@ -44,6 +44,19 @@ func (b *Block) setTmp(val Atom) *VarValue {
 	return v
 }
 
+func (b *Block) setTmps(vals ...Atom) []Value {
+	vars := []Value{}
+
+	for _, val := range vals {
+		v := b.nextTmp(val.Type())
+		b.registerVar(v)
+		b.Commands = append(b.Commands, &Assignment{Var: v, Value: val})
+		vars = append(vars, v)
+	}
+
+	return vars
+}
+
 func (b *Block) nextTmp(t common.Type) *VarValue {
 	return &VarValue{
 		Name: "var_" + strconv.Itoa(b.tmpVar.nextVar()),
@@ -95,7 +108,13 @@ func (b *Block) Print(indent int) string {
 			r += ind + "}\n"
 
 		case *Return:
-			r += ind + "return " + cmd.Value.Print() + "\n"
+			vs := []string{}
+
+			for _, v := range cmd.Values {
+				vs = append(vs, v.Print())
+			}
+
+			r += ind + "return " + strings.Join(vs, ", ") + "\n"
 
 		default:
 			panic(fmt.Sprintf("invalid command %T in bash transpiler", c))

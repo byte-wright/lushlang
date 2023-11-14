@@ -9,6 +9,7 @@ import (
 type Func struct {
 	Name       string
 	Parameters []Value
+	Return     []*VarValue
 }
 
 func (f *Func) Type() common.Type {
@@ -25,5 +26,14 @@ func (f *Func) Print() string {
 		ps = append(ps, p.Print())
 	}
 
-	return f.Name + "(" + strings.Join(ps, ", ") + ")"
+	assign := ""
+	if len(f.Return) > 0 {
+		rps := []string{}
+		for _, r := range f.Return {
+			rps = append(rps, r.Print())
+		}
+		assign = strings.Join(rps, ", ") + " = "
+	}
+
+	return assign + f.Name + "(" + strings.Join(ps, ", ") + ")"
 }
