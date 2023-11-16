@@ -126,6 +126,15 @@ func (b *Block) Print(indent int) string {
 
 			r += ind + "return " + strings.Join(vs, ", ") + "\n"
 
+		case *ExecVar:
+			vs := []string{cmd.Command.Print()}
+
+			for _, v := range cmd.Parameters {
+				vs = append(vs, v.Print())
+			}
+
+			r += ind + cmd.Stdout.Name + ", " + cmd.Stderr.Name + ", " + cmd.Err.Name + " = exec(" + strings.Join(vs, ", ") + ")\n"
+
 		default:
 			panic(fmt.Sprintf("invalid command %T in bash transpiler", c))
 		}

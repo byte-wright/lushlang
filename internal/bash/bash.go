@@ -133,6 +133,18 @@ func (b *bash) block(block *bcode.Block) {
 			}
 			b.print("return")
 
+		case *bcode.ExecVar:
+			cmds := []string{b.atom(cmd.Command)}
+
+			for _, p := range cmd.Parameters {
+				cmds = append(cmds, b.atom(p))
+			}
+
+			cmdl := strings.Join(cmds, " ")
+
+			b.print("output=$(" + cmdl + " 2> >(readarray -t " + cmd.Stderr.Name + "; printf '%s\n' \"${error_lines[@]}\"))")
+			b.print("readarray -t " + cmd.Stdout.Name + " <<< \"$output\"")
+
 		default:
 			fmt.Printf("no valid statement in bash transpiler %T\n", c)
 		}

@@ -248,6 +248,23 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 			return []Value{&Len{
 				Parameter: block.asVar(val[0]),
 			}}
+
+		case "execVar":
+			vals := c.evalExpressions(block, x.Parameters)
+
+			stdout := block.nextTmp(&common.ArrayType{ElementType: &common.BasicType{Type: common.String}})
+			stderr := block.nextTmp(&common.ArrayType{ElementType: &common.BasicType{Type: common.String}})
+			xerr := block.nextTmp(&common.BasicType{Type: common.Int})
+
+			block.add(&ExecVar{
+				Command:    vals[0],
+				Parameters: vals[1:],
+				Stdout:     stdout,
+				Stderr:     stderr,
+				Err:        xerr,
+			})
+
+			return []Value{stdout, stderr, xerr}
 		}
 
 		fSig := getSignature(c.ast, x.Name)
@@ -282,6 +299,16 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 	default:
 		panic(fmt.Sprintf("no valid ast expression %T", x))
 	}
+}
+
+func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value {
+	vals := []Value{}
+
+	for _, exp := range exps {
+		vals = append(vals, c.evalExpression(block, exp)...)
+	}
+
+	return vals
 }
 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
