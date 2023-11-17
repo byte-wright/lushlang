@@ -8,6 +8,7 @@ import (
 )
 
 type Signature struct {
+	Namespace  string
 	Name       string
 	Parameters []common.Type
 	Return     []common.Type
@@ -78,20 +79,39 @@ var internalFuncs = func() map[string]*Signature {
 	}
 }()
 
-func getSignature(prog *ast.Program, name string) *Signature {
-	internal, isInternal := internalFuncs[name]
-	if isInternal {
-		return internal
+func getSignature(prog *ast.Program, namespace, name string) *Signature {
+	if namespace == "" {
+		internal, isInternal := internalFuncs[name]
+		if isInternal {
+			return internal
+		}
+
+		for _, fd := range prog.Root.FuncDefs {
+			if fd.Name == name {
+				return &Signature{
+					Name: name,
+					Parameters: common.Map(fd.Params, func(p *ast.Param) common.Type {
+						return p.Type
+					}),
+					Return: fd.Returns,
+				}
+			}
+		}
 	}
 
-	for _, fd := range prog.Root.FuncDefs {
-		if fd.Name == name {
-			return &Signature{
-				Name: name,
-				Parameters: common.Map(fd.Params, func(p *ast.Param) common.Type {
-					return p.Type
-				}),
-				Return: fd.Returns,
+	for _, lib := range prog.Libs {
+		if lib.Name == namespace {
+			for _, fd := range lib.FuncDefs {
+				if fd.Name == name {
+					return &Signature{
+						Namespace: lib.Path,
+						Name:      name,
+						Parameters: common.Map(fd.Params, func(p *ast.Param) common.Type {
+							return p.Type
+						}),
+						Return: fd.Returns,
+					}
+				}
 			}
 		}
 	}

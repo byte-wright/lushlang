@@ -11,6 +11,12 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#program.
 	VisitProgram(ctx *ProgramContext) interface{}
 
+	// Visit a parse tree produced by LushParser#library.
+	VisitLibrary(ctx *LibraryContext) interface{}
+
+	// Visit a parse tree produced by LushParser#importStatement.
+	VisitImportStatement(ctx *ImportStatementContext) interface{}
+
 	// Visit a parse tree produced by LushParser#statement.
 	VisitStatement(ctx *StatementContext) interface{}
 

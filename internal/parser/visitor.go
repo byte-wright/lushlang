@@ -11,32 +11,57 @@ import (
 
 type Visitor struct {
 	*BaseLushVisitor
-	Program *ast.Program
-	Name    string
+	Target parseTarget
+	Name   string
 }
 
-func newVisitor(name string) *Visitor {
+type parseTarget interface {
+	addImport(path string)
+	addMainStatement(ast.Statement)
+	addFuncDef(*ast.FuncDef)
+}
+
+func newVisitor(name string, target parseTarget) *Visitor {
 	return &Visitor{
 		BaseLushVisitor: &BaseLushVisitor{},
-		Program: &ast.Program{
-			Root: &ast.Block{},
-		},
-		Name: name,
+		Target:          target,
+		Name:            name,
 	}
 }
 
 func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
+	for _, imp := range ctx.AllImportStatement() {
+		path := imp.STRING().GetText()
+		path = strings.Trim(path, "\" ")
+		v.Target.addImport(path)
+	}
+
 	for _, st := range ctx.AllStatement() {
 		statement := st.Accept(v)
-		v.Program.Root.Statements = append(v.Program.Root.Statements, statement.(ast.Statement))
+		v.Target.addMainStatement(statement.(ast.Statement))
 	}
 
 	for _, fd := range ctx.AllFuncDef() {
 		funcDef := fd.Accept(v)
-		v.Program.Root.FuncDefs = append(v.Program.Root.FuncDefs, funcDef.(*ast.FuncDef))
+		v.Target.addFuncDef(funcDef.(*ast.FuncDef))
 	}
 
-	return v.Program
+	return nil
+}
+
+func (v *Visitor) VisitLibrary(ctx *LibraryContext) any {
+	for _, imp := range ctx.AllImportStatement() {
+		path := imp.STRING().GetText()
+		path = strings.Trim(path, "\" ")
+		v.Target.addImport(path)
+	}
+
+	for _, fd := range ctx.AllFuncDef() {
+		funcDef := fd.Accept(v)
+		v.Target.addFuncDef(funcDef.(*ast.FuncDef))
+	}
+
+	return nil
 }
 
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {
@@ -153,6 +178,14 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 	}
 
 	a := ctx.Expression(0).Accept(v).(ast.Expression)
+
+	// method call
+	if ctx.Func_() != nil {
+		return &ast.Method{
+			Expression: a,
+			Func:       ctx.Func_().Accept(v).(*ast.Func),
+		}
+	}
 
 	// unary ops
 	if ctx.GetUnary_op() != nil {

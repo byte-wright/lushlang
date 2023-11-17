@@ -32,7 +32,7 @@ func (b *bash) translate() {
 	b.print("#!/bin/bash")
 
 	for _, gd := range b.p.Funcs {
-		b.print("function lsh__" + gd.Name + "() {")
+		b.print("function lsh__" + gd.FullName() + "() {")
 		b.block(gd.Body)
 		b.print("}")
 	}
@@ -107,8 +107,8 @@ func (b *bash) block(block *bcode.Block) {
 				continue
 			}
 
-			b.useFunc(cmd.Name)
-			b.print("lsh__" + cmd.Name + " " + b.mkFuncParams(cmd))
+			b.useFunc(cmd.Namespace, cmd.Name)
+			b.print("lsh__" + cmd.FullName() + " " + b.mkFuncParams(cmd))
 			for i, rpn := range cmd.Return {
 				b.print("local " + rpn.Name + "=\"$lsh__funcretparam_" + strconv.Itoa(i) + "\"")
 			}
@@ -215,7 +215,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		switch tp := at.Value.Type().(type) {
 		case *common.BasicType:
 			if tp.Type == common.String {
-				b.useFunc("substring")
+				b.useFunc("", "substring")
 				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
 				return "\"$lsh__funcretparam_0\""
 			}
@@ -287,8 +287,8 @@ func (b *bash) mkFuncParams(f *bcode.Func) string {
 	return strings.Join(params, " ")
 }
 
-func (b *bash) useFunc(name string) {
-	b.usedFuncs[name] = true
+func (b *bash) useFunc(namespace, name string) {
+	b.usedFuncs[funcName(namespace, name)] = true
 }
 
 func (b *bash) print(line string) {

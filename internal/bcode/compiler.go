@@ -33,7 +33,14 @@ func (c *Compiler) evalProgram() {
 	}
 	c.evalBlock(c.prog.Main, c.ast.Root)
 
-	for _, fd := range c.ast.Root.FuncDefs {
+	c.addFuncs("", c.ast.Root.FuncDefs)
+	for _, lib := range c.ast.Libs {
+		c.addFuncs(lib.Path, lib.FuncDefs)
+	}
+}
+
+func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
+	for _, fd := range funcDefs {
 		block := &Block{
 			parent: c.prog.Main,
 			tmpVar: c.prog,
@@ -53,13 +60,14 @@ func (c *Compiler) evalProgram() {
 		c.evalBlock(block, fd.Body)
 
 		funcDef := &FuncDef{
-			Name:   fd.Name,
-			Body:   block,
-			Params: params,
+			Namespace: namespace,
+			Name:      fd.Name,
+			Body:      block,
+			Params:    params,
 		}
 
 		c.prog.Funcs = append(c.prog.Funcs, funcDef)
-		c.prog.FuncsByName[funcDef.Name] = funcDef
+		c.prog.FuncsByName[funcDef.FullName()] = funcDef
 	}
 }
 
@@ -267,7 +275,7 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 			return []Value{stdout, stderr, xerr}
 		}
 
-		fSig := getSignature(c.ast, x.Name)
+		fSig := getSignature(c.ast, "", x.Name)
 
 		ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
 			return block.nextTmp(t)
@@ -284,6 +292,29 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		block.add(f)
 
 		return common.Map(f.Return, func(i *VarValue) Value { return i })
+
+	case *ast.Method:
+		vr, is := x.Expression.(*ast.Var)
+		if is {
+			fSig := getSignature(c.ast, vr.Name, x.Func.Name)
+
+			ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
+				return block.nextTmp(t)
+			})
+			f := &Func{
+				Namespace: fSig.Namespace,
+				Name:      x.Func.Name,
+				Return:    ret,
+			}
+			for _, p := range x.Func.Parameters {
+				f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
+			}
+
+			block.add(f)
+			return common.Map(f.Return, func(i *VarValue) Value { return i })
+		}
+
+		panic(fmt.Sprint("unknown package name", vr.Name))
 
 	case *ast.Array:
 		a := &ArrayValue{

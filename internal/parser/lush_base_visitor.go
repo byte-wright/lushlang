@@ -12,6 +12,14 @@ func (v *BaseLushVisitor) VisitProgram(ctx *ProgramContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitLibrary(ctx *LibraryContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitImportStatement(ctx *ImportStatementContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitStatement(ctx *StatementContext) interface{} {
 	return v.VisitChildren(ctx)
 }

@@ -7,6 +7,7 @@ import (
 )
 
 type Func struct {
+	Namespace  string
 	Name       string
 	Parameters []Value
 	Return     []*VarValue
@@ -35,5 +36,17 @@ func (f *Func) Print() string {
 		assign = strings.Join(rps, ", ") + " = "
 	}
 
-	return assign + f.Name + "(" + strings.Join(ps, ", ") + ")"
+	return assign + f.FullName() + "(" + strings.Join(ps, ", ") + ")"
+}
+
+func (f *Func) FullName() string {
+	return funcName(f.Namespace, f.Name)
+}
+
+func funcName(namespace, name string) string {
+	if namespace == "" {
+		return name
+	}
+
+	return namespace + "__" + name
 }

@@ -30,9 +30,13 @@ func TestExample(t *testing.T) {
 			t.Error(err)
 		}
 
-		prog, err := Parse(string(dat), f.Name())
+		prog, err := Parse(string(dat), f.Name(), "./std")
 		if err != nil {
 			t.Error(err)
+		}
+
+		for _, imp := range prog.Libs {
+			fmt.Println("import", imp.Path)
 		}
 
 		// fmt.Println(prog.Print())

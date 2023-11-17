@@ -18,7 +18,7 @@ func (p *Program) nextVar() int {
 func (p *Program) Print() string {
 	str := ""
 	for _, fd := range p.Funcs {
-		str += "func " + fd.Name + "() {\n"
+		str += "func " + fd.FullName() + "() {\n"
 		str += fd.Body.Print(2)
 		str += "}\n"
 	}
@@ -27,9 +27,14 @@ func (p *Program) Print() string {
 }
 
 type FuncDef struct {
-	Name   string
-	Params []*Param
-	Body   *Block
+	Namespace string
+	Name      string
+	Params    []*Param
+	Body      *Block
+}
+
+func (fd *FuncDef) FullName() string {
+	return funcName(fd.Namespace, fd.Name)
 }
 
 type Param struct {

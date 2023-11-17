@@ -1,7 +1,20 @@
 grammar Lush
     ;
 
-program: (statement | funcDef)* EOF;
+program
+    : importStatement* (
+        statement
+        | funcDef
+    )* EOF
+    ;
+
+library
+    : importStatement*
+        funcDef
+    * EOF
+    ;
+
+importStatement: IMPORT STRING;
 
 statement
     : assignment
@@ -11,7 +24,11 @@ statement
     | returnStatement
     ;
 
-funcDef: FUNC ID LPAREN (param (COMMA param)*)? RPAREN (type (COMMA type)*)? block;
+funcDef
+    : FUNC ID LPAREN (
+        param (COMMA param)*
+    )? RPAREN (type (COMMA type)*)? block
+    ;
 
 param: ID type;
 
@@ -22,16 +39,25 @@ for
         assignment block
     ;
 
-returnStatement: RETURN (expression (COMMA expression)*);
+returnStatement
+    : RETURN (
+        expression (COMMA expression)*
+    )
+    ;
 
 block: LCUR (statement)* RCUR;
 
-assignment: ID (COMMA ID)* ASSIGN expression (COMMA expression)*;
+assignment
+    : ID (COMMA ID)* ASSIGN expression (
+        COMMA expression
+    )*
+    ;
 
 funcStatement: func;
 
 expression
     : atom
+    | expression DOT func
     | unary_op = (MINUS | NOT) expression
     | slice = expression LSQ from = expression? COLON to =
         expression? RSQ
@@ -93,8 +119,10 @@ array
     | LSQ RSQ primitiveType
     ;
 
-type: primitiveType
-    | LSQ RSQ arrayType = type;
+type
+    : primitiveType
+    | LSQ RSQ arrayType = type
+    ;
 
 primitiveType
     : STRING_TYPE
@@ -104,6 +132,7 @@ primitiveType
 
 WHITESPACE: [ \r\n\t]+ -> skip;
 
+IMPORT: 'import';
 TRUE: 'true';
 FALSE: 'false';
 IF: 'if';
@@ -141,6 +170,7 @@ COMMA: ',';
 QUESTION: '?';
 COLON: ':';
 SEMICOLON: ';';
+DOT: '.';
 
 ENVVAR: '$' [a-zA-Z_0-0]+;
 

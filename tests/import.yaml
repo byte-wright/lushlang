@@ -1,0 +1,14 @@
+order: 3
+name: Import
+tests:
+  - name: imported methods
+    description:
+    code: |
+      import "math"
+
+      println(math.add(5, 3))
+      println(math.sub(5, 3))
+    expected: |
+      8
+      2
+
