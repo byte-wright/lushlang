@@ -27,10 +27,10 @@ func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, error) {
 		std:  stdRoot,
 	}
 
-	for i := 0; i < len(prog.Libraries()); i++ {
-		lib := prog.Libraries()[i]
+	for i := 0; i < len(prog.Packages()); i++ {
+		pkg := prog.Packages()[i]
 
-		files, err := resolver.resolve(lib.Path)
+		files, err := resolver.resolve(pkg.Path)
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +42,7 @@ func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, error) {
 				return nil, err
 			}
 
-			err = ParseLibFile(prog, lib, string(src), f)
+			err = ParsePkgFile(prog, pkg, string(src), f)
 			if err != nil {
 				return nil, err
 			}
@@ -52,18 +52,18 @@ func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, error) {
 	return prog, nil
 }
 
-func ParseLibFile(p *ast.Program, lib *ast.Library, code, name string) error {
+func ParsePkgFile(p *ast.Program, pkg *ast.Package, code, name string) error {
 	lexer := NewLushLexer(antlr.NewInputStream(code))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	parser := NewLushParser(stream)
 
 	parser.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
 	parser.BuildParseTrees = true
-	tree := parser.Library()
+	tree := parser.Package_()
 
-	v := newVisitor(name, &libTarget{
+	v := newVisitor(name, &pkgTarget{
 		prog: p,
-		lib:  lib,
+		pkg:  pkg,
 	})
 
 	tree.Accept(v)

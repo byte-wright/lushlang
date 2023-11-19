@@ -8,7 +8,7 @@ program
     )* EOF
     ;
 
-library
+package
     : importStatement* (
         funcDef
         | externalFuncDef

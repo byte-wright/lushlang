@@ -29,12 +29,12 @@ func getSignature(prog *ast.Program, namespace, name string) *Signature {
 		}
 	}
 
-	for _, lib := range prog.Libraries() {
-		if lib.Name == namespace {
-			for _, fd := range lib.FuncDefs {
+	for _, pkg := range prog.Packages() {
+		if pkg.Name == namespace {
+			for _, fd := range pkg.FuncDefs {
 				if fd.Name == name {
 					return &Signature{
-						Namespace: lib.Path,
+						Namespace: pkg.Path,
 						Name:      name,
 						Parameters: common.Map(fd.Params, func(p *ast.Param) common.Type {
 							return p.Type
@@ -43,10 +43,10 @@ func getSignature(prog *ast.Program, namespace, name string) *Signature {
 					}
 				}
 			}
-			for _, fd := range lib.ExternalFuncDefs {
+			for _, fd := range pkg.ExternalFuncDefs {
 				if fd.Name == name {
 					return &Signature{
-						Namespace: lib.Path,
+						Namespace: pkg.Path,
 						Name:      name,
 						Parameters: common.Map(fd.Params, func(p *ast.Param) common.Type {
 							return p.Type

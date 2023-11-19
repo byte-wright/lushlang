@@ -48,7 +48,7 @@ func lushParserInit() {
 		"EXTERNAL_CODE",
 	}
 	staticData.RuleNames = []string{
-		"program", "library", "importStatement", "statement", "funcDef", "externalFuncDef",
+		"program", "package", "importStatement", "statement", "funcDef", "externalFuncDef",
 		"param", "if", "for", "returnStatement", "block", "assignment", "funcStatement",
 		"expression", "atom", "func", "var", "envVar", "string", "number", "bool",
 		"array", "type", "primitiveType",
@@ -277,7 +277,7 @@ const (
 // LushParser rules.
 const (
 	LushParserRULE_program         = 0
-	LushParserRULE_library         = 1
+	LushParserRULE_package         = 1
 	LushParserRULE_importStatement = 2
 	LushParserRULE_statement       = 3
 	LushParserRULE_funcDef         = 4
@@ -586,8 +586,8 @@ errorExit:
 	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
-// ILibraryContext is an interface to support dynamic dispatch.
-type ILibraryContext interface {
+// IPackageContext is an interface to support dynamic dispatch.
+type IPackageContext interface {
 	antlr.ParserRuleContext
 
 	// GetParser returns the parser.
@@ -602,47 +602,47 @@ type ILibraryContext interface {
 	AllExternalFuncDef() []IExternalFuncDefContext
 	ExternalFuncDef(i int) IExternalFuncDefContext
 
-	// IsLibraryContext differentiates from other interfaces.
-	IsLibraryContext()
+	// IsPackageContext differentiates from other interfaces.
+	IsPackageContext()
 }
 
-type LibraryContext struct {
+type PackageContext struct {
 	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
-func NewEmptyLibraryContext() *LibraryContext {
-	var p = new(LibraryContext)
+func NewEmptyPackageContext() *PackageContext {
+	var p = new(PackageContext)
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = LushParserRULE_library
+	p.RuleIndex = LushParserRULE_package
 	return p
 }
 
-func InitEmptyLibraryContext(p *LibraryContext) {
+func InitEmptyPackageContext(p *PackageContext) {
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = LushParserRULE_library
+	p.RuleIndex = LushParserRULE_package
 }
 
-func (*LibraryContext) IsLibraryContext() {}
+func (*PackageContext) IsPackageContext() {}
 
-func NewLibraryContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *LibraryContext {
-	var p = new(LibraryContext)
+func NewPackageContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PackageContext {
+	var p = new(PackageContext)
 
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
-	p.RuleIndex = LushParserRULE_library
+	p.RuleIndex = LushParserRULE_package
 
 	return p
 }
 
-func (s *LibraryContext) GetParser() antlr.Parser { return s.parser }
+func (s *PackageContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *LibraryContext) EOF() antlr.TerminalNode {
+func (s *PackageContext) EOF() antlr.TerminalNode {
 	return s.GetToken(LushParserEOF, 0)
 }
 
-func (s *LibraryContext) AllImportStatement() []IImportStatementContext {
+func (s *PackageContext) AllImportStatement() []IImportStatementContext {
 	children := s.GetChildren()
 	len := 0
 	for _, ctx := range children {
@@ -663,7 +663,7 @@ func (s *LibraryContext) AllImportStatement() []IImportStatementContext {
 	return tst
 }
 
-func (s *LibraryContext) ImportStatement(i int) IImportStatementContext {
+func (s *PackageContext) ImportStatement(i int) IImportStatementContext {
 	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
@@ -683,7 +683,7 @@ func (s *LibraryContext) ImportStatement(i int) IImportStatementContext {
 	return t.(IImportStatementContext)
 }
 
-func (s *LibraryContext) AllFuncDef() []IFuncDefContext {
+func (s *PackageContext) AllFuncDef() []IFuncDefContext {
 	children := s.GetChildren()
 	len := 0
 	for _, ctx := range children {
@@ -704,7 +704,7 @@ func (s *LibraryContext) AllFuncDef() []IFuncDefContext {
 	return tst
 }
 
-func (s *LibraryContext) FuncDef(i int) IFuncDefContext {
+func (s *PackageContext) FuncDef(i int) IFuncDefContext {
 	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
@@ -724,7 +724,7 @@ func (s *LibraryContext) FuncDef(i int) IFuncDefContext {
 	return t.(IFuncDefContext)
 }
 
-func (s *LibraryContext) AllExternalFuncDef() []IExternalFuncDefContext {
+func (s *PackageContext) AllExternalFuncDef() []IExternalFuncDefContext {
 	children := s.GetChildren()
 	len := 0
 	for _, ctx := range children {
@@ -745,7 +745,7 @@ func (s *LibraryContext) AllExternalFuncDef() []IExternalFuncDefContext {
 	return tst
 }
 
-func (s *LibraryContext) ExternalFuncDef(i int) IExternalFuncDefContext {
+func (s *PackageContext) ExternalFuncDef(i int) IExternalFuncDefContext {
 	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
@@ -765,27 +765,27 @@ func (s *LibraryContext) ExternalFuncDef(i int) IExternalFuncDefContext {
 	return t.(IExternalFuncDefContext)
 }
 
-func (s *LibraryContext) GetRuleContext() antlr.RuleContext {
+func (s *PackageContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
 
-func (s *LibraryContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+func (s *PackageContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-func (s *LibraryContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+func (s *PackageContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 	switch t := visitor.(type) {
 	case LushVisitor:
-		return t.VisitLibrary(s)
+		return t.VisitPackage(s)
 
 	default:
 		return t.VisitChildren(s)
 	}
 }
 
-func (p *LushParser) Library() (localctx ILibraryContext) {
-	localctx = NewLibraryContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 2, LushParserRULE_library)
+func (p *LushParser) Package_() (localctx IPackageContext) {
+	localctx = NewPackageContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 2, LushParserRULE_package)
 	var _la int
 
 	p.EnterOuterAlt(localctx, 1)

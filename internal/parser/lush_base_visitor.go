@@ -12,7 +12,7 @@ func (v *BaseLushVisitor) VisitProgram(ctx *ProgramContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseLushVisitor) VisitLibrary(ctx *LibraryContext) interface{} {
+func (v *BaseLushVisitor) VisitPackage(ctx *PackageContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

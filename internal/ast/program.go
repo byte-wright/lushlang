@@ -6,12 +6,12 @@ import (
 )
 
 type Program struct {
-	Root      *Block
-	libs      []*Library
-	addedLibs map[string]bool
+	Root          *Block
+	packages      []*Package
+	addedPackages map[string]bool
 }
 
-type Library struct {
+type Package struct {
 	Path             string
 	Name             string
 	FuncDefs         []*FuncDef
@@ -20,15 +20,15 @@ type Library struct {
 
 func NewProgram() *Program {
 	return &Program{
-		Root:      &Block{},
-		addedLibs: map[string]bool{},
+		Root:          &Block{},
+		addedPackages: map[string]bool{},
 	}
 }
 
 func (p *Program) Print() string {
 	lines := []string{}
 
-	for _, imp := range p.libs {
+	for _, imp := range p.packages {
 		lines = append(lines, "import \""+imp.Path+"\"")
 	}
 
@@ -51,17 +51,17 @@ func (p *Program) Print() string {
 }
 
 func (p *Program) AddImport(path string) {
-	if p.addedLibs[path] {
+	if p.addedPackages[path] {
 		return
 	}
-	p.libs = append(p.libs, &Library{
+	p.packages = append(p.packages, &Package{
 		Path: path,
 		Name: filepath.Base(path),
 	})
 
-	p.addedLibs[path] = true
+	p.addedPackages[path] = true
 }
 
-func (p *Program) Libraries() []*Library {
-	return p.libs
+func (p *Program) Packages() []*Package {
+	return p.packages
 }

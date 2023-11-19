@@ -34,9 +34,9 @@ func (c *Compiler) evalProgram() {
 	c.evalBlock(c.prog.Main, c.ast.Root)
 
 	c.addFuncs("", c.ast.Root.FuncDefs)
-	for _, lib := range c.ast.Libraries() {
-		c.addFuncs(lib.Path, lib.FuncDefs)
-		c.addExternalFuncs(lib.Path, lib.ExternalFuncDefs)
+	for _, pkg := range c.ast.Packages() {
+		c.addFuncs(pkg.Path, pkg.FuncDefs)
+		c.addExternalFuncs(pkg.Path, pkg.ExternalFuncDefs)
 	}
 }
 

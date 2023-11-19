@@ -50,7 +50,7 @@ func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 	return nil
 }
 
-func (v *Visitor) VisitLibrary(ctx *LibraryContext) any {
+func (v *Visitor) VisitPackage(ctx *PackageContext) any {
 	for _, imp := range ctx.AllImportStatement() {
 		path := imp.STRING().GetText()
 		path = strings.Trim(path, "\" ")

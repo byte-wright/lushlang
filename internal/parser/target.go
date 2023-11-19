@@ -19,26 +19,26 @@ func (m *mainTarget) addFuncDef(f *ast.FuncDef) {
 }
 
 func (m *mainTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
-	panic("external func devs only in libs allowed")
+	panic("external func devs only in packages allowed")
 }
 
-type libTarget struct {
+type pkgTarget struct {
 	prog *ast.Program
-	lib  *ast.Library
+	pkg  *ast.Package
 }
 
-func (l *libTarget) addImport(path string) {
+func (l *pkgTarget) addImport(path string) {
 	l.prog.AddImport(path)
 }
 
-func (l *libTarget) addMainStatement(s ast.Statement) {
-	panic("lib must not have main statements")
+func (l *pkgTarget) addMainStatement(s ast.Statement) {
+	panic("package must not have main statements")
 }
 
-func (l *libTarget) addFuncDef(f *ast.FuncDef) {
-	l.lib.FuncDefs = append(l.lib.FuncDefs, f)
+func (l *pkgTarget) addFuncDef(f *ast.FuncDef) {
+	l.pkg.FuncDefs = append(l.pkg.FuncDefs, f)
 }
 
-func (l *libTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
-	l.lib.ExternalFuncDefs = append(l.lib.ExternalFuncDefs, f)
+func (l *pkgTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
+	l.pkg.ExternalFuncDefs = append(l.pkg.ExternalFuncDefs, f)
 }
