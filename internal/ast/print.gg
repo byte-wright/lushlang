@@ -1,0 +1,129 @@
+main visitor:
+
+ast.Program type:
+  {for p in .Packages-}
+  import "${p.Path}"
+  {end-}
+
+  {if .Packages}
+  {end-}
+
+  {for fd in .Root.FuncDefs-}
+  @{fd}
+  {end-}
+
+  {if .Root.FuncDefs}
+  {end-}
+
+  {for st in .Root.Statements-}
+  @{st}
+  {end-}
+
+ast.FuncStatement type:
+  @{.Func}
+
+ast.Func type:
+  ${.Name}(@{.Parameters})
+
+ast.Method type:
+  @{.Expression}.@{.Func}
+
+ast.FuncDef type:
+  func ${.Name}(@{.Params}){if .Returns} @{.Returns}{end} {
+    @{.Body}
+  }
+
+ast.ReturnStatement type:
+  return @{.Expressions}
+
+[]ast.Param type:
+  {for i, p, first in .}{if !first}, {end}${p.Name} ${p.Type.Print}{end}
+
+[]common.Type type:
+  {for i, t, first in .}{if !first}, {end}${t.Print}{end}
+
+ast.Block type:
+  {for i, st, first in .Statements-}
+  {if !first}
+  {end-}
+  @{st}
+  {-end}
+
+ast.Assignment type:
+  {for i, n, first in .Names}{if !first}, {end}${n}{end}
+  ${-" = "-}
+  @{.Expressions}
+
+ast.For type:
+  for @{.Initial}; @{.Condition}; @{.Each} {
+    @{.Body}
+  }
+
+ast.Array type:
+  [@{.Values}]
+
+ast.Index type:
+  (@{.Value})[@{.Position}]
+
+ast.Slice type:
+  (@{.Value})[{if .From}@{.From}{end}:{if .To}@{.To}{end}]
+
+[]ast.Expression type:
+  {for i, x, first in .}{if !first}, {end}@{x}{end}
+
+ast.String type:
+  "${.Value}"
+
+ast.Number type:
+  ${.Value}
+
+ast.Bool type:
+  ${.Value}
+
+ast.Var type:
+  ${.Name}
+
+ast.Add type:
+  @{.A} + @{.B}
+
+ast.Sub type:
+  @{.A} - @{.B}
+
+ast.Minus type:
+  -@{.Expression}
+
+ast.Mul type:
+  @{.A} * @{.B}
+
+ast.Div type:
+  @{.A} / @{.B}
+
+ast.Mod type:
+  @{.A} % @{.B}
+
+ast.And type:
+  @{.A} && @{.B}
+
+ast.Or type:
+  @{.A} || @{.B}
+
+ast.LessThan type:
+  @{.A} < @{.B}
+
+ast.LessThanEqual type:
+  @{.A} <= @{.B}
+
+ast.GreaterThan type:
+  @{.A} > @{.B}
+
+ast.GreaterThanEqual type:
+  @{.A} >= @{.B}
+
+ast.Equal type:
+  @{.A} == @{.B}
+
+ast.NotEqual type:
+  @{.A} != @{.B}
+
+ast.Group type:
+  (@{.Expression})

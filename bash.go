@@ -1,6 +1,7 @@
 package lush
 
 import (
+	"github.com/byte-wright/lush/internal/ast"
 	"github.com/byte-wright/lush/internal/bash"
 	"github.com/byte-wright/lush/internal/bcode"
 	"github.com/byte-wright/lush/internal/parser"
@@ -12,7 +13,7 @@ func ToBashDebug(source, name string) (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	ast := prog.Print()
+	ast := ast.Print(prog)
 
 	bc, err := bcode.Compile(prog)
 	if err != nil {

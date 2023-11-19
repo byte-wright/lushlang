@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/akabio/expect"
+	"github.com/byte-wright/lush/internal/ast"
 	"github.com/byte-wright/lush/internal/bash"
 	"github.com/byte-wright/lush/internal/bcode"
 	"github.com/byte-wright/lush/internal/parser"
@@ -84,7 +85,7 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(prog.Print()), 0o600)
+						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(ast.Print(prog)), 0o600)
 						if err != nil {
 							t.Fatal(err)
 						}
