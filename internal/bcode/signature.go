@@ -14,78 +14,8 @@ type Signature struct {
 	Return     []common.Type
 }
 
-var internalFuncs = func() map[string]*Signature {
-	return map[string]*Signature{
-		"join": {
-			Name: "join",
-			Parameters: []common.Type{
-				&common.ArrayType{ElementType: &common.BasicType{Type: common.String}},
-				&common.BasicType{Type: common.String},
-			},
-			Return: []common.Type{
-				&common.BasicType{Type: common.String},
-			},
-		},
-		"append": {
-			Name: "append",
-			Parameters: []common.Type{
-				&common.ArrayType{ElementType: &common.BasicType{Type: common.String}},
-				&common.BasicType{Type: common.String},
-			},
-			Return: []common.Type{
-				&common.ArrayType{ElementType: &common.BasicType{Type: common.String}},
-			},
-		},
-		"hasPrefix": {
-			Name: "hasPrefix",
-			Parameters: []common.Type{
-				&common.BasicType{Type: common.String},
-				&common.BasicType{Type: common.String},
-			},
-			Return: []common.Type{
-				&common.BasicType{Type: common.Bool},
-			},
-		},
-		"hasSuffix": {
-			Name: "hasSuffix",
-			Parameters: []common.Type{
-				&common.BasicType{Type: common.String},
-				&common.BasicType{Type: common.String},
-			},
-			Return: []common.Type{
-				&common.BasicType{Type: common.Bool},
-			},
-		},
-		"trimPrefix": {
-			Name: "trimPrefix",
-			Parameters: []common.Type{
-				&common.BasicType{Type: common.String},
-				&common.BasicType{Type: common.String},
-			},
-			Return: []common.Type{
-				&common.BasicType{Type: common.String},
-			},
-		},
-		"trimSuffix": {
-			Name: "trimSuffix",
-			Parameters: []common.Type{
-				&common.BasicType{Type: common.String},
-				&common.BasicType{Type: common.String},
-			},
-			Return: []common.Type{
-				&common.BasicType{Type: common.String},
-			},
-		},
-	}
-}()
-
 func getSignature(prog *ast.Program, namespace, name string) *Signature {
 	if namespace == "" {
-		internal, isInternal := internalFuncs[name]
-		if isInternal {
-			return internal
-		}
-
 		for _, fd := range prog.Root.FuncDefs {
 			if fd.Name == name {
 				return &Signature{
@@ -99,7 +29,7 @@ func getSignature(prog *ast.Program, namespace, name string) *Signature {
 		}
 	}
 
-	for _, lib := range prog.Libs {
+	for _, lib := range prog.Libraries() {
 		if lib.Name == namespace {
 			for _, fd := range lib.FuncDefs {
 				if fd.Name == name {

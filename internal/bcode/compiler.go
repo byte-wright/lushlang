@@ -34,7 +34,7 @@ func (c *Compiler) evalProgram() {
 	c.evalBlock(c.prog.Main, c.ast.Root)
 
 	c.addFuncs("", c.ast.Root.FuncDefs)
-	for _, lib := range c.ast.Libs {
+	for _, lib := range c.ast.Libraries() {
 		c.addFuncs(lib.Path, lib.FuncDefs)
 		c.addExternalFuncs(lib.Path, lib.ExternalFuncDefs)
 	}
@@ -306,6 +306,19 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 			})
 
 			return []Value{stdout, stderr, xerr}
+
+		case "append":
+			vals := c.evalExpressions(block, x.Parameters)
+
+			ap := block.nextTmp(vals[0].Type())
+
+			block.add(&Append{
+				Array:    vals[0],
+				Elements: vals[1:],
+				Target:   ap,
+			})
+
+			return []Value{ap}
 		}
 
 		fSig := getSignature(c.ast, "", x.Name)
@@ -380,8 +393,6 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 	for _, exp := range ass.Expressions {
 		results = append(results, c.evalExpression(b, exp)...)
 	}
-
-	fmt.Println(len(ass.Expressions), len(results))
 
 	for i, name := range ass.Names {
 		b.set(&VarValue{Name: name, T: results[i].Type()}, results[i])

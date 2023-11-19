@@ -79,7 +79,7 @@ func TestAll(t *testing.T) {
 			for _, tc := range suite.Tests {
 				if !only || tc.Only {
 					t.Run(tc.Name, func(t *testing.T) {
-						prog, err := parser.Parse(string(tc.Code), tc.Name, "./std")
+						prog, err := parser.Parse(string(tc.Code), tc.Name, "./std", "../std")
 						if err != nil {
 							t.Fatal(err)
 						}

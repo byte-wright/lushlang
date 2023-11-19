@@ -422,9 +422,7 @@ func (v *Visitor) VisitArray(ctx *ArrayContext) any {
 func (v *Visitor) VisitType(ctx *TypeContext) any {
 	if ctx.GetArrayType() != nil {
 		return &common.ArrayType{
-			ElementType: &common.BasicType{
-				Type: ctx.GetArrayType().Accept(v).(common.PrimitiveType),
-			},
+			ElementType: ctx.GetArrayType().Accept(v).(*common.BasicType),
 		}
 	}
 

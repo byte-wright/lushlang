@@ -88,25 +88,6 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
-
-			if cmd.Name == "append" {
-				params := []string{}
-
-				for _, p := range cmd.Parameters[1:] {
-					params = append(params, b.atom(p))
-				}
-				arr := cmd.Parameters[0].(*bcode.VarValue)
-
-				b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
-				b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
-				b.print("else")
-				b.print(`  local lsh__tmp_array=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
-				b.print("fi")
-				b.print("local " + cmd.Return[0].Name + `=("${lsh__tmp_array[@]}")`)
-
-				continue
-			}
-
 			b.useFunc(cmd.Namespace, cmd.Name)
 			b.print("lsh__" + cmd.FullName() + " " + b.mkFuncParams(cmd))
 			for i, rpn := range cmd.Return {
@@ -147,6 +128,21 @@ func (b *bash) block(block *bcode.Block) {
 
 		case *bcode.Code:
 			b.print(cmd.Code)
+
+		case *bcode.Append:
+			params := []string{}
+
+			for _, p := range cmd.Elements {
+				params = append(params, b.atom(p))
+			}
+			arr := cmd.Array.(*bcode.VarValue)
+
+			b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
+			b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
+			b.print("else")
+			b.print(`  local lsh__tmp_array=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
+			b.print("fi")
+			b.print("local " + cmd.Target.Name + `=("${lsh__tmp_array[@]}")`)
 
 		default:
 			fmt.Printf("no valid statement in bash transpiler %T\n", c)

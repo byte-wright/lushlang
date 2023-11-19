@@ -4,7 +4,9 @@ tests:
   - name: execArrays
     description: 
     code: |
+      import "strings"
+
       files, stderr, err = execVar("ls", "-1", "./exec/files")
-      println(join(files, ", "))
+      println(strings.join(files, ", "))
     expected: |
       bar.txt, foo.txt

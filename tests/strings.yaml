@@ -4,12 +4,14 @@ tests:
   - name: prefix/suffix
     description: Prefix/suffix operations match against strings and not globs.
     code: |
-      println(hasPrefix("fooBar", "foo"), hasPrefix("fooBar", "no"))
-      println(trimPrefix("fooBar", "foo"), trimPrefix("fooBar", "no"))
-      println(hasSuffix("fooBar", "Bar"), hasSuffix("fooBar", "no"))
-      println(trimSuffix("fooBar", "Bar"), trimSuffix("fooBar", "no"))
-      println(hasPrefix("abc", "*b"), trimPrefix("abc", "*b"))
-      println(hasSuffix("abc", "b*"), trimSuffix("abc", "b*"))
+      import "strings"
+
+      println(strings.hasPrefix("fooBar", "foo"), strings.hasPrefix("fooBar", "no"))
+      println(strings.trimPrefix("fooBar", "foo"), strings.trimPrefix("fooBar", "no"))
+      println(strings.hasSuffix("fooBar", "Bar"), strings.hasSuffix("fooBar", "no"))
+      println(strings.trimSuffix("fooBar", "Bar"), strings.trimSuffix("fooBar", "no"))
+      println(strings.hasPrefix("abc", "*b"), strings.trimPrefix("abc", "*b"))
+      println(strings.hasSuffix("abc", "b*"), strings.trimSuffix("abc", "b*"))
     expected: |
       true false
       Bar fooBar
@@ -36,4 +38,14 @@ tests:
     expected: |
       abcdef 6
        0
+
+
+  - name: indexOf
+    description: Index of first occurence of string
+    code: |
+      import "strings"
+
+      println(strings.indexOf("abrcdrrerrfr", "rr"))
+    expected: |
+      5
 

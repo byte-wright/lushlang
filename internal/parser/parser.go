@@ -2,15 +2,12 @@ package parser
 
 import (
 	"os"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
 )
 
-func Parse(code, name, libRoot string) (*ast.Program, error) {
+func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, error) {
 	lexer := NewLushLexer(antlr.NewInputStream(code))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	parser := NewLushParser(stream)
@@ -19,43 +16,36 @@ func Parse(code, name, libRoot string) (*ast.Program, error) {
 	parser.BuildParseTrees = true
 	tree := parser.Program()
 
-	prog := &ast.Program{
-		Root: &ast.Block{},
-	}
+	prog := ast.NewProgram()
 
 	v := newVisitor(name, &mainTarget{prog: prog})
 
 	tree.Accept(v)
 
-	imported := map[string]bool{}
+	resolver := &resolver{
+		main: mainRoot,
+		std:  stdRoot,
+	}
 
-	for len(imported) < len(prog.Libs) {
-		for _, lib := range prog.Libs {
-			libDir := filepath.Join(libRoot, lib.Path)
-			files, err := os.ReadDir(libDir)
+	for i := 0; i < len(prog.Libraries()); i++ {
+		lib := prog.Libraries()[i]
+
+		files, err := resolver.resolve(lib.Path)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, f := range files {
+
+			src, err := os.ReadFile(f)
 			if err != nil {
 				return nil, err
 			}
 
-			for _, f := range files {
-				if !strings.HasSuffix(f.Name(), ".lsh") {
-					continue
-				}
-
-				src, err := os.ReadFile(filepath.Join(libDir, f.Name()))
-				if err != nil {
-					return nil, err
-				}
-
-				name := path.Join(lib.Path, f.Name())
-
-				err = ParseLibFile(prog, lib, string(src), name)
-				if err != nil {
-					return nil, err
-				}
+			err = ParseLibFile(prog, lib, string(src), f)
+			if err != nil {
+				return nil, err
 			}
-
-			imported[lib.Path] = true
 		}
 	}
 

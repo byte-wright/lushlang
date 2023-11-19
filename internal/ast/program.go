@@ -6,8 +6,9 @@ import (
 )
 
 type Program struct {
-	Root *Block
-	Libs []*Library
+	Root      *Block
+	libs      []*Library
+	addedLibs map[string]bool
 }
 
 type Library struct {
@@ -17,10 +18,17 @@ type Library struct {
 	ExternalFuncDefs []*ExternalFuncDef
 }
 
+func NewProgram() *Program {
+	return &Program{
+		Root:      &Block{},
+		addedLibs: map[string]bool{},
+	}
+}
+
 func (p *Program) Print() string {
 	lines := []string{}
 
-	for _, imp := range p.Libs {
+	for _, imp := range p.libs {
 		lines = append(lines, "import \""+imp.Path+"\"")
 	}
 
@@ -43,8 +51,17 @@ func (p *Program) Print() string {
 }
 
 func (p *Program) AddImport(path string) {
-	p.Libs = append(p.Libs, &Library{
+	if p.addedLibs[path] {
+		return
+	}
+	p.libs = append(p.libs, &Library{
 		Path: path,
 		Name: filepath.Base(path),
 	})
+
+	p.addedLibs[path] = true
+}
+
+func (p *Program) Libraries() []*Library {
+	return p.libs
 }

@@ -4,7 +4,7 @@ tests:
   - name: imported methods
     description:
     code: |
-      import "math"
+      import "/math"
 
       println(math.add(5, 3))
       println(math.sub(5, 3))

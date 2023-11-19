@@ -138,6 +138,14 @@ func (b *Block) Print(indent int) string {
 		case *Code:
 			r += cmd.Code
 
+		case *Append:
+			vs := []string{}
+
+			for _, v := range cmd.Elements {
+				vs = append(vs, v.Print())
+			}
+			r += cmd.Target.Name + " = append(" + cmd.Array.Print() + ", " + strings.Join(vs, ", ") + ")"
+
 		default:
 			panic(fmt.Sprintf("invalid command %T in bash transpiler", c))
 		}
