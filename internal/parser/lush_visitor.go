@@ -23,6 +23,9 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#funcDef.
 	VisitFuncDef(ctx *FuncDefContext) interface{}
 
+	// Visit a parse tree produced by LushParser#externalFuncDef.
+	VisitExternalFuncDef(ctx *ExternalFuncDefContext) interface{}
+
 	// Visit a parse tree produced by LushParser#param.
 	VisitParam(ctx *ParamContext) interface{}
 

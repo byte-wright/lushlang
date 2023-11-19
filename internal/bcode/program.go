@@ -5,7 +5,7 @@ import "github.com/byte-wright/lush/internal/common"
 type Program struct {
 	Main  *Block
 	Funcs []*FuncDef
-	// Funcs by name contains teh same funcs like the Funcs slice
+	// Funcs by name contains the same funcs like the Funcs slice
 	FuncsByName map[string]*FuncDef
 	varIdx      int
 }

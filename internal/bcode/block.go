@@ -135,6 +135,9 @@ func (b *Block) Print(indent int) string {
 
 			r += ind + cmd.Stdout.Name + ", " + cmd.Stderr.Name + ", " + cmd.Err.Name + " = exec(" + strings.Join(vs, ", ") + ")\n"
 
+		case *Code:
+			r += cmd.Code
+
 		default:
 			panic(fmt.Sprintf("invalid command %T in bash transpiler", c))
 		}

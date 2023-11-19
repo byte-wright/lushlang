@@ -11,9 +11,10 @@ type Program struct {
 }
 
 type Library struct {
-	Path     string
-	Name     string
-	FuncDefs []*FuncDef
+	Path             string
+	Name             string
+	FuncDefs         []*FuncDef
+	ExternalFuncDefs []*ExternalFuncDef
 }
 
 func (p *Program) Print() string {

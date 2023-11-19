@@ -145,6 +145,9 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("output=$(" + cmdl + " 2> >(readarray -t " + cmd.Stderr.Name + "; printf '%s\n' \"${error_lines[@]}\"))")
 			b.print("readarray -t " + cmd.Stdout.Name + " <<< \"$output\"")
 
+		case *bcode.Code:
+			b.print(cmd.Code)
+
 		default:
 			fmt.Printf("no valid statement in bash transpiler %T\n", c)
 		}

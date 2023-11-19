@@ -36,6 +36,7 @@ func (c *Compiler) evalProgram() {
 	c.addFuncs("", c.ast.Root.FuncDefs)
 	for _, lib := range c.ast.Libs {
 		c.addFuncs(lib.Path, lib.FuncDefs)
+		c.addExternalFuncs(lib.Path, lib.ExternalFuncDefs)
 	}
 }
 
@@ -58,6 +59,38 @@ func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 		}
 
 		c.evalBlock(block, fd.Body)
+
+		funcDef := &FuncDef{
+			Namespace: namespace,
+			Name:      fd.Name,
+			Body:      block,
+			Params:    params,
+		}
+
+		c.prog.Funcs = append(c.prog.Funcs, funcDef)
+		c.prog.FuncsByName[funcDef.FullName()] = funcDef
+	}
+}
+
+func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFuncDef) {
+	for _, fd := range funcDefs {
+		block := &Block{
+			parent: c.prog.Main,
+			tmpVar: c.prog,
+			vars:   map[string]*VarValue{},
+		}
+
+		params := []*Param{}
+
+		paramIndex := 1
+		for _, p := range fd.Params {
+			params = append(params, &Param{Name: p.Name, Type: p.Type})
+			block.set(&VarValue{Name: p.Name, T: p.Type}, &EnvVarValue{Name: strconv.Itoa(paramIndex)})
+
+			paramIndex++
+		}
+
+		block.add(&Code{Code: fd.Code})
 
 		funcDef := &FuncDef{
 			Namespace: namespace,

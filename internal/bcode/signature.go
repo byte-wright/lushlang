@@ -113,6 +113,18 @@ func getSignature(prog *ast.Program, namespace, name string) *Signature {
 					}
 				}
 			}
+			for _, fd := range lib.ExternalFuncDefs {
+				if fd.Name == name {
+					return &Signature{
+						Namespace: lib.Path,
+						Name:      name,
+						Parameters: common.Map(fd.Params, func(p *ast.Param) common.Type {
+							return p.Type
+						}),
+						Return: fd.Returns,
+					}
+				}
+			}
 		}
 	}
 

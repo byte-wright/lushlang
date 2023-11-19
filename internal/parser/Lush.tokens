@@ -39,6 +39,7 @@ ID=38
 ASSIGN=39
 STRING=40
 NUMBER=41
+EXTERNAL_CODE=42
 'import'=2
 'true'=3
 'false'=4

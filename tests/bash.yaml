@@ -1,0 +1,14 @@
+order: 3
+name: Bash
+tests:
+  - name: bash fun
+    description:
+    code: |
+      import "strings"
+
+      println(strings.hasPrefix("foo", "f"))
+      println(strings.hasPrefix("foo", "o"))
+    expected: |
+      true
+      false
+

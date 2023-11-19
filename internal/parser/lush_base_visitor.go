@@ -28,6 +28,10 @@ func (v *BaseLushVisitor) VisitFuncDef(ctx *FuncDefContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitParam(ctx *ParamContext) interface{} {
 	return v.VisitChildren(ctx)
 }

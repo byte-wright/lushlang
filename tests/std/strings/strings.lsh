@@ -1,0 +1,8 @@
+
+func hasPrefix(s string, p string) string ```
+  if [[ "$s" == "$p"* ]]; then
+    lsh__funcretparam_0=true
+  else
+    lsh__funcretparam_0=false
+  fi
+```

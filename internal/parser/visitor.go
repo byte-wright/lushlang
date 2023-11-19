@@ -19,6 +19,7 @@ type parseTarget interface {
 	addImport(path string)
 	addMainStatement(ast.Statement)
 	addFuncDef(*ast.FuncDef)
+	addExternalFuncDef(*ast.ExternalFuncDef)
 }
 
 func newVisitor(name string, target parseTarget) *Visitor {
@@ -59,6 +60,11 @@ func (v *Visitor) VisitLibrary(ctx *LibraryContext) any {
 	for _, fd := range ctx.AllFuncDef() {
 		funcDef := fd.Accept(v)
 		v.Target.addFuncDef(funcDef.(*ast.FuncDef))
+	}
+
+	for _, fd := range ctx.AllExternalFuncDef() {
+		funcDef := fd.Accept(v)
+		v.Target.addExternalFuncDef(funcDef.(*ast.ExternalFuncDef))
 	}
 
 	return nil
@@ -105,6 +111,29 @@ func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
 		Params:  params,
 		Returns: returns,
 		Body:    ctx.Block().Accept(v).(*ast.Block),
+	}
+}
+
+func (v *Visitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) any {
+	params := []*ast.Param{}
+
+	for _, p := range ctx.AllParam() {
+		params = append(params, p.Accept(v).(*ast.Param))
+	}
+
+	returns := []common.Type{}
+	for _, tp := range ctx.AllType_() {
+		returns = append(returns, tp.Accept(v).(common.Type))
+	}
+
+	code := ctx.EXTERNAL_CODE().GetText()
+	code = code[3 : len(code)-3]
+
+	return &ast.ExternalFuncDef{
+		Name:    ctx.ID().GetText(),
+		Params:  params,
+		Returns: returns,
+		Code:    code,
 	}
 }
 

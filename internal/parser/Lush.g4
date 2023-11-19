@@ -9,9 +9,10 @@ program
     ;
 
 library
-    : importStatement*
+    : importStatement* (
         funcDef
-    * EOF
+        | externalFuncDef
+    )* EOF
     ;
 
 importStatement: IMPORT STRING;
@@ -28,6 +29,12 @@ funcDef
     : FUNC ID LPAREN (
         param (COMMA param)*
     )? RPAREN (type (COMMA type)*)? block
+    ;
+
+externalFuncDef
+    : FUNC ID LPAREN (
+        param (COMMA param)*
+    )? RPAREN (type (COMMA type)*)? EXTERNAL_CODE
     ;
 
 param: ID type;
@@ -181,5 +188,9 @@ STRING
     : '"' (~["\\] | ESCAPED_VALUE)* '"'
     ;
 NUMBER: [0-9]+;
+
+EXTERNAL_CODE
+    : '```' (. | '\r' | '\n')*? '```'
+    ;
 
 fragment ESCAPED_VALUE: '\\' [nt\\"];

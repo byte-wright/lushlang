@@ -6,3 +6,7 @@ type Assignment struct {
 	Var   *VarValue
 	Value Atom
 }
+
+type Code struct {
+	Code string
+}
