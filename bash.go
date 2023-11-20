@@ -20,7 +20,7 @@ func ToBashDebug(source, name string) (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	bCode := bc.Print()
+	bCode := bcode.Print(bc)
 
 	return ast, bCode, bash.Translate(bc), nil
 }

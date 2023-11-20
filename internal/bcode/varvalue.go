@@ -10,7 +10,3 @@ type VarValue struct {
 func (v *VarValue) Type() common.Type {
 	return v.T
 }
-
-func (v *VarValue) Print() string {
-	return v.Name + ":" + v.Type().Print()
-}

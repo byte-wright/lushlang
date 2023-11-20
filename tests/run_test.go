@@ -95,7 +95,7 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bc.Print()), 0o600)
+						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bcode.Print(bc)), 0o600)
 						if err != nil {
 							t.Fatal(err)
 						}

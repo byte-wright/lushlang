@@ -11,7 +11,3 @@ type Len struct {
 func (l *Len) Type() common.Type {
 	return &common.BasicType{Type: common.Int}
 }
-
-func (l *Len) Print() string {
-	return "len(" + l.Parameter.Print() + ")"
-}

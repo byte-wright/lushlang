@@ -1,6 +1,8 @@
 package bcode
 
-import "github.com/byte-wright/lush/internal/common"
+import (
+	"github.com/byte-wright/lush/internal/common"
+)
 
 type Program struct {
 	Main  *Block
@@ -13,17 +15,6 @@ type Program struct {
 func (p *Program) nextVar() int {
 	p.varIdx++
 	return p.varIdx
-}
-
-func (p *Program) Print() string {
-	str := ""
-	for _, fd := range p.Funcs {
-		str += "func " + fd.FullName() + "() {\n"
-		str += fd.Body.Print(2)
-		str += "}\n"
-	}
-
-	return str + p.Main.Print(0)
 }
 
 type FuncDef struct {

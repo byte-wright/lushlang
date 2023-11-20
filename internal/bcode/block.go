@@ -1,9 +1,7 @@
 package bcode
 
 import (
-	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/byte-wright/lush/internal/common"
 )
@@ -93,62 +91,4 @@ func (b *Block) getVisibleVar(name string) *VarValue {
 
 func (b *Block) add(cmd Command) {
 	b.Commands = append(b.Commands, cmd)
-}
-
-func (b *Block) Print(indent int) string {
-	r := ""
-
-	ind := strings.Repeat("  ", indent)
-
-	for _, c := range b.Commands {
-		switch cmd := c.(type) {
-		case *Assignment:
-			r += ind + cmd.Var.Name + " = " + cmd.Value.Print() + "\n"
-		case *Func:
-			r += ind + cmd.Print() + "\n"
-
-		case *If:
-			r += ind + "if " + cmd.Condition.Print() + " {\n"
-			r += cmd.Block.Print(indent + 2)
-			r += ind + "}\n"
-
-		case *While:
-			r += ind + "while " + cmd.Condition.Print() + " {\n"
-			r += cmd.Block.Print(indent + 2)
-			r += ind + "}\n"
-
-		case *Return:
-			vs := []string{}
-
-			for _, v := range cmd.Values {
-				vs = append(vs, v.Print())
-			}
-
-			r += ind + "return " + strings.Join(vs, ", ") + "\n"
-
-		case *ExecVar:
-			vs := []string{cmd.Command.Print()}
-
-			for _, v := range cmd.Parameters {
-				vs = append(vs, v.Print())
-			}
-
-			r += ind + cmd.Stdout.Name + ", " + cmd.Stderr.Name + ", " + cmd.Err.Name + " = exec(" + strings.Join(vs, ", ") + ")\n"
-
-		case *Code:
-			r += cmd.Code
-
-		case *Append:
-			vs := []string{}
-
-			for _, v := range cmd.Elements {
-				vs = append(vs, v.Print())
-			}
-			r += cmd.Target.Name + " = append(" + cmd.Array.Print() + ", " + strings.Join(vs, ", ") + ")"
-
-		default:
-			panic(fmt.Sprintf("invalid command %T in bash transpiler", c))
-		}
-	}
-	return r
 }

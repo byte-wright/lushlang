@@ -16,10 +16,6 @@ func (s *Slice) Type() common.Type {
 	return s.Value.Type()
 }
 
-func (s *Slice) Print() string {
-	return s.Value.Print() + "[" + s.From.Print() + ":" + s.To.Print() + "]"
-}
-
 type Index struct {
 	Value    *VarValue
 	Position Atom
@@ -34,8 +30,4 @@ func (i *Index) Type() common.Type {
 	}
 
 	panic(fmt.Sprintf("invalid type to index %T", t))
-}
-
-func (i *Index) Print() string {
-	return i.Value.Print() + "[" + i.Position.Print() + "]"
 }

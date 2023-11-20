@@ -1,0 +1,122 @@
+main visitor:
+
+bcode.Program type:
+  {for i, fd, first in .Funcs-}
+    func ${fd.FullName}() {
+    @{fd.Body}
+  }
+  {end-}
+
+  @{.Main}
+
+bcode.Block type:
+  {indent 2-}
+  {for i, cmd, first in .Commands-}
+    @{cmd}
+  {end-}
+  {end}
+
+bcode.Assignment type:
+  ${.Var.Name} = @{.Value}
+
+bcode.VarValue type:
+  ${.Name}:${.Type.Print}
+
+bcode.Index type:
+  @{.Value}[@{.Position}]
+
+bcode.Slice type:
+  @{.Value}[{if .From}@{.From}{end}:{if .To}@{.To}{end}]
+
+bcode.Len type:
+  len(@{.Parameter})
+
+bcode.EnvVarValue type:
+  $${.Name}
+
+bcode.Func type:
+  {if .Return}@{.Return} = {end-}
+  ${.FullName}(@{.Parameters})
+
+[]bcode.VarValue type:
+  {for i, a, first in .}{if !first}, {end}@{a}{end}
+
+[]bcode.Value type:
+  {for i, a, first in .}{if !first}, {end}@{a}{end}
+
+bcode.Return type:
+  return @{.Values}
+
+bcode.While type:
+  while @{.Condition} {
+    @{.Block}
+  }
+
+bcode.Code type:
+  {indent -2 -}
+  ${.Code}
+  {-end}
+
+// use visitor for var name
+bcode.Append type:
+  ${.Target.Name} = append(@{.Array}, @{.Elements})
+
+bcode.StringValue type:
+  "${.Value}"
+
+bcode.NumberValue type:
+  ${.Value}
+
+bcode.BoolValue type:
+  ${.Value}
+
+bcode.ArrayValue type:
+  [@{.Values}]
+
+[]bcode.Atom type:
+  {for i, a, first in .}{if !first}, {end}@{a}{end}
+
+bcode.Add type:
+  @{.Left} + @{.Right}
+
+bcode.Sub type:
+  @{.Left} - @{.Right}
+
+bcode.Minus type:
+  -@{.Expression}
+
+bcode.Mul type:
+  @{.Left} * @{.Right}
+
+bcode.Div type:
+  @{.Left} / @{.Right}
+
+bcode.Mod type:
+  @{.Left} % @{.Right}
+
+bcode.And type:
+  @{.Left} && @{.Right}
+
+bcode.Or type:
+  @{.Left} || @{.Right}
+
+bcode.GreaterThan type:
+  @{.Left} > @{.Right}
+
+bcode.GreaterThanEqual type:
+  @{.Left} >= @{.Right}
+
+bcode.LessThan type:
+  @{.Left} < @{.Right}
+
+bcode.LessThanEqual type:
+  @{.Left} <= @{.Right}
+
+bcode.Equal type:
+  @{.Left} == @{.Right}
+
+bcode.NotEqual type:
+  @{.Left} != @{.Right}
+
+bcode.ExecVar type:
+  ${.Stdout.Name}, ${.Stderr.Name}, ${.Err.Name} = exec(@{.Command}, @{.Parameters})
