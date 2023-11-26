@@ -1,0 +1,11 @@
+order: 3
+name: TypeErrors
+tests:
+  - name: assign
+    description: Assign int to string
+    code: |
+      import "strings"
+      str = "foo"
+      str = 1
+    errors:
+      - you cannot assign an int value to the variable 'str' of type string

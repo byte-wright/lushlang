@@ -25,6 +25,7 @@ func PrimitiveTypeFor(t string) PrimitiveType {
 
 type Type interface {
 	IsArray() bool
+	Is(Type) bool
 	Print() string
 }
 
@@ -34,6 +35,14 @@ type BasicType struct {
 
 func (b *BasicType) IsArray() bool {
 	return false
+}
+
+func (b *BasicType) Is(o Type) bool {
+	ot, is := o.(*BasicType)
+	if !is {
+		return false
+	}
+	return b.Type == ot.Type
 }
 
 func (b *BasicType) Print() string {
@@ -54,6 +63,14 @@ type ArrayType struct {
 
 func (a *ArrayType) IsArray() bool {
 	return true
+}
+
+func (a *ArrayType) Is(o Type) bool {
+	ot, is := o.(*ArrayType)
+	if !is {
+		return false
+	}
+	return a.ElementType.Is(ot.ElementType)
 }
 
 func (a *ArrayType) Print() string {

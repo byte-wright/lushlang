@@ -80,9 +80,27 @@ func TestAll(t *testing.T) {
 			for _, tc := range suite.Tests {
 				if !only || tc.Only {
 					t.Run(tc.Name, func(t *testing.T) {
-						prog, err := parser.Parse(string(tc.Code), tc.Name, "./std", "../std")
+						prog, errors, err := parser.Parse(string(tc.Code), tc.Name, "./std", "../std")
 						if err != nil {
 							t.Fatal(err)
+						}
+
+						errors = append(errors, ast.Validate(prog)...)
+
+						expectedErrors := map[string]bool{}
+						for _, e := range tc.Errors {
+							expectedErrors[e] = true
+						}
+
+						for _, err := range errors {
+							if !expectedErrors[err.Error()] {
+								t.Errorf("unexpected error `%v`", err.Error())
+							}
+							delete(expectedErrors, err.Error())
+						}
+
+						for expe := range expectedErrors {
+							t.Errorf("expected error `%v`", expe)
 						}
 
 						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(ast.Print(prog)), 0o600)

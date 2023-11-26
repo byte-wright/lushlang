@@ -15,7 +15,7 @@ func (m *mainTarget) addMainStatement(s ast.Statement) {
 }
 
 func (m *mainTarget) addFuncDef(f *ast.FuncDef) {
-	m.prog.Root.FuncDefs = append(m.prog.Root.FuncDefs, f)
+	m.prog.FuncDefs = append(m.prog.FuncDefs, f)
 }
 
 func (m *mainTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {

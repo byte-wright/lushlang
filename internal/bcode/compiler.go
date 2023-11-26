@@ -33,7 +33,7 @@ func (c *Compiler) evalProgram() {
 	}
 	c.evalBlock(c.prog.Main, c.ast.Root)
 
-	c.addFuncs("", c.ast.Root.FuncDefs)
+	c.addFuncs("", c.ast.FuncDefs)
 	for _, pkg := range c.ast.Packages() {
 		c.addFuncs(pkg.Path, pkg.FuncDefs)
 		c.addExternalFuncs(pkg.Path, pkg.ExternalFuncDefs)
@@ -340,27 +340,22 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		return common.Map(f.Return, func(i *VarValue) Value { return i })
 
 	case *ast.Method:
-		vr, is := x.Expression.(*ast.Var)
-		if is {
-			fSig := getSignature(c.ast, vr.Name, x.Func.Name)
+		fSig := getSignature(c.ast, x.Namespace, x.Func.Name)
 
-			ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
-				return block.nextTmp(t)
-			})
-			f := &Func{
-				Namespace: fSig.Namespace,
-				Name:      x.Func.Name,
-				Return:    ret,
-			}
-			for _, p := range x.Func.Parameters {
-				f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
-			}
-
-			block.add(f)
-			return common.Map(f.Return, func(i *VarValue) Value { return i })
+		ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
+			return block.nextTmp(t)
+		})
+		f := &Func{
+			Namespace: fSig.Namespace,
+			Name:      x.Func.Name,
+			Return:    ret,
+		}
+		for _, p := range x.Func.Parameters {
+			f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
 		}
 
-		panic(fmt.Sprint("unknown package name", vr.Name))
+		block.add(f)
+		return common.Map(f.Return, func(i *VarValue) Value { return i })
 
 	case *ast.Array:
 		a := &ArrayValue{

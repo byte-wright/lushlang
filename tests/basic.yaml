@@ -10,3 +10,15 @@ tests:
       println("Hello", world)
     expected: "Hello World\n"
 
+
+  - name: Multi assignment
+    code: |
+      hello, world, num = "Hello", "World", 42
+      println(hello, world, num)
+    expected: "Hello World 42\n"
+
+  - name: Multi assignment error
+    code: |
+      hello, world, num = "Hello", "World", 42, true
+    errors:
+      - Wrong number of expressions

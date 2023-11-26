@@ -5,9 +5,10 @@ import (
 
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
+	astpass "github.com/byte-wright/lush/internal/ast/pass"
 )
 
-func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, error) {
+func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, []*ast.ASTError, error) {
 	lexer := NewLushLexer(antlr.NewInputStream(code))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	parser := NewLushParser(stream)
@@ -32,24 +33,27 @@ func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, error) {
 
 		files, err := resolver.resolve(pkg.Path)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		for _, f := range files {
 
 			src, err := os.ReadFile(f)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			err = ParsePkgFile(prog, pkg, string(src), f)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 	}
 
-	return prog, nil
+	errs := astpass.SetParent(prog)
+	errs = append(errs, astpass.SetFuncs(prog)...)
+
+	return prog, errs, nil
 }
 
 func ParsePkgFile(p *ast.Program, pkg *ast.Package, code, name string) error {

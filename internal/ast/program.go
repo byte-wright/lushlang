@@ -5,7 +5,9 @@ import (
 )
 
 type Program struct {
-	Root          *Block
+	Root     *Block
+	FuncDefs []*FuncDef
+
 	packages      []*Package
 	addedPackages map[string]bool
 }

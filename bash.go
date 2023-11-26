@@ -8,7 +8,7 @@ import (
 )
 
 func ToBashDebug(source, name string) (string, string, string, error) {
-	prog, err := parser.Parse(string(source), name, "./std", "./std")
+	prog, _, err := parser.Parse(string(source), name, "./std", "./std")
 	if err != nil {
 		return "", "", "", err
 	}

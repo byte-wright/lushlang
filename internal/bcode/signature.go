@@ -16,7 +16,7 @@ type Signature struct {
 
 func getSignature(prog *ast.Program, namespace, name string) *Signature {
 	if namespace == "" {
-		for _, fd := range prog.Root.FuncDefs {
+		for _, fd := range prog.FuncDefs {
 			if fd.Name == name {
 				return &Signature{
 					Name: name,

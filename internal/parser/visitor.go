@@ -211,8 +211,8 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 	// method call
 	if ctx.Func_() != nil {
 		return &ast.Method{
-			Expression: a,
-			Func:       ctx.Func_().Accept(v).(*ast.Func),
+			Namespace: a.(*ast.Var).Name,
+			Func:      ctx.Func_().Accept(v).(*ast.Func),
 		}
 	}
 

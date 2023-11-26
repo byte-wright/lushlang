@@ -8,11 +8,11 @@ ast.Program type:
   {if .Packages}
   {end-}
 
-  {for fd in .Root.FuncDefs-}
+  {for fd in .FuncDefs-}
   @{fd}
   {end-}
 
-  {if .Root.FuncDefs}
+  {if .FuncDefs}
   {end-}
 
   {for st in .Root.Statements-}
@@ -26,7 +26,7 @@ ast.Func type:
   ${.Name}(@{.Parameters})
 
 ast.Method type:
-  @{.Expression}.@{.Func}
+  ${.Namespace}.@{.Func}
 
 ast.FuncDef type:
   func ${.Name}(@{.Params}){if .Returns} @{.Returns}{end} {
