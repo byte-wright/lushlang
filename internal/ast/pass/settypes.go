@@ -7,14 +7,14 @@ import (
 	"github.com/byte-wright/lush/internal/common"
 )
 
-type setFuncsPass struct {
+type setTypesPass struct {
 	ast    *ast.Program
 	errors []*ast.ASTError
 	block  *ast.Block
 }
 
-func SetFuncs(ast *ast.Program) []*ast.ASTError {
-	te := &setFuncsPass{
+func SetTypes(ast *ast.Program) []*ast.ASTError {
+	te := &setTypesPass{
 		ast: ast,
 	}
 	Visit(ast, te)
@@ -22,14 +22,14 @@ func SetFuncs(ast *ast.Program) []*ast.ASTError {
 	return te.errors
 }
 
-func (t *setFuncsPass) BeforeBlock(block *ast.Block) {
+func (t *setTypesPass) BeforeBlock(block *ast.Block) {
 	t.block = block
 }
 
-func (t *setFuncsPass) AfterBlock(block *ast.Block) {
+func (t *setTypesPass) AfterBlock(block *ast.Block) {
 }
 
-func (t *setFuncsPass) Statement(statement ast.Statement) {
+func (t *setTypesPass) Statement(statement ast.Statement) {
 	switch st := statement.(type) {
 	case *ast.FuncStatement:
 		t.Expression(st.Func)
@@ -40,21 +40,20 @@ func (t *setFuncsPass) Statement(statement ast.Statement) {
 			types = append(types, exp.Types()...)
 		}
 
-		for i, name := range st.Names {
+		for i, target := range st.Targets {
 			if i >= len(types) {
 				continue
 			}
 
-			err := t.block.SetVar(name, types[i])
+			err := t.block.SetVar(target.Name, types[i])
 			if err != nil {
-				t.errors = append(t.errors, &ast.ASTError{Location: st.Location, Message: err.Error()})
+				t.errors = append(t.errors, &ast.ASTError{Location: target.Location, Message: err.Error()})
 			}
 		}
-
 	}
 }
 
-func (t *setFuncsPass) Expression(expression ast.Expression) {
+func (t *setTypesPass) Expression(expression ast.Expression) {
 	switch exp := expression.(type) {
 	case *ast.Func:
 		tps, err := t.getFunc("", exp.Name, exp.Parameters)
@@ -80,7 +79,7 @@ func (t *setFuncsPass) Expression(expression ast.Expression) {
 	}
 }
 
-func (t *setFuncsPass) getFunc(namespace, name string, params []ast.Expression) ([]common.Type, error) {
+func (t *setTypesPass) getFunc(namespace, name string, params []ast.Expression) ([]common.Type, error) {
 	if name == "println" {
 		return []common.Type{}, nil
 	}

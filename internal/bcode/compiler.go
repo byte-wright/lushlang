@@ -389,8 +389,8 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 		results = append(results, c.evalExpression(b, exp)...)
 	}
 
-	for i, name := range ass.Names {
-		b.set(&VarValue{Name: name, T: results[i].Type()}, results[i])
+	for i, target := range ass.Targets {
+		b.set(&VarValue{Name: target.Name, T: results[i].Type()}, results[i])
 	}
 }
 

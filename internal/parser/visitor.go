@@ -41,6 +41,16 @@ func (v *Visitor) loc(c antlr.ParserRuleContext) *common.Location {
 	}
 }
 
+func (v *Visitor) locTk(c antlr.Token) *common.Location {
+	return &common.Location{
+		File:     v.Name,
+		LineFrom: c.GetLine(),
+		ColFrom:  c.GetColumn() + 1,
+		LineTo:   c.GetLine(),
+		ColTo:    c.GetColumn() + 1,
+	}
+}
+
 func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 	for _, imp := range ctx.AllImportStatement() {
 		path := imp.STRING().GetText()
@@ -194,14 +204,17 @@ func (v *Visitor) VisitBlock(ctx *BlockContext) any {
 }
 
 func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
-	names := []string{}
+	targets := []*ast.AssignmentTarget{}
 	for _, id := range ctx.AllID() {
-		names = append(names, id.GetText())
+		targets = append(targets, &ast.AssignmentTarget{
+			Location: v.locTk(id.GetSymbol()),
+			Name:     id.GetText(),
+		})
 	}
 
 	return &ast.Assignment{
 		Location: v.loc(ctx),
-		Names:    names,
+		Targets:  targets,
 		Expressions: common.Map(ctx.AllExpression(), func(x IExpressionContext) ast.Expression {
 			return x.Accept(v).(ast.Expression)
 		}),

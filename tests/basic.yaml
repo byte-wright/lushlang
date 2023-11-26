@@ -10,7 +10,6 @@ tests:
       println("Hello", world)
     expected: "Hello World\n"
 
-
   - name: Multi assignment
     code: |
       hello, world, num = "Hello", "World", 42
@@ -21,4 +20,4 @@ tests:
     code: |
       hello, world, num = "Hello", "World", 42, true
     errors:
-      - Wrong number of expressions
+      - basic/Multi assignment error.lsh Ln:1 Col:1 Wrong number of expressions

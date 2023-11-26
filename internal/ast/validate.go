@@ -44,8 +44,8 @@ func (v *Validator) validateBlock(block *Block) {
 		switch st := statement.(type) {
 		case *Assignment:
 			rightTypes := typesForExpressions(st.Expressions)
-			if len(st.Names) != len(rightTypes) {
-				v.errors = append(v.errors, &ASTError{Message: "Wrong number of expressions"})
+			if len(st.Targets) != len(rightTypes) {
+				v.errors = append(v.errors, &ASTError{Location: st.Location, Message: "Wrong number of expressions"})
 				continue
 			}
 		}

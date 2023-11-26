@@ -10,3 +10,12 @@ tests:
       str = 1
     errors:
       - typeerrors/assign.lsh Ln:4 Col:1 you cannot assign an int value to the variable 'str' of type string
+  - name: multi assign
+    description: Assign int to string
+    code: |
+      import "strings"
+
+      str = "foo"
+      n, str = 0, 1
+    errors:
+      - typeerrors/multi assign.lsh Ln:4 Col:4 you cannot assign an int value to the variable 'str' of type string

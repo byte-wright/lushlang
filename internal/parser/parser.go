@@ -51,7 +51,7 @@ func Parse(code, name, mainRoot, stdRoot string) (*ast.Program, []*ast.ASTError,
 	}
 
 	errs := astpass.SetParent(prog)
-	errs = append(errs, astpass.SetFuncs(prog)...)
+	errs = append(errs, astpass.SetTypes(prog)...)
 
 	return prog, errs, nil
 }

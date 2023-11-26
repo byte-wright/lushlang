@@ -50,7 +50,7 @@ ast.Block type:
   {-end}
 
 ast.Assignment type:
-  {for i, n, first in .Names}{if !first}, {end}${n}{end}
+  {for i, n, first in .Targets}{if !first}, {end}${n.Name}{end}
   ${-" = "-}
   @{.Expressions}
 

@@ -4,6 +4,11 @@ import "github.com/byte-wright/lush/internal/common"
 
 type Assignment struct {
 	Location    *common.Location
-	Names       []string
+	Targets     []*AssignmentTarget
 	Expressions []Expression
+}
+
+type AssignmentTarget struct {
+	Location *common.Location
+	Name     string
 }
