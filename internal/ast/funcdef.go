@@ -5,8 +5,9 @@ import (
 )
 
 type Param struct {
-	Name string
-	Type common.Type
+	Location *common.Location
+	Name     string
+	Type     common.Type
 }
 
 type FuncDef struct {

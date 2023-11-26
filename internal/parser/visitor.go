@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
 	"github.com/byte-wright/lush/internal/common"
 )
@@ -27,6 +28,16 @@ func newVisitor(name string, target parseTarget) *Visitor {
 		BaseLushVisitor: &BaseLushVisitor{},
 		Target:          target,
 		Name:            name,
+	}
+}
+
+func (v *Visitor) loc(c antlr.ParserRuleContext) *common.Location {
+	return &common.Location{
+		File:     v.Name,
+		LineFrom: c.GetStart().GetLine(),
+		ColFrom:  c.GetStart().GetColumn() + 1,
+		LineTo:   c.GetStop().GetLine(),
+		ColTo:    c.GetStop().GetColumn() + 1,
 	}
 }
 
@@ -139,8 +150,9 @@ func (v *Visitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) any {
 
 func (v *Visitor) VisitParam(ctx *ParamContext) any {
 	return &ast.Param{
-		Name: ctx.ID().GetText(),
-		Type: ctx.Type_().Accept(v).(common.Type),
+		Location: v.loc(ctx),
+		Name:     ctx.ID().GetText(),
+		Type:     ctx.Type_().Accept(v).(common.Type),
 	}
 }
 
@@ -188,7 +200,8 @@ func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
 	}
 
 	return &ast.Assignment{
-		Names: names,
+		Location: v.loc(ctx),
+		Names:    names,
 		Expressions: common.Map(ctx.AllExpression(), func(x IExpressionContext) ast.Expression {
 			return x.Accept(v).(ast.Expression)
 		}),

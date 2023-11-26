@@ -47,7 +47,7 @@ func (t *setFuncsPass) Statement(statement ast.Statement) {
 
 			err := t.block.SetVar(name, types[i])
 			if err != nil {
-				t.errors = append(t.errors, &ast.ASTError{Message: err.Error()})
+				t.errors = append(t.errors, &ast.ASTError{Location: st.Location, Message: err.Error()})
 			}
 		}
 

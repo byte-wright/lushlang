@@ -1,13 +1,22 @@
 package ast
 
-import "github.com/byte-wright/lush/internal/common"
+import (
+	"strconv"
+
+	"github.com/byte-wright/lush/internal/common"
+)
 
 type ASTError struct {
-	Message string
+	Location *common.Location
+	Message  string
 }
 
 func (a *ASTError) Error() string {
-	return a.Message
+	l := ""
+	if a.Location != nil {
+		l = a.Location.File + " Ln:" + strconv.Itoa(a.Location.LineFrom) + " Col:" + strconv.Itoa(a.Location.ColFrom) + " "
+	}
+	return l + a.Message
 }
 
 type Validator struct {

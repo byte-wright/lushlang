@@ -5,7 +5,8 @@ tests:
     description: Assign int to string
     code: |
       import "strings"
+
       str = "foo"
       str = 1
     errors:
-      - you cannot assign an int value to the variable 'str' of type string
+      - typeerrors/assign.lsh Ln:4 Col:1 you cannot assign an int value to the variable 'str' of type string
