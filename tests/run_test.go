@@ -138,20 +138,10 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						// Capture stdout and stderr
+						// Capture stdout
 						stdout := stdoutBuf.String()
-						// stderr := stderrBuf.String()
 
 						expect.Value(t, "result", stdout).ToBe(tc.Expected)
-						// expect.Value(t, "errors", errs.Get()).ToCount(len(tc.Errors))
-						// for i, erra := range errs.Get() {
-						// 	if i < len(tc.Errors) {
-						// 		expect.Value(t, "error", erra.Error()).ToBe(tc.Errors[i])
-						// 	}
-						// 	if i >= len(tc.Errors) {
-						// 		t.Error(erra)
-						// 	}
-						// }
 					})
 				}
 			}
