@@ -10,3 +10,13 @@ tests:
       println(strings.join(files, ", "))
     expected: |
       bar.txt, foo.txt
+
+  - name: stderr and exit code
+    code: |
+      o, e, code = execVar("bash", "-c", "echo out; echo err1 >&2; echo err2 >&2; exit 3")
+      println(len(o), o[0], len(e), e[1], code)
+      o, e, code = execVar("true")
+      println(len(o), len(e), code)
+    expected: |
+      1 out 2 err2 3
+      0 0 0

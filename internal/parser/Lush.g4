@@ -39,17 +39,28 @@ externalFuncDef
 
 param: ID type;
 
-if: IF expression block;
+if
+    : IF expression then = block (
+        ELSE (
+            elseIf = if
+            | elseBlock = block
+        )
+    )?
+    ;
 
 for
     : FOR assignment SEMICOLON expression SEMICOLON
         assignment block
     ;
 
+// like in Go, a return at the end of a line has no values, so code after it isn't
+// taken as its value
 returnStatement
     : RETURN (
-        expression (COMMA expression)*
-    )
+        {p.GetTokenStream().LT(-1).GetLine() == p.GetTokenStream().LT(1).GetLine()}? expression (
+            COMMA expression
+        )*
+    )?
     ;
 
 block: LCUR (statement)* RCUR;
@@ -60,7 +71,7 @@ assignment
     )*
     ;
 
-funcStatement: func;
+funcStatement: (namespace = ID DOT)? func;
 
 expression
     : atom
@@ -143,6 +154,7 @@ IMPORT: 'import';
 TRUE: 'true';
 FALSE: 'false';
 IF: 'if';
+ELSE: 'else';
 FOR: 'for';
 STRING_TYPE: 'string';
 INT_TYPE: 'int';
@@ -179,9 +191,9 @@ COLON: ':';
 SEMICOLON: ';';
 DOT: '.';
 
-ENVVAR: '$' [a-zA-Z_0-0]+;
+ENVVAR: '$' [a-zA-Z_0-9]+;
 
-ID: [a-z_] [a-zA-Z_0-0]*;
+ID: [a-z_] [a-zA-Z_0-9]*;
 ASSIGN: '=';
 
 STRING

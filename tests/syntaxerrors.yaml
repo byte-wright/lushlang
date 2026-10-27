@@ -1,0 +1,24 @@
+order: 3
+name: SyntaxErrors
+tests:
+  - name: missing paren
+    code: |
+      println("a"
+      println("after")
+    errors:
+      - "syntaxerrors/missing paren.lsh Ln:2 Col:1 mismatched input 'println' expecting {')', ','}"
+
+  - name: invalid token
+    code: |
+      x = 1 #
+    errors:
+      - "syntaxerrors/invalid token.lsh Ln:1 Col:7 token recognition error at: '#'"
+
+  - name: return value on the next line
+    code: |
+      func f() int {
+        return
+          1
+      }
+    errors:
+      - "syntaxerrors/return value on the next line.lsh Ln:3 Col:5 no viable alternative at input '1'"

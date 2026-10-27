@@ -12,3 +12,19 @@ tests:
       true
       false
 
+
+  - name: env var
+    code: |
+      v = $LUSH_TEST
+      println(v)
+    expected: |
+      hello
+
+  - name: env var in function
+    code: |
+      func env() string {
+        return $LUSH_TEST
+      }
+      println(env())
+    expected: |
+      hello

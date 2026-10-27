@@ -14,10 +14,11 @@ type Visitor struct {
 	*BaseLushVisitor
 	Target parseTarget
 	Name   string
+	errors []*ast.ASTError
 }
 
 type parseTarget interface {
-	addImport(path string)
+	addImport(path string, loc *common.Location) error
 	addMainStatement(ast.Statement)
 	addFuncDef(*ast.FuncDef)
 	addExternalFuncDef(*ast.ExternalFuncDef)
@@ -52,11 +53,7 @@ func (v *Visitor) locTk(c antlr.Token) *common.Location {
 }
 
 func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
-	for _, imp := range ctx.AllImportStatement() {
-		path := imp.STRING().GetText()
-		path = strings.Trim(path, "\" ")
-		v.Target.addImport(path)
-	}
+	v.imports(ctx.AllImportStatement())
 
 	for _, st := range ctx.AllStatement() {
 		statement := st.Accept(v)
@@ -72,11 +69,7 @@ func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 }
 
 func (v *Visitor) VisitPackage(ctx *PackageContext) any {
-	for _, imp := range ctx.AllImportStatement() {
-		path := imp.STRING().GetText()
-		path = strings.Trim(path, "\" ")
-		v.Target.addImport(path)
-	}
+	v.imports(ctx.AllImportStatement())
 
 	for _, fd := range ctx.AllFuncDef() {
 		funcDef := fd.Accept(v)
@@ -89,6 +82,19 @@ func (v *Visitor) VisitPackage(ctx *PackageContext) any {
 	}
 
 	return nil
+}
+
+func (v *Visitor) imports(imps []IImportStatementContext) {
+	for _, imp := range imps {
+		path := imp.STRING().GetText()
+		path = strings.Trim(path, "\" ")
+
+		loc := v.loc(imp)
+		err := v.Target.addImport(path, loc)
+		if err != nil {
+			v.errors = append(v.errors, &ast.ASTError{Location: loc, Message: err.Error()})
+		}
+	}
 }
 
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {
@@ -167,10 +173,20 @@ func (v *Visitor) VisitParam(ctx *ParamContext) any {
 }
 
 func (v *Visitor) VisitIf(ctx *IfContext) any {
-	return &ast.If{
+	st := &ast.If{
 		Condition: ctx.Expression().Accept(v).(ast.Expression),
-		If:        ctx.Block().Accept(v).(*ast.Block),
+		If:        ctx.GetThen().Accept(v).(*ast.Block),
+		Location:  v.loc(ctx),
 	}
+
+	if ctx.GetElseIf() != nil {
+		st.Else = &ast.Block{Statements: []ast.Statement{ctx.GetElseIf().Accept(v)}}
+	}
+	if ctx.GetElseBlock() != nil {
+		st.Else = ctx.GetElseBlock().Accept(v).(*ast.Block)
+	}
+
+	return st
 }
 
 func (v *Visitor) VisitFor(ctx *ForContext) any {
@@ -179,6 +195,7 @@ func (v *Visitor) VisitFor(ctx *ForContext) any {
 		Condition: ctx.Expression().Accept(v).(ast.Expression),
 		Each:      ctx.AllAssignment()[1].Accept(v).(*ast.Assignment),
 		Body:      ctx.Block().Accept(v).(*ast.Block),
+		Location:  v.loc(ctx),
 	}
 }
 
@@ -190,11 +207,12 @@ func (v *Visitor) VisitReturnStatement(ctx *ReturnStatementContext) any {
 
 	return &ast.ReturnStatement{
 		Expressions: xps,
+		Location:    v.loc(ctx),
 	}
 }
 
 func (v *Visitor) VisitBlock(ctx *BlockContext) any {
-	b := &ast.Block{}
+	b := &ast.Block{End: v.locTk(ctx.RCUR().GetSymbol())}
 
 	for _, s := range ctx.AllStatement() {
 		b.Statements = append(b.Statements, s.Accept(v).(ast.Statement))
@@ -222,9 +240,15 @@ func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
 }
 
 func (v *Visitor) VisitFuncStatement(ctx *FuncStatementContext) any {
-	return &ast.FuncStatement{
-		Func: ctx.Func_().Accept(v).(*ast.Func),
+	f := ctx.Func_().Accept(v).(*ast.Func)
+
+	if ctx.GetNamespace() != nil {
+		return &ast.FuncStatement{
+			Call: &ast.Method{Namespace: ctx.GetNamespace().GetText(), Func: f},
+		}
 	}
+
+	return &ast.FuncStatement{Call: f}
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
@@ -233,6 +257,7 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 	}
 
 	a := ctx.Expression(0).Accept(v).(ast.Expression)
+	loc := v.loc(ctx)
 
 	// method call
 	if ctx.Func_() != nil {
@@ -245,11 +270,11 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 	// unary ops
 	if ctx.GetUnary_op() != nil {
 		if ctx.MINUS() != nil {
-			return &ast.Minus{Expression: a}
+			return &ast.Minus{Expression: a, Location: loc}
 		}
 
 		if ctx.NOT() != nil {
-			return &ast.Not{Expression: a}
+			return &ast.Not{Expression: a, Location: loc}
 		}
 	}
 
@@ -265,9 +290,10 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 			to = ctx.to.Accept(v).(ast.Expression)
 		}
 		return &ast.Slice{
-			Value: a,
-			From:  from,
-			To:    to,
+			Value:    a,
+			From:     from,
+			To:       to,
+			Location: loc,
 		}
 	}
 
@@ -279,6 +305,7 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 		return &ast.Index{
 			Value:    value,
 			Position: position,
+			Location: loc,
 		}
 	}
 
@@ -286,54 +313,54 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 
 	// mul ops
 	if ctx.MUL() != nil {
-		return &ast.Mul{A: a, B: b}
+		return &ast.Mul{A: a, B: b, Location: loc}
 	}
 
 	if ctx.DIV() != nil {
-		return &ast.Div{A: a, B: b}
+		return &ast.Div{A: a, B: b, Location: loc}
 	}
 
 	if ctx.MOD() != nil {
-		return &ast.Mod{A: a, B: b}
+		return &ast.Mod{A: a, B: b, Location: loc}
 	}
 
 	// add ops
 	if ctx.PLUS() != nil {
-		return &ast.Add{A: a, B: b}
+		return &ast.Add{A: a, B: b, Location: loc}
 	}
 
 	if ctx.MINUS() != nil {
-		return &ast.Sub{A: a, B: b}
+		return &ast.Sub{A: a, B: b, Location: loc}
 	}
 
 	// rel ops
 	if ctx.LT() != nil {
-		return &ast.LessThan{A: a, B: b}
+		return &ast.LessThan{A: a, B: b, Location: loc}
 	}
 	if ctx.LTE() != nil {
-		return &ast.LessThanEqual{A: a, B: b}
+		return &ast.LessThanEqual{A: a, B: b, Location: loc}
 	}
 	if ctx.GT() != nil {
-		return &ast.GreaterThan{A: a, B: b}
+		return &ast.GreaterThan{A: a, B: b, Location: loc}
 	}
 	if ctx.GTE() != nil {
-		return &ast.GreaterThanEqual{A: a, B: b}
+		return &ast.GreaterThanEqual{A: a, B: b, Location: loc}
 	}
 	if ctx.EQ() != nil {
-		return &ast.Equal{A: a, B: b}
+		return &ast.Equal{A: a, B: b, Location: loc}
 	}
 	if ctx.NEQ() != nil {
-		return &ast.NotEqual{A: a, B: b}
+		return &ast.NotEqual{A: a, B: b, Location: loc}
 	}
 
 	// logical and
 	if ctx.LAND() != nil {
-		return &ast.And{A: a, B: b}
+		return &ast.And{A: a, B: b, Location: loc}
 	}
 
 	// logical or
 	if ctx.LOR() != nil {
-		return &ast.Or{A: a, B: b}
+		return &ast.Or{A: a, B: b, Location: loc}
 	}
 
 	// ternary
@@ -343,6 +370,7 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 			Condition: a,
 			True:      b,
 			False:     c,
+			Location:  loc,
 		}
 	}
 
@@ -354,9 +382,7 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 		txt := ctx.String_().GetText()
 		txt = txt[1 : len(txt)-1]
 
-		for _, e := range strEscapes {
-			txt = strings.ReplaceAll(txt, e.k, e.v)
-		}
+		txt = strEscapes.Replace(txt)
 
 		return &ast.String{
 			Value: txt,
@@ -406,7 +432,8 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 
 func (v *Visitor) VisitFunc(ctx *FuncContext) any {
 	f := &ast.Func{
-		Name: ctx.ID().GetText(),
+		Name:     ctx.ID().GetText(),
+		Location: v.loc(ctx),
 	}
 	for _, p := range ctx.AllExpression() {
 		f.Parameters = append(f.Parameters, p.Accept(v).(ast.Expression))
@@ -416,7 +443,8 @@ func (v *Visitor) VisitFunc(ctx *FuncContext) any {
 
 func (v *Visitor) VisitVar(ctx *VarContext) any {
 	return &ast.Var{
-		Name: ctx.ID().GetText(),
+		Name:     ctx.ID().GetText(),
+		Location: v.loc(ctx),
 	}
 }
 
@@ -459,19 +487,5 @@ func (v *Visitor) VisitPrimitiveType(ctx *PrimitiveTypeContext) any {
 	return common.PrimitiveTypeFor(ctx.GetText())
 }
 
-var strEscapes = []struct {
-	k string
-	v string
-}{{
-	k: "\\n",
-	v: "\n",
-}, {
-	k: "\\t",
-	v: "\t",
-}, {
-	k: "\\\\",
-	v: "\\",
-}, {
-	k: "\\\"",
-	v: "\"",
-}}
+// a single pass, so \\n becomes a backslash followed by n, not a newline
+var strEscapes = strings.NewReplacer(`\n`, "\n", `\t`, "\t", `\\`, `\`, `\"`, `"`)

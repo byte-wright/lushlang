@@ -19,3 +19,18 @@ tests:
       2 != 2 false
 
 
+
+  - name: Less or greater equal false
+    code: |
+      println(3 <= 2, 3 >= 4, 2 <= 3, 4 >= 3)
+    expected: |
+      false false true true
+
+  - name: Equal strings and bools
+    code: |
+      a = "x y"
+      println(a == "x y", a != "x y", a == "y", a != "y")
+      println(true == false, true != false, false == false)
+    expected: |
+      true false false true
+      false true true

@@ -5,11 +5,9 @@ import (
 )
 
 type Program struct {
-	Main  *Block
-	Funcs []*FuncDef
-	// Funcs by name contains the same funcs like the Funcs slice
-	FuncsByName map[string]*FuncDef
-	varIdx      int
+	Main   *Block
+	Funcs  []*FuncDef
+	varIdx int
 }
 
 func (p *Program) nextVar() int {

@@ -49,3 +49,26 @@ tests:
     expected: |
       5
 
+
+  - name: escapes
+    code: |
+      println("a\\nb", "say \"hi\"", "x\ny")
+    expected: |
+      a\nb say "hi" x
+      y
+
+  - name: concatenation
+    code: |
+      a = "foo"
+      b = a + " bar" + "'s"
+      println(b, "x" + a, $LUSH_TEST + "!")
+    expected: |
+      foo bar's xfoo hello!
+
+  - name: index
+    code: |
+      s = "abc"
+      i = 1
+      println(s[0], s[i + 1], "xyz"[i])
+    expected: |
+      a c y

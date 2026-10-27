@@ -44,8 +44,18 @@ bcode.Func type:
 []bcode.Value type:
   {for i, a, first in .}{if !first}, {end}@{a}{end}
 
+bcode.Params type:
+  params @{.Vars}
+
 bcode.Return type:
   return @{.Values}
+
+bcode.If type:
+  if @{.Condition} {
+    @{.Block}
+  }{if .Else} else {
+    @{.Else}
+  }{end}
 
 bcode.While type:
   while @{.Condition} {
@@ -94,11 +104,8 @@ bcode.Div type:
 bcode.Mod type:
   @{.Left} % @{.Right}
 
-bcode.And type:
-  @{.Left} && @{.Right}
-
-bcode.Or type:
-  @{.Left} || @{.Right}
+bcode.Not type:
+  !@{.Expression}
 
 bcode.GreaterThan type:
   @{.Left} > @{.Right}

@@ -1,3 +1,5 @@
+import "strings"
+
 project = $CI_PROJECT_NAME
 
 isSuccess = $CI_JOB_STATUS == "success"
@@ -5,13 +7,13 @@ isFailure = $CI_JOB_STATUS == "failure"
 
 isMain = $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-pmTest = !isMain && hasPrefix($CI_COMMIT_BRANCH, "projectmonitor/")
-pmMerge = isMain && hasPrefix($CI_COMMIT_TITLE, "Mergerequest from projectmonitor/")
+pmTest = !isMain && strings.hasPrefix($CI_COMMIT_BRANCH, "projectmonitor/")
+pmMerge = isMain && strings.hasPrefix($CI_COMMIT_TITLE, "Mergerequest from projectmonitor/")
 
 if pmTest {
   println("we run a merge request pipeline")
-  operation = trimPrefix($CI_COMMIT_BRANCH, "projectmonitor/")
-  operation = operation[0:indexOf(operation, "-")]
+  operation = strings.trimPrefix($CI_COMMIT_BRANCH, "projectmonitor/")
+  operation = operation[0:strings.indexOf(operation, "-")]
 
   if operation != "" {
     msg = isSuccess ? "ready" : "error"
@@ -22,8 +24,8 @@ if pmTest {
 if pmMerge {
   println("we merged a pipeline into main")
 
-  operation = trimPrefix($CI_COMMIT_TITLE, "Mergerequest from projectmonitor/")
-  operation = operation[0:indexOf(operation, "-")]
+  operation = strings.trimPrefix($CI_COMMIT_TITLE, "Mergerequest from projectmonitor/")
+  operation = operation[0:strings.indexOf(operation, "-")]
 
   if operation != "" {
     msg = isSuccess ? "ok" : "error"

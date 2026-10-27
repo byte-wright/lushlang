@@ -80,12 +80,10 @@ func TestAll(t *testing.T) {
 			for _, tc := range suite.Tests {
 				if !only || tc.Only {
 					t.Run(tc.Name, func(t *testing.T) {
-						prog, errors, err := parser.Parse(string(tc.Code), suite.Name+"/"+tc.Name+".lsh", "./std", "../std")
+						prog, errors, err := parser.Parse(string(tc.Code), suite.Name+"/"+tc.Name+".lsh", "./std", os.DirFS("../std"))
 						if err != nil {
 							t.Fatal(err)
 						}
-
-						errors = append(errors, ast.Validate(prog)...)
 
 						expectedErrors := map[string]bool{}
 						for _, e := range tc.Errors {
@@ -101,6 +99,10 @@ func TestAll(t *testing.T) {
 
 						for expe := range expectedErrors {
 							t.Errorf("expected error `%v`", expe)
+						}
+
+						if len(errors) > 0 {
+							return
 						}
 
 						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(ast.Print(prog)), 0o600)
@@ -125,6 +127,7 @@ func TestAll(t *testing.T) {
 						}
 
 						cmd := exec.Command("bash", file)
+						cmd.Env = append(os.Environ(), "LUSH_TEST=hello")
 
 						// Create buffers to capture stdout and stderr
 						stdoutBuf := &bytes.Buffer{}

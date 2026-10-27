@@ -58,6 +58,10 @@ func (a *Mod) Types() []common.Type {
 	return a.A.Types()
 }
 
+func (n *Not) Types() []common.Type {
+	return boolT
+}
+
 func (a *And) Types() []common.Type {
 	return boolT
 }
@@ -96,10 +100,17 @@ func (s *Slice) Types() []common.Type {
 
 func (i *Index) Types() []common.Type {
 	tps := i.Value.Types()
+	if len(tps) != 1 {
+		return noneT
+	}
 	f := tps[0]
 
 	if f.IsArray() {
 		return tl(f.(*common.ArrayType).ElementType)
+	}
+
+	if f.Is(&common.BasicType{Type: common.String}) {
+		return tl(f)
 	}
 
 	return noneT

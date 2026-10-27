@@ -1,0 +1,169 @@
+order: 2
+name: If
+tests:
+  - name: if statement
+    code: |
+      x = 3
+      if x > 2 {
+        println("big")
+      }
+      if x < 2 {
+        println("small")
+      }
+    expected: |
+      big
+
+  - name: nested if
+    code: |
+      x = 3
+      if x > 1 {
+        if x > 2 {
+          println("both")
+        }
+      }
+    expected: |
+      both
+
+  - name: if in for loop
+    code: |
+      for i = 0; i < 5; i = i + 1 {
+        if i % 2 == 0 {
+          println(i)
+        }
+      }
+    expected: |
+      0
+      2
+      4
+
+  - name: if in function
+    code: |
+      func fac(n int) int {
+        if n < 2 {
+          return 1
+        }
+        return n * fac(n - 1)
+      }
+      println(fac(5))
+    expected: |
+      120
+
+  - name: ternary in function
+    code: |
+      func size(x int) string {
+        return x > 2 ? "big" : "small"
+      }
+      println(size(3), size(1))
+    expected: |
+      big small
+
+  - name: ternary at top level
+    code: |
+      x = 3
+      size = x > 2 ? "big" : "small"
+      println(size, x < 2 ? "big" : "small")
+    expected: |
+      big small
+
+  - name: empty if
+    code: |
+      if 1 < 2 {
+      }
+      println("after")
+    expected: |
+      after
+
+  - name: if else
+    code: |
+      func size(x int) string {
+        if x > 2 {
+          return "big"
+        } else {
+          return "small"
+        }
+      }
+      println(size(3), size(1))
+    expected: |
+      big small
+
+  - name: else if
+    code: |
+      for i = 0; i < 4; i = i + 1 {
+        if i == 0 {
+          println("zero")
+        } else if i == 1 {
+          println("one")
+        } else if i == 2 {
+          println("two")
+        } else {
+          println("many")
+        }
+      }
+    expected: |
+      zero
+      one
+      two
+      many
+
+  - name: else if without else
+    code: |
+      for i = 0; i < 3; i = i + 1 {
+        if i == 0 {
+          println("zero")
+        } else if i == 1 {
+          println("one")
+        }
+      }
+    expected: |
+      zero
+      one
+
+  - name: else if condition is only evaluated when reached
+    code: |
+      func check(name string, r bool) bool {
+        println("check", name)
+        return r
+      }
+      if check("a", true) {
+        println("a")
+      } else if check("b", true) {
+        println("b")
+      }
+    expected: |
+      check a
+      a
+
+  - name: else on the next line
+    code: |
+      if 1 > 2 {
+        println("if")
+      }
+      else {
+        println("else")
+      }
+    expected: |
+      else
+
+  - name: empty else
+    code: |
+      if 1 < 2 {
+        println("if")
+      } else {
+      }
+      println("after")
+    expected: |
+      if
+      after
+
+  - name: variables of if and else are separate
+    code: |
+      x = 1
+      if x > 2 {
+        y = "big"
+        println(y)
+      } else {
+        y = 2
+        println(y + x)
+      }
+    expected: |
+      3

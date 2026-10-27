@@ -8,99 +8,120 @@ type Expression interface {
 
 type Minus struct {
 	Expression
+	Location *common.Location
 }
 
 type Mul struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Div struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Mod struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Add struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Sub struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type And struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Or struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Not struct {
 	Expression
+	Location *common.Location
 }
 
 type LessThan struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type LessThanEqual struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type GreaterThan struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type GreaterThanEqual struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Equal struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type NotEqual struct {
-	A Expression
-	B Expression
+	A        Expression
+	B        Expression
+	Location *common.Location
 }
 
 type Slice struct {
-	Value Expression
-	From  Expression
-	To    Expression
+	Value    Expression
+	From     Expression
+	To       Expression
+	Location *common.Location
 }
 
 type Index struct {
 	Value    Expression
 	Position Expression
+	Location *common.Location
 }
 
 type Ternary struct {
 	Condition Expression
 	True      Expression
 	False     Expression
+	Location  *common.Location
 }
 
 type Func struct {
 	Name       string
 	Parameters []Expression
+	Location   *common.Location
 	// calculated
 	ReturnTypes []common.Type
+	// Package defines the function, it's nil for builtins
+	Package *Package
 }
 
 type Method struct {
@@ -109,7 +130,8 @@ type Method struct {
 }
 
 type Var struct {
-	Name string
+	Name     string
+	Location *common.Location
 	// calculated
 	Type common.Type
 }

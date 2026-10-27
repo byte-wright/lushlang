@@ -3,6 +3,7 @@ package bcode
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/byte-wright/lush/internal/ast"
 	"github.com/byte-wright/lush/internal/common"
@@ -11,14 +12,21 @@ import (
 type Compiler struct {
 	prog *Program
 	ast  *ast.Program
+	// namespaces keep the function names of the packages apart. Builtins have no package,
+	// so they get the empty namespace.
+	namespaces map[*ast.Package]string
 }
 
 func Compile(program *ast.Program) (*Program, error) {
 	a := &Compiler{
-		prog: &Program{
-			FuncsByName: map[string]*FuncDef{},
-		},
-		ast: program,
+		prog:       &Program{},
+		ast:        program,
+		namespaces: map[*ast.Package]string{program.Main: "main"},
+	}
+
+	// the number makes them unique, the name is only for reading the generated code
+	for i, pkg := range program.Packages() {
+		a.namespaces[pkg] = "p" + strconv.Itoa(i+1) + "_" + identifier(pkg.Name)
 	}
 
 	a.evalProgram()
@@ -33,11 +41,21 @@ func (c *Compiler) evalProgram() {
 	}
 	c.evalBlock(c.prog.Main, c.ast.Root)
 
-	c.addFuncs("", c.ast.FuncDefs)
+	c.addFuncs(c.namespaces[c.ast.Main], c.ast.Main.FuncDefs)
 	for _, pkg := range c.ast.Packages() {
-		c.addFuncs(pkg.Path, pkg.FuncDefs)
-		c.addExternalFuncs(pkg.Path, pkg.ExternalFuncDefs)
+		c.addFuncs(c.namespaces[pkg], pkg.FuncDefs)
+		c.addExternalFuncs(c.namespaces[pkg], pkg.ExternalFuncDefs)
 	}
+}
+
+// identifier replaces everything that can't be part of a bash function name.
+func identifier(name string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
+			return r
+		}
+		return '_'
+	}, name)
 }
 
 func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
@@ -49,13 +67,18 @@ func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 		}
 
 		params := []*Param{}
+		paramVars := []*VarValue{}
 
-		paramIndex := 1
 		for _, p := range fd.Params {
 			params = append(params, &Param{Name: p.Name, Type: p.Type})
-			block.set(&VarValue{Name: p.Name, T: p.Type}, &EnvVarValue{Name: strconv.Itoa(paramIndex)})
 
-			paramIndex++
+			v := &VarValue{Name: p.Name, T: p.Type}
+			block.registerVar(v)
+			paramVars = append(paramVars, v)
+		}
+
+		if len(paramVars) > 0 {
+			block.add(&Params{Vars: paramVars})
 		}
 
 		c.evalBlock(block, fd.Body)
@@ -68,7 +91,6 @@ func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 		}
 
 		c.prog.Funcs = append(c.prog.Funcs, funcDef)
-		c.prog.FuncsByName[funcDef.FullName()] = funcDef
 	}
 }
 
@@ -81,13 +103,18 @@ func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFu
 		}
 
 		params := []*Param{}
+		paramVars := []*VarValue{}
 
-		paramIndex := 1
 		for _, p := range fd.Params {
 			params = append(params, &Param{Name: p.Name, Type: p.Type})
-			block.set(&VarValue{Name: p.Name, T: p.Type}, &EnvVarValue{Name: strconv.Itoa(paramIndex)})
 
-			paramIndex++
+			v := &VarValue{Name: p.Name, T: p.Type}
+			block.registerVar(v)
+			paramVars = append(paramVars, v)
+		}
+
+		if len(paramVars) > 0 {
+			block.add(&Params{Vars: paramVars})
 		}
 
 		block.add(&Code{Code: fd.Code})
@@ -100,7 +127,6 @@ func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFu
 		}
 
 		c.prog.Funcs = append(c.prog.Funcs, funcDef)
-		c.prog.FuncsByName[funcDef.FullName()] = funcDef
 	}
 }
 
@@ -189,10 +215,10 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		return block.setTmps(&Mod{Left: a[0], Right: b[0]})
 
 	case *ast.And:
-		a := c.evalExpression(block, x.A)
-		b := c.evalExpression(block, x.B)
+		return c.evalLogical(block, x.A, x.B, true)
 
-		return block.setTmps(&And{Left: a[0], Right: b[0]})
+	case *ast.Or:
+		return c.evalLogical(block, x.A, x.B, false)
 
 	case *ast.Not:
 		a := c.evalExpression(block, x.Expression)
@@ -283,6 +309,10 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		return []Value{v}
 
 	case *ast.Func:
+		if x.Package != nil {
+			return c.evalCall(block, x)
+		}
+
 		switch x.Name {
 		case "len":
 			val := c.evalExpression(block, x.Parameters[0])
@@ -321,41 +351,10 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 			return []Value{ap}
 		}
 
-		fSig := getSignature(c.ast, "", x.Name)
-
-		ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
-			return block.nextTmp(t)
-		})
-
-		f := &Func{
-			Name:   x.Name,
-			Return: ret,
-		}
-		for _, p := range x.Parameters {
-			f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
-		}
-
-		block.add(f)
-
-		return common.Map(f.Return, func(i *VarValue) Value { return i })
+		return c.evalCall(block, x)
 
 	case *ast.Method:
-		fSig := getSignature(c.ast, x.Namespace, x.Func.Name)
-
-		ret := common.Map(fSig.Return, func(t common.Type) *VarValue {
-			return block.nextTmp(t)
-		})
-		f := &Func{
-			Namespace: fSig.Namespace,
-			Name:      x.Func.Name,
-			Return:    ret,
-		}
-		for _, p := range x.Func.Parameters {
-			f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
-		}
-
-		block.add(f)
-		return common.Map(f.Return, func(i *VarValue) Value { return i })
+		return c.evalCall(block, x.Func)
 
 	case *ast.Array:
 		a := &ArrayValue{
@@ -394,6 +393,24 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 	}
 }
 
+// evalLogical evaluates b only when a doesn't decide the result already,
+// so && and || short-circuit like in Go.
+func (c *Compiler) evalLogical(block *Block, a, b ast.Expression, isAnd bool) []Value {
+	result := block.setTmp(c.evalExpression(block, a)[0])
+
+	cond := result
+	if !isAnd {
+		cond = block.setTmp(&Not{Expression: result})
+	}
+
+	right := block.subBlock()
+	right.set(result, c.evalExpression(right, b)[0])
+
+	block.add(&If{Condition: cond, Block: right})
+
+	return []Value{result}
+}
+
 func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	value := c.evalExpression(block, s.Value)
 
@@ -427,21 +444,44 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 }
 
 func (c *Compiler) evalIndex(block *Block, s *ast.Index) Atom {
+	value := block.asVar(c.evalExpression(block, s.Value)[0])
+	position := c.evalExpression(block, s.Position)[0]
+
+	if !value.Type().IsArray() {
+		return block.setTmp(&Slice{
+			Value: value,
+			From:  position,
+			To:    block.setTmp(&Add{Left: position, Right: &NumberValue{Value: 1}}),
+		})
+	}
+
 	return block.setTmp(&Index{
-		Value:    c.evalExpression(block, s.Value)[0].(*VarValue),
-		Position: c.evalExpression(block, s.Position)[0],
+		Value:    value,
+		Position: position,
 	})
 }
 
 func (c *Compiler) evalFuncStatement(block *Block, f *ast.FuncStatement) {
-	fnc := &Func{
-		Name: f.Func.Name,
+	c.evalExpression(block, f.Call)
+}
+
+func (c *Compiler) evalCall(block *Block, x *ast.Func) []Value {
+	ret := common.Map(x.ReturnTypes, func(t common.Type) *VarValue {
+		return block.nextTmp(t)
+	})
+
+	f := &Func{
+		Namespace: c.namespaces[x.Package],
+		Name:      x.Name,
+		Return:    ret,
 	}
-	for _, p := range f.Func.Parameters {
-		fnc.Parameters = append(fnc.Parameters, c.evalExpression(block, p)[0])
+	for _, p := range x.Parameters {
+		f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
 	}
 
-	block.add(fnc)
+	block.add(f)
+
+	return common.Map(f.Return, func(i *VarValue) Value { return i })
 }
 
 func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
@@ -453,6 +493,11 @@ func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
 	}
 
 	c.evalBlock(ifs.Block, ifst.If)
+
+	if ifst.Else != nil {
+		ifs.Else = block.subBlock()
+		c.evalBlock(ifs.Else, ifst.Else)
+	}
 
 	block.add(ifs)
 }
@@ -480,7 +525,9 @@ func (c *Compiler) evalReturnStatement(block *Block, ret *ast.ReturnStatement) {
 	values := []*VarValue{}
 
 	for _, x := range ret.Expressions {
-		values = append(values, block.setTmp(c.evalExpression(block, x)[0]))
+		for _, val := range c.evalExpression(block, x) {
+			values = append(values, block.setTmp(val))
+		}
 	}
 
 	block.add(&Return{

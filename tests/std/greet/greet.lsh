@@ -1,0 +1,9 @@
+import "/strings"
+
+func hello(name string) {
+  println("hello", name)
+}
+
+func shout(name string) {
+  println(strings.shout("hello " + name))
+}

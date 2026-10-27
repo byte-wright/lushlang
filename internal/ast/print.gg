@@ -8,11 +8,11 @@ ast.Program type:
   {if .Packages}
   {end-}
 
-  {for fd in .FuncDefs-}
+  {for fd in .Main.FuncDefs-}
   @{fd}
   {end-}
 
-  {if .FuncDefs}
+  {if .Main.FuncDefs}
   {end-}
 
   {for st in .Root.Statements-}
@@ -20,7 +20,7 @@ ast.Program type:
   {end-}
 
 ast.FuncStatement type:
-  @{.Func}
+  @{.Call}
 
 ast.Func type:
   ${.Name}(@{.Parameters})
@@ -34,7 +34,7 @@ ast.FuncDef type:
   }
 
 ast.ReturnStatement type:
-  return @{.Expressions}
+  return{if .Expressions} @{.Expressions}{end}
 
 []ast.Param type:
   {for i, p, first in .}{if !first}, {end}${p.Name} ${p.Type.Print}{end}
@@ -58,6 +58,13 @@ ast.For type:
   for @{.Initial}; @{.Condition}; @{.Each} {
     @{.Body}
   }
+
+ast.If type:
+  if @{.Condition} {
+    @{.If}
+  }{if .Else} else {
+    @{.Else}
+  }{end}
 
 ast.Array type:
   [@{.Values}]
@@ -83,6 +90,9 @@ ast.Bool type:
 ast.Var type:
   ${.Name}
 
+ast.EnvVar type:
+  $${.Name}
+
 ast.Add type:
   @{.A} + @{.B}
 
@@ -91,6 +101,9 @@ ast.Sub type:
 
 ast.Minus type:
   -@{.Expression}
+
+ast.Not type:
+  !@{.Expression}
 
 ast.Mul type:
   @{.A} * @{.B}
@@ -124,6 +137,9 @@ ast.Equal type:
 
 ast.NotEqual type:
   @{.A} != @{.B}
+
+ast.Ternary type:
+  @{.Condition} ? @{.True} : @{.False}
 
 ast.Group type:
   (@{.Expression})

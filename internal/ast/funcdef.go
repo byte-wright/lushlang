@@ -15,6 +15,7 @@ type FuncDef struct {
 	Params  []*Param
 	Returns []common.Type
 	Body    *Block
+	File    *File
 }
 
 type ExternalFuncDef struct {

@@ -19,7 +19,7 @@ Its in no way optimized and quite rudimentary.
   - int, string, bools and type inference
   - arrays (very slow)
   - functions with params and (multiple) return params
-  - if and for
+  - if, else if, else and for
   - modules
 
 Tests
@@ -38,14 +38,15 @@ Example
       println(s, gt)
 
 prints:
+
     9 false
 
 the compiled bash code:
 
     #!/bin/bash
-    function lsh__sum() {
-      local a="$1"
-      local b="$2"
+    function lsh_main_sumGt() {
+      local a="${1}"
+      local b="${2}"
       local var_3=$(( "$a" + "$b" ))
       local var_4="$var_3"
       [ "$a" -gt "$b" ]
@@ -57,7 +58,7 @@ the compiled bash code:
       return
     }
     function main() {
-      lsh__sum 3 6
+      lsh_main_sumGt 3 6
       local var_1="$lsh__funcretparam_0"
       local var_2="$lsh__funcretparam_1"
       local s="$var_1"
@@ -79,4 +80,4 @@ the compiled bash code:
     printf "\n"
     }
 
-    main $@
+    main "$@"

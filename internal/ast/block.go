@@ -10,6 +10,8 @@ type Statement interface{}
 
 type Block struct {
 	Statements []Statement
+	// End is the closing brace, it's nil for the root block
+	End *common.Location
 
 	// calculated
 	Parent    *Block

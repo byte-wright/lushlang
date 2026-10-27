@@ -33,3 +33,136 @@ tests:
       println(s, gt)
     expected: |
       9 false
+
+  - name: empty function
+    code: |
+      func noop() {
+      }
+      noop()
+      println("after")
+    expected: |
+      after
+
+  - name: array parameters
+    code: |
+      func first(xs []string) string {
+        return xs[0]
+      }
+
+      func describe(pre string, xs []string, ys []int, post string) {
+        println(pre, len(xs), xs[1], len(ys), post)
+      }
+
+      println(first(["a", "b"]))
+      describe("pre", ["a b", "c"], []int, "post")
+    expected: |
+      a
+      pre 2 c 0 post
+
+  - name: function named like a helper
+    description: the bash helpers can't be replaced by user functions
+    code: |
+      x = "abc"
+      println(x[1])
+      println(substring())
+
+      func substring() string {
+        return "mine"
+      }
+    expected: |
+      b
+      mine
+
+  - name: multiple values as arguments and return values
+    code: |
+      func pair() int, int {
+        return 3, 4
+      }
+
+      func pass() int, int {
+        return pair()
+      }
+
+      func sum(a int, b int) int {
+        return a + b
+      }
+
+      func show(a int, b int) {
+        println(a, b)
+      }
+
+      println(sum(pair()))
+      show(pair())
+      show(pass())
+      println(pair())
+    expected: |
+      7
+      3 4
+      3 4
+      3 4
+
+  - name: builtins as statements
+    code: |
+      a = [1]
+      len("abc")
+      append(a, 2)
+      println(len(a))
+    expected: |
+      1
+
+  - name: return without values
+    code: |
+      func check(a int) {
+        if a > 1 {
+          println("big")
+          return
+        }
+        println("small")
+      }
+
+      func nothing() { return }
+
+      check(1)
+      check(2)
+      nothing()
+    expected: |
+      small
+      big
+
+  - name: return at the end of a line has no values
+    description: like in Go, the call on the next line isn't the return value
+    code: |
+      func f() {
+        println("a")
+        return
+        println("b")
+      }
+
+      f()
+    expected: |
+      a
+
+  - name: return values over several lines
+    code: |
+      func pair() int, int {
+        return 1,
+          2
+      }
+
+      println(pair())
+    expected: |
+      1 2
+
+  - name: endless loop ends a function
+    code: |
+      func first(a []int, min int) int {
+        for i = 0; true; i = i + 1 {
+          if a[i] >= min {
+            return a[i]
+          }
+        }
+      }
+
+      println(first([1, 5, 9], 4))
+    expected: |
+      5

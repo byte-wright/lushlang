@@ -13,3 +13,45 @@ tests:
       t && f = false
       t && t = true
       f && f = false
+
+  - name: Not in function
+    code: |
+      func invert(b bool) bool {
+        return !b
+      }
+      println(invert(true), invert(false))
+    expected: |
+      false true
+
+  - name: Not at top level
+    code: |
+      t = true
+      println(!t, !false)
+    expected: |
+      false true
+
+  - name: Or
+    code: |
+      t = true
+      f = false
+      println(t || f, f || t, f || f, t || t)
+    expected: |
+      true true false true
+
+  - name: Short circuit
+    code: |
+      func yes(s string) bool {
+        println(s)
+        return true
+      }
+      println(false && yes("and evaluated"))
+      println(true || yes("or evaluated"))
+      println(true && yes("and rhs"))
+      println(false || yes("or rhs"))
+    expected: |
+      false
+      true
+      and rhs
+      true
+      or rhs
+      true

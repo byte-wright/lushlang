@@ -32,7 +32,7 @@ func (b *bash) translate() {
 	b.print("#!/bin/bash")
 
 	for _, gd := range b.p.Funcs {
-		b.print("function lsh__" + gd.FullName() + "() {")
+		b.print("function lsh_" + gd.FullName() + "() {")
 		b.block(gd.Body)
 		b.print("}")
 	}
@@ -57,30 +57,26 @@ lsh_bool_1=false
 
 	for _, fn := range ufncs {
 		iFunc, isInternal := funcs[fn]
-		if isInternal {
-			b.print("lsh__" + fn + "() {")
-			b.print(iFunc.code)
-			b.print("}\n")
-
-			continue
+		if !isInternal {
+			panic("func not found " + fn)
 		}
 
-		_, isDefined := b.p.FuncsByName[fn]
-		if isDefined {
-			// we added them already
-			continue
-		}
-
-		panic("func not found " + fn)
-
+		b.print("lsh__" + fn + "() {")
+		b.print(iFunc.code)
+		b.print("}\n")
 	}
 
-	b.print("main $@")
+	b.print(`main "$@"`)
 }
 
 func (b *bash) block(block *bcode.Block) {
 	b.indent++
 	defer func() { b.indent-- }()
+
+	// bash rejects empty function and if bodies
+	if len(block.Commands) == 0 {
+		b.print(":")
+	}
 
 	for _, c := range block.Commands {
 		switch cmd := c.(type) {
@@ -88,8 +84,7 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
-			b.useFunc(cmd.Namespace, cmd.Name)
-			b.print("lsh__" + cmd.FullName() + " " + b.mkFuncParams(cmd))
+			b.print(b.funcName(cmd) + " " + b.mkFuncParams(cmd))
 			for i, rpn := range cmd.Return {
 				b.print("local " + rpn.Name + "=\"$lsh__funcretparam_" + strconv.Itoa(i) + "\"")
 			}
@@ -98,6 +93,11 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("if [ " + b.atom(cmd.Condition) + " == true ]; then")
 
 			b.block(cmd.Block)
+
+			if cmd.Else != nil {
+				b.print("else")
+				b.block(cmd.Else)
+			}
 
 			b.print("fi")
 
@@ -123,8 +123,21 @@ func (b *bash) block(block *bcode.Block) {
 
 			cmdl := strings.Join(cmds, " ")
 
-			b.print("output=$(" + cmdl + " 2> >(readarray -t " + cmd.Stderr.Name + "; printf '%s\n' \"${error_lines[@]}\"))")
-			b.print("readarray -t " + cmd.Stdout.Name + " <<< \"$output\"")
+			// stderr goes through a file because a process substitution runs in a
+			// subshell and can't set our variables. The exit code must be read
+			// right after the command substitution, local would overwrite $?.
+			b.print("local lsh__stdout lsh__stderr")
+			b.print("lsh__stderr=$(mktemp)")
+			b.print("lsh__stdout=$(" + cmdl + " 2> \"$lsh__stderr\")")
+			b.print("local " + cmd.Err.Name + "=$?")
+			b.print("local -a " + cmd.Stdout.Name + " " + cmd.Stderr.Name)
+			// printf instead of <<<, which would turn no output into one empty line
+			b.print("readarray -t " + cmd.Stdout.Name + " < <(printf '%s' \"$lsh__stdout\")")
+			b.print("readarray -t " + cmd.Stderr.Name + " < \"$lsh__stderr\"")
+			b.print("rm -f \"$lsh__stderr\"")
+
+		case *bcode.Params:
+			b.params(cmd.Vars)
 
 		case *bcode.Code:
 			b.print(cmd.Code)
@@ -153,6 +166,10 @@ func (b *bash) block(block *bcode.Block) {
 func (b *bash) atom(a bcode.Atom) string {
 	switch at := a.(type) {
 	case *bcode.Add:
+		if at.Left.Type().Is(&common.BasicType{Type: common.String}) {
+			// both atoms are quoted words, putting them side by side concatenates them
+			return b.atom(at.Left) + b.atom(at.Right)
+		}
 		return "$(( " + b.atom(at.Left) + " + " + b.atom(at.Right) + " ))"
 
 	case *bcode.Sub:
@@ -171,12 +188,12 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "$(( " + b.atom(at.Left) + " % " + b.atom(at.Right) + " ))"
 
 	case *bcode.Equal:
-		b.print("[ " + b.atom(at.Left) + " -eq " + b.atom(at.Right) + " ]")
+		b.print("[ " + b.atom(at.Left) + " " + equalOp(at.Left) + " " + b.atom(at.Right) + " ]")
 		b.print("local lsh_i=\"lsh_bool_$?\"")
 		return "${!lsh_i}"
 
 	case *bcode.NotEqual:
-		b.print("! [ " + b.atom(at.Left) + " -eq " + b.atom(at.Right) + " ]")
+		b.print("! [ " + b.atom(at.Left) + " " + equalOp(at.Left) + " " + b.atom(at.Right) + " ]")
 		b.print("local lsh_i=\"lsh_bool_$?\"")
 		return "${!lsh_i}"
 
@@ -186,8 +203,8 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!lsh_i}"
 
 	case *bcode.LessThanEqual:
-		b.print("local lsh_i=\"lsh_bool_$?\"")
 		b.print("[ " + b.atom(at.Left) + " -le " + b.atom(at.Right) + " ]")
+		b.print("local lsh_i=\"lsh_bool_$?\"")
 		return "${!lsh_i}"
 
 	case *bcode.GreaterThan:
@@ -196,12 +213,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!lsh_i}"
 
 	case *bcode.GreaterThanEqual:
-		b.print("local lsh_i=\"lsh_bool_$?\"")
 		b.print("[ " + b.atom(at.Left) + " -ge " + b.atom(at.Right) + " ]")
-		return "${!lsh_i}"
-
-	case *bcode.And:
-		b.print("[ " + b.atom(at.Left) + " == true ] && [ " + b.atom(at.Right) + " == true ]")
 		b.print("local lsh_i=\"lsh_bool_$?\"")
 		return "${!lsh_i}"
 
@@ -214,7 +226,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		switch tp := at.Value.Type().(type) {
 		case *common.BasicType:
 			if tp.Type == common.String {
-				b.useFunc("", "substring")
+				b.useFunc("substring")
 				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
 				return "\"$lsh__funcretparam_0\""
 			}
@@ -266,6 +278,38 @@ func (b *bash) atom(a bcode.Atom) string {
 	return "unknown"
 }
 
+// params binds the positional arguments. mkFuncParams passes an array as its
+// length followed by its elements, so every later position depends on that length.
+func (b *bash) params(vars []*bcode.VarValue) {
+	pos := 1
+	lengths := ""
+
+	for _, v := range vars {
+		at := strconv.Itoa(pos) + lengths
+
+		if v.Type().IsArray() {
+			length := "lsh__len_" + v.Name
+			b.print("local " + length + "=\"${@:" + at + ":1}\"")
+			b.print("local " + v.Name + "=(\"${@:" + at + "+1:" + length + "}\")")
+			lengths += "+" + length
+		} else if lengths == "" {
+			b.print("local " + v.Name + "=\"${" + at + "}\"")
+		} else {
+			b.print("local " + v.Name + "=\"${@:" + at + ":1}\"")
+		}
+
+		pos++
+	}
+}
+
+// equalOp picks the test operator for == and !=, -eq only accepts integers.
+func equalOp(v bcode.Value) string {
+	if v.Type().Is(&common.BasicType{Type: common.Int}) {
+		return "-eq"
+	}
+	return "="
+}
+
 func (b *bash) mkFuncParams(f *bcode.Func) string {
 	params := []string{}
 
@@ -286,8 +330,19 @@ func (b *bash) mkFuncParams(f *bcode.Func) string {
 	return strings.Join(params, " ")
 }
 
-func (b *bash) useFunc(namespace, name string) {
-	b.usedFuncs[funcName(namespace, name)] = true
+// funcName gives helpers a double underscore, a namespace never starts with one, so
+// user functions can't replace them.
+func (b *bash) funcName(f *bcode.Func) string {
+	if f.Namespace == "" {
+		b.useFunc(f.Name)
+		return "lsh__" + f.Name
+	}
+
+	return "lsh_" + f.FullName()
+}
+
+func (b *bash) useFunc(name string) {
+	b.usedFuncs[name] = true
 }
 
 func (b *bash) print(line string) {

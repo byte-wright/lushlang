@@ -12,3 +12,76 @@ tests:
       8
       2
 
+
+  - name: method as statement
+    code: |
+      import "/greet"
+      import "/math"
+
+      greet.hello("world")
+      math.add(1, 2)
+    expected: |
+      hello world
+
+  - name: own package function
+    description: an unqualified call in a package goes to its own package, not to main
+    code: |
+      import "/math"
+
+      println(math.double(4))
+      println(add(1, 2))
+
+      func add(a int, b int) int {
+        return 100
+      }
+    expected: |
+      8
+      100
+
+  - name: same package name in different files
+    code: |
+      import "strings"
+      import "/greet"
+
+      greet.shout("world")
+      println(strings.hasPrefix("world", "w"))
+    expected: |
+      hello world!
+      true
+
+  - name: same package name in one file
+    code: |
+      import "strings"
+      import "/strings"
+    errors:
+      - import/same package name in one file.lsh Ln:2 Col:1 package strings is already imported from "strings"
+
+  - name: package scope
+    description: a package sees neither the imports nor the functions of the main file
+    code: |
+      import "/math"
+      import "/isolated"
+
+      println(isolated.run())
+
+      func mainOnly() int {
+        return 1
+      }
+    errors:
+      - std/isolated/isolated.lsh Ln:2 Col:15 namespace math not found
+      - std/isolated/isolated.lsh Ln:2 Col:27 function mainOnly not found
+
+  - name: missing package
+    description: missing packages are reported at the import that added them, also in packages
+    code: |
+      import "nope"
+      import "/gone"
+      import "/../std"
+      import "/broken"
+
+      println(nope.foo())
+    errors:
+      - import/missing package.lsh Ln:1 Col:1 package "nope" not found
+      - import/missing package.lsh Ln:2 Col:1 package "/gone" not found
+      - import/missing package.lsh Ln:3 Col:1 package "/../std" not found
+      - std/broken/broken.lsh Ln:1 Col:1 package "/missing" not found

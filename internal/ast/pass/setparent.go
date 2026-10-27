@@ -20,6 +20,10 @@ func SetParent(ast *ast.Program) []*ast.ASTError {
 
 func (t *setParentPass) eval() {
 	t.evalBlock(t.ast.Root)
+
+	for _, fd := range funcDefs(t.ast) {
+		t.evalBlock(fd.Body)
+	}
 }
 
 func (t *setParentPass) evalBlock(block *ast.Block) {
@@ -32,6 +36,10 @@ func (t *setParentPass) evalBlock(block *ast.Block) {
 		case *ast.If:
 			st.If.Parent = block
 			t.evalBlock(st.If)
+			if st.Else != nil {
+				st.Else.Parent = block
+				t.evalBlock(st.Else)
+			}
 		}
 	}
 }

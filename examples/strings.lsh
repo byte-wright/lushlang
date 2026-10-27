@@ -1,6 +1,8 @@
-println("indexOf(\"abcdef\", \"e\") = 4", indexOf("abcdef", "e"))
+import "strings"
 
-println("indexOf(\"abcdef\", \"q\") = -1", indexOf("abcdef", "q"))
+println("indexOf(\"abcdef\", \"e\") = 4", strings.indexOf("abcdef", "e"))
+
+println("indexOf(\"abcdef\", \"q\") = -1", strings.indexOf("abcdef", "q"))
 
 hw = "Hello World"
 

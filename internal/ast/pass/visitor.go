@@ -7,7 +7,9 @@ import (
 
 type Visitor interface {
 	Expression(ast.Expression)
+	BeforeStatement(ast.Statement)
 	Statement(ast.Statement)
+	BeforeFuncDef(*ast.FuncDef)
 	BeforeBlock(*ast.Block)
 	AfterBlock(*ast.Block)
 }
@@ -28,6 +30,20 @@ func Visit(ast *ast.Program, v Visitor) {
 
 func (c *context) visit() {
 	c.evalBlock(c.ast.Root)
+
+	for _, fd := range funcDefs(c.ast) {
+		c.visitor.BeforeFuncDef(fd)
+		c.evalBlock(fd.Body)
+	}
+}
+
+func funcDefs(prog *ast.Program) []*ast.FuncDef {
+	fds := append([]*ast.FuncDef{}, prog.Main.FuncDefs...)
+	for _, pkg := range prog.Packages() {
+		fds = append(fds, pkg.FuncDefs...)
+	}
+
+	return fds
 }
 
 func (c context) evalBlock(block *ast.Block) {
@@ -39,22 +55,32 @@ func (c context) evalBlock(block *ast.Block) {
 }
 
 func (c context) evalStatement(statement ast.Statement) {
+	c.visitor.BeforeStatement(statement)
+
 	switch st := statement.(type) {
 	case *ast.Assignment:
 		for _, exp := range st.Expressions {
 			c.evalExpression(exp)
 		}
 	case *ast.For:
-		c.evalExpression(st.Condition)
 		c.evalStatement(st.Initial)
+		c.evalExpression(st.Condition)
 		c.evalStatement(st.Each)
 		c.evalBlock(st.Body)
 	case *ast.If:
 		c.evalExpression(st.Condition)
 		c.evalBlock(st.If)
+		if st.Else != nil {
+			c.evalBlock(st.Else)
+		}
 
 	case *ast.FuncStatement:
-		c.evalExpression(st.Func)
+		c.evalExpression(st.Call)
+
+	case *ast.ReturnStatement:
+		for _, exp := range st.Expressions {
+			c.evalExpression(exp)
+		}
 
 	default:
 		common.IncompleteSwitch(st)
@@ -80,6 +106,8 @@ func (c context) evalExpression(expression ast.Expression) {
 		c.evalExpression(exp.A)
 		c.evalExpression(exp.B)
 	case *ast.Minus:
+		c.evalExpression(exp.Expression)
+	case *ast.Not:
 		c.evalExpression(exp.Expression)
 	case *ast.Mul:
 		c.evalExpression(exp.A)
@@ -129,9 +157,13 @@ func (c context) evalExpression(expression ast.Expression) {
 	case *ast.Index:
 		c.evalExpression(exp.Value)
 		c.evalExpression(exp.Position)
+	case *ast.Ternary:
+		c.evalExpression(exp.Condition)
+		c.evalExpression(exp.True)
+		c.evalExpression(exp.False)
 	case *ast.Group:
 		c.evalExpression(exp.Expression)
-	case *ast.String, *ast.Number, *ast.Bool, *ast.Var:
+	case *ast.String, *ast.Number, *ast.Bool, *ast.Var, *ast.EnvVar:
 
 	default:
 		common.IncompleteSwitch(exp)

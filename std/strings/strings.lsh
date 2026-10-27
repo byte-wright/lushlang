@@ -1,5 +1,5 @@
 
-func hasPrefix(s string, prefix string) string ```
+func hasPrefix(s string, prefix string) bool ```
   if [[ "$s" == "$prefix"* ]]; then
     lsh__funcretparam_0=true
   else
@@ -7,7 +7,7 @@ func hasPrefix(s string, prefix string) string ```
   fi
 ```
 
-func hasSuffix(s string, suffix string) string ```
+func hasSuffix(s string, suffix string) bool ```
   if [[ "$s" == *"$suffix" ]]; then
     lsh__funcretparam_0=true
   else

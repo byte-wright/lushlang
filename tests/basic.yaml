@@ -21,3 +21,11 @@ tests:
       hello, world, num = "Hello", "World", 42, true
     errors:
       - basic/Multi assignment error.lsh Ln:1 Col:1 Wrong number of expressions
+
+  - name: Identifiers with digits
+    code: |
+      x1 = 5
+      v2x = x1 + 1
+      println(x1, v2x)
+    expected: |
+      5 6

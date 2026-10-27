@@ -1,13 +1,16 @@
 package parser
 
-import "github.com/byte-wright/lush/internal/ast"
+import (
+	"github.com/byte-wright/lush/internal/ast"
+	"github.com/byte-wright/lush/internal/common"
+)
 
 type mainTarget struct {
 	prog *ast.Program
 }
 
-func (m *mainTarget) addImport(path string) {
-	m.prog.AddImport(path)
+func (m *mainTarget) addImport(path string, loc *common.Location) error {
+	return m.prog.File.Import(m.prog.AddImport(path, loc))
 }
 
 func (m *mainTarget) addMainStatement(s ast.Statement) {
@@ -15,7 +18,8 @@ func (m *mainTarget) addMainStatement(s ast.Statement) {
 }
 
 func (m *mainTarget) addFuncDef(f *ast.FuncDef) {
-	m.prog.FuncDefs = append(m.prog.FuncDefs, f)
+	f.File = m.prog.File
+	m.prog.Main.FuncDefs = append(m.prog.Main.FuncDefs, f)
 }
 
 func (m *mainTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
@@ -24,11 +28,11 @@ func (m *mainTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
 
 type pkgTarget struct {
 	prog *ast.Program
-	pkg  *ast.Package
+	file *ast.File
 }
 
-func (l *pkgTarget) addImport(path string) {
-	l.prog.AddImport(path)
+func (l *pkgTarget) addImport(path string, loc *common.Location) error {
+	return l.file.Import(l.prog.AddImport(path, loc))
 }
 
 func (l *pkgTarget) addMainStatement(s ast.Statement) {
@@ -36,9 +40,10 @@ func (l *pkgTarget) addMainStatement(s ast.Statement) {
 }
 
 func (l *pkgTarget) addFuncDef(f *ast.FuncDef) {
-	l.pkg.FuncDefs = append(l.pkg.FuncDefs, f)
+	f.File = l.file
+	l.file.Package.FuncDefs = append(l.file.Package.FuncDefs, f)
 }
 
 func (l *pkgTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
-	l.pkg.ExternalFuncDefs = append(l.pkg.ExternalFuncDefs, f)
+	l.file.Package.ExternalFuncDefs = append(l.file.Package.ExternalFuncDefs, f)
 }

@@ -1,5 +1,5 @@
 package ast
 
 type FuncStatement struct {
-	Func *Func
+	Call Expression // *Func or *Method
 }

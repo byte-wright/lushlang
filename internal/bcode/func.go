@@ -24,5 +24,10 @@ func funcName(namespace, name string) string {
 		return name
 	}
 
-	return namespace + "__" + name
+	return namespace + "_" + name
+}
+
+// Params binds the arguments of a function call to its parameters.
+type Params struct {
+	Vars []*VarValue
 }
