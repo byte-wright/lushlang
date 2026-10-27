@@ -20,6 +20,25 @@ tests:
     expected: |
       hello
 
+  - name: identifiers that look like generated names
+    description: generated variables start with an uppercase letter, identifiers can't
+    code: |
+      func one() int {
+        return 1
+      }
+
+      var_1 = "mine"
+      lsh_i = "mine"
+      lsh_bool_0 = "mine"
+      lsh__funcretparam_0 = "mine"
+      lsh__stdout = "mine"
+      x = one() + 2
+      b = x > 2
+      o, e, c = execVar("echo", "out")
+      println(var_1, lsh_i, lsh_bool_0, lsh__funcretparam_0, lsh__stdout, x, b, o[0])
+    expected: |
+      mine mine mine mine mine 3 true out
+
   - name: env var in function
     code: |
       func env() string {

@@ -16,6 +16,41 @@ tests:
       println(hello, world, num)
     expected: "Hello World 42\n"
 
+  - name: Multi assignment reads all values first
+    description: like in Go, a, b = b, a swaps
+    code: |
+      a, b = 1, 2
+      a, b = b, a
+      println(a, b)
+
+      lines = ["a", "b"]
+      lines, n = append(lines, "c"), len(lines)
+      println(len(lines), n)
+
+      for i, x, y = 0, "x", "y"; i < 3; i, x, y = i + 1, y, x {
+        println(i, x, y)
+      }
+    expected: |
+      2 1
+      3 2
+      0 x y
+      1 y x
+      2 x y
+
+  - name: Blank identifier
+    description: values assigned to _ are dropped, _ isn't a variable
+    code: |
+      func second(_ []string, b string) string {
+        return b
+      }
+
+      _ = "drop"
+      _, _, code = execVar("false")
+      _ = 5
+      println(code, second(["a"], "b"))
+    expected: |
+      1 b
+
   - name: Multi assignment error
     code: |
       hello, world, num = "Hello", "World", 42, true

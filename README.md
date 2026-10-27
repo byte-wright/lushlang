@@ -47,27 +47,27 @@ the compiled bash code:
     function lsh_main_sumGt() {
       local a="${1}"
       local b="${2}"
-      local var_3=$(( "$a" + "$b" ))
-      local var_4="$var_3"
+      local L_t3=$(( "$a" + "$b" ))
+      local L_t4="$L_t3"
       [ "$a" -gt "$b" ]
-      local lsh_i="lsh_bool_$?"
-      local var_5=${!lsh_i}
-      local var_6="$var_5"
-      lsh__funcretparam_0="$var_4"
-      lsh__funcretparam_1="$var_6"
+      local L_i="L_bool_$?"
+      local L_t5=${!L_i}
+      local L_t6="$L_t5"
+      L_ret0="$L_t4"
+      L_ret1="$L_t6"
       return
     }
     function main() {
       lsh_main_sumGt 3 6
-      local var_1="$lsh__funcretparam_0"
-      local var_2="$lsh__funcretparam_1"
-      local s="$var_1"
-      local gt="$var_2"
+      local L_t1="$L_ret0"
+      local L_t2="$L_ret1"
+      local s="$L_t1"
+      local gt="$L_t2"
       lsh__println "$s" "$gt"
     }
 
-    lsh_bool_0=true
-    lsh_bool_1=false
+    L_bool_0=true
+    L_bool_1=false
 
     lsh__println() {
     local i=1

@@ -43,9 +43,11 @@ func (b *bash) translate() {
 
 	b.print("}")
 
+	// generated variables start with L_: identifiers can't start with an uppercase
+	// letter, and none of bash's own variables starts with L_
 	b.print(`
-lsh_bool_0=true
-lsh_bool_1=false
+L_bool_0=true
+L_bool_1=false
 `)
 
 	ufncs := []string{}
@@ -86,7 +88,8 @@ func (b *bash) block(block *bcode.Block) {
 		case *bcode.Func:
 			b.print(b.funcName(cmd) + " " + b.mkFuncParams(cmd))
 			for i, rpn := range cmd.Return {
-				b.print("local " + rpn.Name + "=\"$lsh__funcretparam_" + strconv.Itoa(i) + "\"")
+				ret := &bcode.VarValue{Name: "L_ret" + strconv.Itoa(i), T: rpn.T}
+				b.print("local " + rpn.Name + "=" + b.atom(ret))
 			}
 
 		case *bcode.If:
@@ -110,7 +113,7 @@ func (b *bash) block(block *bcode.Block) {
 
 		case *bcode.Return:
 			for i, val := range cmd.Values {
-				b.print("lsh__funcretparam_" + strconv.Itoa(i) + "=" + b.atom(val))
+				b.print("L_ret" + strconv.Itoa(i) + "=" + b.atom(val))
 			}
 			b.print("return")
 
@@ -126,15 +129,15 @@ func (b *bash) block(block *bcode.Block) {
 			// stderr goes through a file because a process substitution runs in a
 			// subshell and can't set our variables. The exit code must be read
 			// right after the command substitution, local would overwrite $?.
-			b.print("local lsh__stdout lsh__stderr")
-			b.print("lsh__stderr=$(mktemp)")
-			b.print("lsh__stdout=$(" + cmdl + " 2> \"$lsh__stderr\")")
+			b.print("local L_stdout L_stderr")
+			b.print("L_stderr=$(mktemp)")
+			b.print("L_stdout=$(" + cmdl + " 2> \"$L_stderr\")")
 			b.print("local " + cmd.Err.Name + "=$?")
 			b.print("local -a " + cmd.Stdout.Name + " " + cmd.Stderr.Name)
 			// printf instead of <<<, which would turn no output into one empty line
-			b.print("readarray -t " + cmd.Stdout.Name + " < <(printf '%s' \"$lsh__stdout\")")
-			b.print("readarray -t " + cmd.Stderr.Name + " < \"$lsh__stderr\"")
-			b.print("rm -f \"$lsh__stderr\"")
+			b.print("readarray -t " + cmd.Stdout.Name + " < <(printf '%s' \"$L_stdout\")")
+			b.print("readarray -t " + cmd.Stderr.Name + " < \"$L_stderr\"")
+			b.print("rm -f \"$L_stderr\"")
 
 		case *bcode.Params:
 			b.params(cmd.Vars)
@@ -151,11 +154,11 @@ func (b *bash) block(block *bcode.Block) {
 			arr := cmd.Array.(*bcode.VarValue)
 
 			b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
-			b.print(`  local lsh__tmp_array=(` + strings.Join(params, " ") + `)`)
+			b.print(`  local L_tmp_array=(` + strings.Join(params, " ") + `)`)
 			b.print("else")
-			b.print(`  local lsh__tmp_array=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
+			b.print(`  local L_tmp_array=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
 			b.print("fi")
-			b.print("local " + cmd.Target.Name + `=("${lsh__tmp_array[@]}")`)
+			b.print("local " + cmd.Target.Name + `=("${L_tmp_array[@]}")`)
 
 		default:
 			fmt.Printf("no valid statement in bash transpiler %T\n", c)
@@ -189,38 +192,38 @@ func (b *bash) atom(a bcode.Atom) string {
 
 	case *bcode.Equal:
 		b.print("[ " + b.atom(at.Left) + " " + equalOp(at.Left) + " " + b.atom(at.Right) + " ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.NotEqual:
 		b.print("! [ " + b.atom(at.Left) + " " + equalOp(at.Left) + " " + b.atom(at.Right) + " ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.LessThan:
 		b.print("[ " + b.atom(at.Left) + " -lt " + b.atom(at.Right) + " ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.LessThanEqual:
 		b.print("[ " + b.atom(at.Left) + " -le " + b.atom(at.Right) + " ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.GreaterThan:
 		b.print("[ " + b.atom(at.Left) + " -gt " + b.atom(at.Right) + " ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.GreaterThanEqual:
 		b.print("[ " + b.atom(at.Left) + " -ge " + b.atom(at.Right) + " ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.Not:
 		b.print("[ " + b.atom(at.Expression) + " == false ]")
-		b.print("local lsh_i=\"lsh_bool_$?\"")
-		return "${!lsh_i}"
+		b.print("local L_i=\"L_bool_$?\"")
+		return "${!L_i}"
 
 	case *bcode.Slice:
 		switch tp := at.Value.Type().(type) {
@@ -228,7 +231,7 @@ func (b *bash) atom(a bcode.Atom) string {
 			if tp.Type == common.String {
 				b.useFunc("substring")
 				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
-				return "\"$lsh__funcretparam_0\""
+				return "\"$L_ret0\""
 			}
 
 		case *common.ArrayType:
@@ -288,7 +291,7 @@ func (b *bash) params(vars []*bcode.VarValue) {
 		at := strconv.Itoa(pos) + lengths
 
 		if v.Type().IsArray() {
-			length := "lsh__len_" + v.Name
+			length := "L_len_" + v.Name
 			b.print("local " + length + "=\"${@:" + at + ":1}\"")
 			b.print("local " + v.Name + "=(\"${@:" + at + "+1:" + length + "}\")")
 			lengths += "+" + length

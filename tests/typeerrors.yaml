@@ -309,6 +309,18 @@ tests:
       }
     errors:
       - "typeerrors/else if condition must be bool.lsh Ln:2 Col:8 if condition must be of type bool, not int"
+  - name: blank identifier as value
+    code: |
+      _ = 1
+      x = _
+      println(_ + 1)
+      func f(_ int) int {
+        return _
+      }
+    errors:
+      - "typeerrors/blank identifier as value.lsh Ln:2 Col:5 cannot use _ as value"
+      - "typeerrors/blank identifier as value.lsh Ln:3 Col:9 cannot use _ as value"
+      - "typeerrors/blank identifier as value.lsh Ln:5 Col:10 cannot use _ as value"
   - name: variables of if aren't visible in else
     code: |
       if true {

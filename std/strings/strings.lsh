@@ -1,34 +1,34 @@
 
 func hasPrefix(s string, prefix string) bool ```
   if [[ "$s" == "$prefix"* ]]; then
-    lsh__funcretparam_0=true
+    L_ret0=true
   else
-    lsh__funcretparam_0=false
+    L_ret0=false
   fi
 ```
 
 func hasSuffix(s string, suffix string) bool ```
   if [[ "$s" == *"$suffix" ]]; then
-    lsh__funcretparam_0=true
+    L_ret0=true
   else
-    lsh__funcretparam_0=false
+    L_ret0=false
   fi
 ```
 
 func trimPrefix(s string, prefix string) string ```
-  lsh__funcretparam_0="${s#"$prefix"}"
+  L_ret0="${s#"$prefix"}"
 ```
 
 func trimSuffix(s string, suffix string) string ```
-  lsh__funcretparam_0="${s%"$suffix"}"
+  L_ret0="${s%"$suffix"}"
 ```
 
 func indexOf(s string, sub string) int ```
   local pos=$(awk -v a="$s" -v b="$sub" 'BEGIN{print index(a,b)}')
   if [ "$pos" -eq 0 ]; then
-    lsh__funcretparam_0=-1
+    L_ret0=-1
   else
-    lsh__funcretparam_0=$((pos - 1))
+    L_ret0=$((pos - 1))
   fi
 ```
 
@@ -43,5 +43,5 @@ func join(strs []string, sep string) string ```
       v="$v${!di}${!i}"
     fi
   done
-  lsh__funcretparam_0="${v}"
+  L_ret0="${v}"
 ```

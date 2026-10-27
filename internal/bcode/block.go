@@ -65,11 +65,23 @@ func (b *Block) asVar(val Value) *VarValue {
 	return b.setTmp(val)
 }
 
+// identifiers can't start with an uppercase letter, so they never collide with a temp
 func (b *Block) nextTmp(t common.Type) *VarValue {
 	return &VarValue{
-		Name: "var_" + strconv.Itoa(b.tmpVar.nextVar()),
+		Name: "L_t" + strconv.Itoa(b.tmpVar.nextVar()),
 		T:    t,
 	}
+}
+
+// a blank parameter still takes its position in the arguments, so it gets a temp
+func (b *Block) paramVar(name string, t common.Type) *VarValue {
+	if name == "_" {
+		return b.nextTmp(t)
+	}
+
+	v := &VarValue{Name: name, T: t}
+	b.registerVar(v)
+	return v
 }
 
 func (b *Block) registerVar(v *VarValue) {

@@ -71,10 +71,7 @@ func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 
 		for _, p := range fd.Params {
 			params = append(params, &Param{Name: p.Name, Type: p.Type})
-
-			v := &VarValue{Name: p.Name, T: p.Type}
-			block.registerVar(v)
-			paramVars = append(paramVars, v)
+			paramVars = append(paramVars, block.paramVar(p.Name, p.Type))
 		}
 
 		if len(paramVars) > 0 {
@@ -107,10 +104,7 @@ func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFu
 
 		for _, p := range fd.Params {
 			params = append(params, &Param{Name: p.Name, Type: p.Type})
-
-			v := &VarValue{Name: p.Name, T: p.Type}
-			block.registerVar(v)
-			paramVars = append(paramVars, v)
+			paramVars = append(paramVars, block.paramVar(p.Name, p.Type))
 		}
 
 		if len(paramVars) > 0 {
@@ -316,9 +310,9 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		switch x.Name {
 		case "len":
 			val := c.evalExpression(block, x.Parameters[0])
-			return []Value{&Len{
+			return block.setTmps(&Len{
 				Parameter: block.asVar(val[0]),
-			}}
+			})
 
 		case "execVar":
 			vals := c.evalExpressions(block, x.Parameters)
@@ -383,13 +377,26 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 }
 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
+	targets := map[string]bool{}
+	for _, target := range ass.Targets {
+		targets[target.Name] = true
+	}
+
 	results := []Value{}
 	for _, exp := range ass.Expressions {
-		results = append(results, c.evalExpression(b, exp)...)
+		for _, val := range c.evalExpression(b, exp) {
+			// without the copy, a, b = b, a would read a after assigning b to it
+			if v, isVar := val.(*VarValue); isVar && targets[v.Name] {
+				val = b.setTmp(v)
+			}
+			results = append(results, val)
+		}
 	}
 
 	for i, target := range ass.Targets {
-		b.set(&VarValue{Name: target.Name, T: results[i].Type()}, results[i])
+		if target.Name != "_" {
+			b.set(&VarValue{Name: target.Name, T: results[i].Type()}, results[i])
+		}
 	}
 }
 

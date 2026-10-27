@@ -49,6 +49,10 @@ func (t *setTypesPass) BeforeFuncDef(fd *ast.FuncDef) {
 	}
 
 	for _, p := range fd.Params {
+		if p.Name == "_" {
+			continue
+		}
+
 		err := fd.Body.SetVar(p.Name, p.Type)
 		if err != nil {
 			t.errors = append(t.errors, &ast.ASTError{Location: p.Location, Message: err.Error()})
@@ -111,6 +115,10 @@ func (t *setTypesPass) assignment(st *ast.Assignment) {
 	}
 
 	for i, target := range st.Targets {
+		if target.Name == "_" {
+			continue
+		}
+
 		v := t.block.GetVar(target.Name)
 		if v != nil && !known([]common.Type{v.Type, types[i]}) {
 			continue
@@ -133,7 +141,9 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 
 	case *ast.Var:
 		v := t.block.GetVar(exp.Name)
-		if v == nil {
+		if exp.Name == "_" {
+			t.errorf(exp.Location, "cannot use _ as value")
+		} else if v == nil {
 			t.errorf(exp.Location, "variable '%v' is not defined", exp.Name)
 		} else {
 			exp.Type = v.Type

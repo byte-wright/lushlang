@@ -15,7 +15,7 @@ func init() {
 	register(&bFunc{
 		name: "substring",
 		code: `local i2=$(($3-$2))
-lsh__funcretparam_0="${1:$2:$i2}"`,
+L_ret0="${1:$2:$i2}"`,
 	})
 
 	register(&bFunc{

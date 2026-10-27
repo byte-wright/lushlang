@@ -101,6 +101,31 @@ tests:
       3 4
       3 4
 
+  - name: array return values
+    code: |
+      import "strings"
+
+      func words() []string {
+        return ["a", "b c"]
+      }
+
+      func pair() []int, string {
+        return [1, 2, 3], "x"
+      }
+
+      func none() []string {
+        return []string
+      }
+
+      println(len(words()), strings.join(words(), "+"))
+      nums, s = pair()
+      println(len(nums), nums[2], s)
+      println(len(none()))
+    expected: |
+      2 a+b c
+      3 3 x
+      0
+
   - name: builtins as statements
     code: |
       a = [1]
