@@ -7,9 +7,10 @@ import (
 )
 
 type Slice struct {
-	Value *VarValue
-	From  Atom
-	To    Atom
+	Value    *VarValue
+	From     Atom
+	To       Atom
+	Location *common.Location
 }
 
 func (s *Slice) Type() common.Type {
@@ -19,6 +20,7 @@ func (s *Slice) Type() common.Type {
 type Index struct {
 	Value    *VarValue
 	Position Atom
+	Location *common.Location
 }
 
 func (i *Index) Type() common.Type {
@@ -27,6 +29,10 @@ func (i *Index) Type() common.Type {
 	switch tp := t.(type) {
 	case *common.ArrayType:
 		return tp.ElementType
+	case *common.BasicType:
+		if tp.Type == common.String {
+			return tp
+		}
 	}
 
 	panic(fmt.Sprintf("invalid type to index %T", t))

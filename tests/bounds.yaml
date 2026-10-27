@@ -1,0 +1,79 @@
+order: 3
+name: Bounds
+tests:
+  - name: in range
+    description: an index goes from 0 to len - 1, a slice from 0 to len
+    code: |
+      import "strings"
+
+      a = ["x", "y", "z"]
+      s = "hello"
+      i = 1
+      println(a[0], a[len(a) - 1], s[0], s[len(s) - 1])
+      println(strings.join(a[i:], "+"), strings.join(a[i:i], "+") + "|", len(a[3:]))
+      println(s[i:], s[i:i] + "|", s[5:] + "|")
+    expected: |
+      x z h o
+      y+z | 0
+      ello | |
+
+  - name: index past the end
+    description: an index or slice out of range stops the script
+    code: |
+      a = ["x", "y", "z"]
+      println("before")
+      println(a[3])
+      println("after")
+    expected: |
+      before
+    stderr: |
+      bounds/index past the end.lsh Ln:3 Col:9 index out of range [3] with length 3
+    exit: 2
+
+  - name: negative index
+    code: |
+      s = "abc"
+      println(s[-1])
+    stderr: |
+      bounds/negative index.lsh Ln:2 Col:9 index out of range [-1] with length 3
+    exit: 2
+
+  - name: reversed slice
+    code: |
+      a = [1, 2, 3]
+      b = a[2:1]
+    stderr: |
+      bounds/reversed slice.lsh Ln:2 Col:5 slice bounds out of range [2:1] with length 3
+    exit: 2
+
+  - name: slice past the end
+    code: |
+      s = "abc"
+      println(s[1:4])
+    stderr: |
+      bounds/slice past the end.lsh Ln:2 Col:9 slice bounds out of range [1:4] with length 3
+    exit: 2
+
+  - name: indexOf not found
+    description: strings.indexOf gives -1 when it finds nothing, that's no valid slice end
+    code: |
+      import "strings"
+
+      branch = "feature"
+      println(branch[0:strings.indexOf(branch, "-")])
+    stderr: |
+      bounds/indexOf not found.lsh Ln:4 Col:9 slice bounds out of range [0:-1] with length 7
+    exit: 2
+
+  - name: index error in a function
+    description: the error stops the script, not only the function
+    code: |
+      func first(a []string) string {
+        return a[0]
+      }
+
+      println(first([]string))
+      println("after")
+    stderr: |
+      bounds/index error in a function.lsh Ln:2 Col:10 index out of range [0] with length 0
+    exit: 2

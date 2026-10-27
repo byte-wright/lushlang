@@ -444,9 +444,10 @@ func (c *Compiler) evalSlice(block *Block, s *ast.Slice) Atom {
 	}
 
 	return block.setTmp(&Slice{
-		Value: varValue,
-		From:  from,
-		To:    to,
+		Value:    varValue,
+		From:     from,
+		To:       to,
+		Location: s.Location,
 	})
 }
 
@@ -454,17 +455,10 @@ func (c *Compiler) evalIndex(block *Block, s *ast.Index) Atom {
 	value := block.asVar(c.evalExpression(block, s.Value)[0])
 	position := c.evalExpression(block, s.Position)[0]
 
-	if !value.Type().IsArray() {
-		return block.setTmp(&Slice{
-			Value: value,
-			From:  position,
-			To:    block.setTmp(&Add{Left: position, Right: &NumberValue{Value: 1}}),
-		})
-	}
-
 	return block.setTmp(&Index{
 		Value:    value,
 		Position: position,
+		Location: s.Location,
 	})
 }
 

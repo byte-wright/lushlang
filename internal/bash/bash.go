@@ -226,27 +226,29 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!L_i}"
 
 	case *bcode.Slice:
-		switch tp := at.Value.Type().(type) {
-		case *common.BasicType:
-			if tp.Type == common.String {
-				b.useFunc("substring")
-				b.print("lsh__substring " + b.atom(at.Value) + " " + b.atom(at.From) + " " + b.atom(at.To))
-				return "\"$L_ret0\""
-			}
+		from, to := b.atom(at.From), b.atom(at.To)
+		b.useFunc("checkSlice")
+		b.print("lsh__checkSlice " + from + " " + to + " " + length(at.Value) + " " + b.location(at.Location))
 
-		case *common.ArrayType:
-			return "(\"${" + at.Value.Name + "[@]:" + b.atom(at.From) + ":$(( " + b.atom(at.To) + "-" + b.atom(at.From) + " ))}\")"
+		// bash doesn't accept a quoted offset, "${a[@]:"$i"}" is a syntax error
+		bounds := ":$(( " + from + " )):$(( " + to + " - " + from + " ))}"
+		if at.Value.Type().IsArray() {
+			return "(\"${" + at.Value.Name + "[@]" + bounds + "\")"
 		}
-		panic(fmt.Sprintf("invalid slice type %T", at.Value.Type()))
+		return "\"${" + at.Value.Name + bounds + "\""
 
 	case *bcode.Len:
-		if at.Parameter.Type().IsArray() {
-			return "\"${#" + at.Parameter.Name + "[@]}\""
-		}
-		return "\"${#" + at.Parameter.Name + "}\""
+		return length(at.Parameter)
 
 	case *bcode.Index:
-		return "\"${" + at.Value.Name + "[" + b.atom(at.Position) + "]}\""
+		position := b.atom(at.Position)
+		b.useFunc("checkIndex")
+		b.print("lsh__checkIndex " + position + " " + length(at.Value) + " " + b.location(at.Location))
+
+		if at.Value.Type().IsArray() {
+			return "\"${" + at.Value.Name + "[" + position + "]}\""
+		}
+		return "\"${" + at.Value.Name + ":$(( " + position + " )):1}\""
 
 	case *bcode.NumberValue:
 		return strconv.Itoa(at.Value)
@@ -303,6 +305,17 @@ func (b *bash) params(vars []*bcode.VarValue) {
 
 		pos++
 	}
+}
+
+func length(v *bcode.VarValue) string {
+	if v.Type().IsArray() {
+		return "\"${#" + v.Name + "[@]}\""
+	}
+	return "\"${#" + v.Name + "}\""
+}
+
+func (b *bash) location(l *common.Location) string {
+	return b.atom(&bcode.StringValue{Value: l.String()})
 }
 
 // equalOp picks the test operator for == and !=, -eq only accepts integers.

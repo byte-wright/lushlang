@@ -12,10 +12,21 @@ func register(f *bFunc) {
 }
 
 func init() {
+	// both exit with 2, like a panic in Go
 	register(&bFunc{
-		name: "substring",
-		code: `local i2=$(($3-$2))
-L_ret0="${1:$2:$i2}"`,
+		name: "checkIndex",
+		code: `if (( $1 < 0 || $1 >= $2 )); then
+	printf '%s index out of range [%s] with length %s\n' "$3" "$1" "$2" >&2
+	exit 2
+fi`,
+	})
+
+	register(&bFunc{
+		name: "checkSlice",
+		code: `if (( $1 < 0 || $1 > $2 || $2 > $3 )); then
+	printf '%s slice bounds out of range [%s:%s] with length %s\n' "$4" "$1" "$2" "$3" >&2
+	exit 2
+fi`,
 	})
 
 	register(&bFunc{

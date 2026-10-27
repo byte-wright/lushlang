@@ -27,6 +27,8 @@ type Test struct {
 	Only     bool     `json:"only"`
 	Code     string   `json:"code"`
 	Expected string   `json:"expected"`
+	Stderr   string   `json:"stderr"`
+	Exit     int      `json:"exit"`
 	Errors   []string `json:"errors"`
 }
 
@@ -137,7 +139,10 @@ func TestAll(t *testing.T) {
 
 						// Run the command
 						err = cmd.Run()
-						if err != nil {
+						exit := 0
+						if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
+							exit = exitErr.ExitCode()
+						} else if err != nil {
 							t.Fatal(err)
 						}
 
@@ -145,6 +150,8 @@ func TestAll(t *testing.T) {
 						stdout := stdoutBuf.String()
 
 						expect.Value(t, "result", stdout).ToBe(tc.Expected)
+						expect.Value(t, "stderr", stderrBuf.String()).ToBe(tc.Stderr)
+						expect.Value(t, "exit code", exit).ToBe(tc.Exit)
 					})
 				}
 			}
