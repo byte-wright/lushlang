@@ -47,3 +47,16 @@ tests:
       println(env())
     expected: |
       hello
+
+  - name: variables don't hide env vars
+    description: lowercase env vars like http_proxy are valid variable names
+    code: |
+      func env() string {
+        return $lush_test
+      }
+
+      lush_test = "mine"
+      out, _, _ = execVar("printenv", "lush_test")
+      println(lush_test, $lush_test, env(), out[0])
+    expected: |
+      mine env env env

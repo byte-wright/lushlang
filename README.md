@@ -45,11 +45,11 @@ the compiled bash code:
 
     #!/bin/bash
     function lsh_main_sumGt() {
-      local a="${1}"
-      local b="${2}"
-      local L_t3=$(( "$a" + "$b" ))
+      local V_a="${1}"
+      local V_b="${2}"
+      local L_t3=$(( "$V_a" + "$V_b" ))
       local L_t4="$L_t3"
-      [ "$a" -gt "$b" ]
+      [ "$V_a" -gt "$V_b" ]
       local L_i="L_bool_$?"
       local L_t5=${!L_i}
       local L_t6="$L_t5"
@@ -61,9 +61,9 @@ the compiled bash code:
       lsh_main_sumGt 3 6
       local L_t1="$L_ret0"
       local L_t2="$L_ret1"
-      local s="$L_t1"
-      local gt="$L_t2"
-      lsh__println "$s" "$gt"
+      local V_s="$L_t1"
+      local V_gt="$L_t2"
+      lsh__println "$V_s" "$V_gt"
     }
 
     L_bool_0=true

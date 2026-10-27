@@ -127,7 +127,7 @@ func TestAll(t *testing.T) {
 						}
 
 						cmd := exec.Command("bash", file)
-						cmd.Env = append(os.Environ(), "LUSH_TEST=hello")
+						cmd.Env = append(os.Environ(), "LUSH_TEST=hello", "lush_test=env")
 
 						// Create buffers to capture stdout and stderr
 						stdoutBuf := &bytes.Buffer{}

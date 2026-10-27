@@ -73,15 +73,30 @@ func (b *Block) nextTmp(t common.Type) *VarValue {
 	}
 }
 
+// without the prefix, a variable named like an environment variable (http_proxy) would
+// hide it from the functions it calls and from child processes
+func varName(identifier string) string {
+	return "V_" + identifier
+}
+
 // a blank parameter still takes its position in the arguments, so it gets a temp
 func (b *Block) paramVar(name string, t common.Type) *VarValue {
 	if name == "_" {
 		return b.nextTmp(t)
 	}
 
-	v := &VarValue{Name: name, T: t}
+	v := &VarValue{Name: varName(name), T: t}
 	b.registerVar(v)
 	return v
+}
+
+// the bash code of an external function reads its parameters by their names
+func (b *Block) externalParamVar(name string, t common.Type) *VarValue {
+	if name == "_" {
+		return b.nextTmp(t)
+	}
+
+	return &VarValue{Name: name, T: t}
 }
 
 func (b *Block) registerVar(v *VarValue) {

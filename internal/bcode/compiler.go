@@ -104,7 +104,7 @@ func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFu
 
 		for _, p := range fd.Params {
 			params = append(params, &Param{Name: p.Name, Type: p.Type})
-			paramVars = append(paramVars, block.paramVar(p.Name, p.Type))
+			paramVars = append(paramVars, block.externalParamVar(p.Name, p.Type))
 		}
 
 		if len(paramVars) > 0 {
@@ -163,7 +163,7 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		return []Value{&BoolValue{Value: x.Value}}
 
 	case *ast.Var:
-		current := block.getVisibleVar(x.Name)
+		current := block.getVisibleVar(varName(x.Name))
 		if current == nil {
 			panic(fmt.Sprintf("var not defined %v", x.Name))
 		}
@@ -379,7 +379,7 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 	targets := map[string]bool{}
 	for _, target := range ass.Targets {
-		targets[target.Name] = true
+		targets[varName(target.Name)] = true
 	}
 
 	results := []Value{}
@@ -395,7 +395,7 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 
 	for i, target := range ass.Targets {
 		if target.Name != "_" {
-			b.set(&VarValue{Name: target.Name, T: results[i].Type()}, results[i])
+			b.set(&VarValue{Name: varName(target.Name), T: results[i].Type()}, results[i])
 		}
 	}
 }
