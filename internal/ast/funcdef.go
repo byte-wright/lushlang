@@ -11,16 +11,18 @@ type Param struct {
 }
 
 type FuncDef struct {
-	Name    string
-	Params  []*Param
-	Returns []common.Type
-	Body    *Block
-	File    *File
+	Name     string
+	Location *common.Location
+	Params   []*Param
+	Returns  []common.Type
+	Body     *Block
+	File     *File
 }
 
 type ExternalFuncDef struct {
-	Name    string
-	Params  []*Param
-	Returns []common.Type
-	Code    string
+	Name     string
+	Location *common.Location
+	Params   []*Param
+	Returns  []common.Type
+	Code     string
 }

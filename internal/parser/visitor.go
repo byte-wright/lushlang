@@ -134,10 +134,11 @@ func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
 	}
 
 	return &ast.FuncDef{
-		Name:    ctx.ID().GetText(),
-		Params:  params,
-		Returns: returns,
-		Body:    ctx.Block().Accept(v).(*ast.Block),
+		Name:     ctx.ID().GetText(),
+		Location: v.locTk(ctx.ID().GetSymbol()),
+		Params:   params,
+		Returns:  returns,
+		Body:     ctx.Block().Accept(v).(*ast.Block),
 	}
 }
 
@@ -157,10 +158,11 @@ func (v *Visitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) any {
 	code = code[3 : len(code)-3]
 
 	return &ast.ExternalFuncDef{
-		Name:    ctx.ID().GetText(),
-		Params:  params,
-		Returns: returns,
-		Code:    code,
+		Name:     ctx.ID().GetText(),
+		Location: v.locTk(ctx.ID().GetSymbol()),
+		Params:   params,
+		Returns:  returns,
+		Code:     code,
 	}
 }
 
@@ -468,8 +470,9 @@ func (v *Visitor) VisitArray(ctx *ArrayContext) any {
 	}
 
 	return &ast.Array{
-		Values: exps,
-		Type:   tp,
+		Values:   exps,
+		Type:     tp,
+		Location: v.loc(ctx),
 	}
 }
 

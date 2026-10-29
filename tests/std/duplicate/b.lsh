@@ -1,0 +1,7 @@
+func twice() int ```
+  L_ret0=2
+```
+
+func first(a string, a string) string ```
+  L_ret0="$a"
+```

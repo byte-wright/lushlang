@@ -1,0 +1,7 @@
+func len(s string) int {
+  return 42
+}
+
+func size(s string) int {
+  return len(s)
+}

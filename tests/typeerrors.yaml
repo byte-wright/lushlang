@@ -330,3 +330,54 @@ tests:
       }
     errors:
       - "typeerrors/variables of if aren't visible in else.lsh Ln:4 Col:11 variable 'x' is not defined"
+  - name: array elements
+    description: bash arrays can't nest, and an empty array has no element to take the type from
+    code: |
+      a = [1, "x", true]
+      b = [[1, 2], [3]]
+      c = [[]int]
+      d = []
+      e = [1, nope]
+      f = [1, 2, 3]
+    errors:
+      - "typeerrors/array elements.lsh Ln:1 Col:5 array element 2 must be of type int, not string"
+      - "typeerrors/array elements.lsh Ln:2 Col:5 array element 1 can't be of type []int"
+      - "typeerrors/array elements.lsh Ln:3 Col:5 array element 1 can't be of type []int"
+      - "typeerrors/array elements.lsh Ln:4 Col:5 empty array needs an element type, like []int"
+      - "typeerrors/array elements.lsh Ln:5 Col:9 variable 'nope' is not defined"
+  - name: duplicate functions
+    code: |
+      func f() int {
+        return 1
+      }
+      func f() string {
+        return "s"
+      }
+      func g() {
+      }
+      func g() {
+      }
+      println(f())
+    errors:
+      - "typeerrors/duplicate functions.lsh Ln:4 Col:6 function f is already defined at typeerrors/duplicate functions.lsh Ln:1 Col:6"
+      - "typeerrors/duplicate functions.lsh Ln:9 Col:6 function g is already defined at typeerrors/duplicate functions.lsh Ln:7 Col:6"
+  - name: duplicate functions in a package
+    description: the functions of all files of a package and its external functions share one namespace
+    code: |
+      import "/duplicate"
+    errors:
+      - "std/duplicate/b.lsh Ln:1 Col:6 function twice is already defined at std/duplicate/a.lsh Ln:1 Col:6"
+      - "std/duplicate/b.lsh Ln:5 Col:22 parameter a is already defined"
+  - name: duplicate parameters
+    description: a duplicate of another type is only reported once, not also as an assignment
+    code: |
+      func f(a int, a int) int {
+        return a
+      }
+      func g(a int, b string, a string) {
+      }
+      func h(_ int, _ int) {
+      }
+    errors:
+      - "typeerrors/duplicate parameters.lsh Ln:1 Col:15 parameter a is already defined"
+      - "typeerrors/duplicate parameters.lsh Ln:4 Col:25 parameter a is already defined"

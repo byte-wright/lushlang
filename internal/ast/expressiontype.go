@@ -125,6 +125,10 @@ func (s *Array) Types() []common.Type {
 		return tl(&common.ArrayType{ElementType: &common.BasicType{Type: s.Type}})
 	}
 
+	if len(s.Values) == 0 {
+		return noneT
+	}
+
 	return tl(&common.ArrayType{ElementType: s.Values[0].Types()[0]})
 }
 

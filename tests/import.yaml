@@ -85,3 +85,11 @@ tests:
       - import/missing package.lsh Ln:2 Col:1 package "/gone" not found
       - import/missing package.lsh Ln:3 Col:1 package "/../std" not found
       - std/broken/broken.lsh Ln:1 Col:1 package "/missing" not found
+
+  - name: package function shadows a builtin only in its package
+    code: |
+      import "/shadow"
+
+      println(len("abc"), shadow.len("abc"), shadow.size("abc"))
+    expected: |
+      3 42 42

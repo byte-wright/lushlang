@@ -191,3 +191,14 @@ tests:
       println(first([1, 5, 9], 4))
     expected: |
       5
+
+  - name: function shadows a builtin
+    description: like in Go, a function of the package wins over the builtin of the same name
+    code: |
+      func len(s string) int {
+        return 42
+      }
+
+      println(len("abc"))
+    expected: |
+      42

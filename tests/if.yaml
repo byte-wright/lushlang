@@ -65,6 +65,41 @@ tests:
     expected: |
       big small
 
+  - name: ternary with several values in an assignment
+    code: |
+      func pair(a int, b int) int, int {
+        return a, b
+      }
+      a, b = true ? pair(1, 2) : pair(3, 4)
+      c, d = false ? pair(1, 2) : pair(3, 4)
+      println(a, b, c, d)
+    expected: |
+      1 2 3 4
+
+  - name: ternary with several values as arguments
+    code: |
+      func pair(a int, b int) int, int {
+        return a, b
+      }
+      println(true ? pair(1, 2) : pair(3, 4), false ? pair(1, 2) : pair(3, 4))
+    expected: |
+      1 2 3 4
+
+  - name: ternary with several values in a return
+    description: the value after the ternary would take the place of its second value
+    code: |
+      func pair(a int, b int) int, int {
+        return a, b
+      }
+      func pick(first bool) int, int, string {
+        return first ? pair(1, 2) : pair(3, 4), "x"
+      }
+      println(pick(true))
+      println(pick(false))
+    expected: |
+      1 2 x
+      3 4 x
+
   - name: empty if
     code: |
       if 1 < 2 {

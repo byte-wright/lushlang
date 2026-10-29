@@ -35,9 +35,46 @@ func SetTypes(ast *ast.Program) []*ast.ASTError {
 		// Root is visited before the function bodies
 		file: ast.File,
 	}
+
+	te.declarations(ast.Main)
+	for _, pkg := range ast.Packages() {
+		te.declarations(pkg)
+	}
+
 	Visit(ast, te)
 
 	return te.errors
+}
+
+// declarations reports functions and parameters that are defined twice. Calls would be
+// checked against the first one, but in bash the last one wins.
+func (t *setTypesPass) declarations(pkg *ast.Package) {
+	defined := map[string]*common.Location{}
+
+	for _, fd := range pkg.FuncDefs {
+		t.declare(defined, fd.Name, fd.Location, fd.Params)
+	}
+
+	for _, fd := range pkg.ExternalFuncDefs {
+		t.declare(defined, fd.Name, fd.Location, fd.Params)
+	}
+}
+
+func (t *setTypesPass) declare(defined map[string]*common.Location, name string, loc *common.Location, params []*ast.Param) {
+	first := defined[name]
+	if first != nil {
+		t.errorf(loc, "function %v is already defined at %v", name, first)
+	} else {
+		defined[name] = loc
+	}
+
+	seen := map[string]bool{}
+	for _, p := range params {
+		if p.Name != "_" && seen[p.Name] {
+			t.errorf(p.Location, "parameter %v is already defined", p.Name)
+		}
+		seen[p.Name] = true
+	}
 }
 
 func (t *setTypesPass) BeforeFuncDef(fd *ast.FuncDef) {
@@ -49,7 +86,8 @@ func (t *setTypesPass) BeforeFuncDef(fd *ast.FuncDef) {
 	}
 
 	for _, p := range fd.Params {
-		if p.Name == "_" {
+		// a duplicate is already reported by declarations
+		if p.Name == "_" || fd.Body.GetVar(p.Name) != nil {
 			continue
 		}
 
@@ -200,6 +238,39 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 		if known(tt) && known(ft) && !sameTypes(tt, ft) {
 			t.errorf(exp.Location, "ternary branches must have the same type, not %v and %v", printTypes(tt), printTypes(ft))
 		}
+
+	case *ast.Array:
+		t.array(exp)
+	}
+}
+
+// array checks that the elements of a literal share one type that isn't an array, bash
+// arrays can't nest.
+func (t *setTypesPass) array(a *ast.Array) {
+	if a.Type != common.None {
+		return
+	}
+
+	if len(a.Values) == 0 {
+		t.errorf(a.Location, "empty array needs an element type, like []int")
+		return
+	}
+
+	elements := valueTypes(a.Values)
+	if !known(elements) {
+		return
+	}
+
+	for i, el := range elements {
+		if el.IsArray() {
+			t.errorf(a.Location, "array element %v can't be of type %v", i+1, el.Print())
+			return
+		}
+
+		if !el.Is(elements[0]) {
+			t.errorf(a.Location, "array element %v must be of type %v, not %v", i+1, elements[0].Print(), el.Print())
+			return
+		}
 	}
 }
 
@@ -267,11 +338,13 @@ func (t *setTypesPass) call(namespace string, f *ast.Func) {
 }
 
 // returnTypes resolves the function and checks its arguments. Unqualified names are
-// builtins or functions of the caller's own package.
+// functions of the caller's own package or builtins.
 func (t *setTypesPass) returnTypes(namespace, name string, f *ast.Func) []common.Type {
 	args := valueTypes(f.Parameters)
 
-	if namespace == "" {
+	// like in Go, the functions of a package shadow the builtins inside of it
+	_, _, isOwn := findFunc(t.file.Package, f.Name)
+	if namespace == "" && !isOwn {
 		tps, isBuiltin, err := builtin(f.Name, args)
 		if isBuiltin {
 			if err != nil && known(args) {
@@ -429,16 +502,9 @@ func (t *setTypesPass) getFunc(namespace, name string) ([]*ast.Param, []common.T
 		}
 	}
 
-	for _, fd := range pkg.FuncDefs {
-		if fd.Name == name {
-			return fd.Params, fd.Returns, pkg, nil
-		}
-	}
-
-	for _, fd := range pkg.ExternalFuncDefs {
-		if fd.Name == name {
-			return fd.Params, fd.Returns, pkg, nil
-		}
+	params, returns, found := findFunc(pkg, name)
+	if found {
+		return params, returns, pkg, nil
 	}
 
 	if namespace == "" {
@@ -446,6 +512,22 @@ func (t *setTypesPass) getFunc(namespace, name string) ([]*ast.Param, []common.T
 	}
 
 	return nil, nil, nil, fmt.Errorf("function %v in namespace %v not found", name, namespace)
+}
+
+func findFunc(pkg *ast.Package, name string) ([]*ast.Param, []common.Type, bool) {
+	for _, fd := range pkg.FuncDefs {
+		if fd.Name == name {
+			return fd.Params, fd.Returns, true
+		}
+	}
+
+	for _, fd := range pkg.ExternalFuncDefs {
+		if fd.Name == name {
+			return fd.Params, fd.Returns, true
+		}
+	}
+
+	return nil, nil, false
 }
 
 // builtin returns the return types of a builtin function and an error if the arguments

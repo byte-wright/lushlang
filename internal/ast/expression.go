@@ -152,5 +152,6 @@ type Array struct {
 	Values []Expression
 	// Type is set only when declaring an empty array.
 	// Otherwise it needs to be read from the arrays values.
-	Type common.PrimitiveType
+	Type     common.PrimitiveType
+	Location *common.Location
 }

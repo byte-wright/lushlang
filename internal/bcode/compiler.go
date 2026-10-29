@@ -266,41 +266,27 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 
 	case *ast.Ternary:
 		trueBlock := block.subBlock()
-		trueValue := c.evalExpression(trueBlock, x.True)
+		trueValues := c.evalExpression(trueBlock, x.True)
 
 		falseBlock := block.subBlock()
-		falseValue := c.evalExpression(falseBlock, x.False)
+		falseValues := c.evalExpression(falseBlock, x.False)
 
-		v := c.prog.Main.nextTmp(trueValue[0].Type())
+		// the type check guarantees that both branches have the same number of values
+		vars := []Value{}
+		for i := range trueValues {
+			v := block.nextTmp(trueValues[i].Type())
+			trueBlock.add(&Assignment{Var: v, Value: trueValues[i]})
+			falseBlock.add(&Assignment{Var: v, Value: falseValues[i]})
+			vars = append(vars, v)
+		}
 
 		cond := block.setTmp(c.evalExpression(block, x.Condition)[0])
 		notCond := block.setTmp(&Not{Expression: cond})
 
-		ifTrue := &If{
-			Condition: cond,
-			Block:     trueBlock,
-		}
+		block.add(&If{Condition: cond, Block: trueBlock})
+		block.add(&If{Condition: notCond, Block: falseBlock})
 
-		ifTrue.Block.add(&Assignment{
-			Var:   v,
-			Value: trueValue[0],
-		})
-
-		block.add(ifTrue)
-
-		ifFalse := &If{
-			Condition: notCond,
-			Block:     falseBlock,
-		}
-
-		ifFalse.Block.add(&Assignment{
-			Var:   v,
-			Value: falseValue[0],
-		})
-
-		block.add(ifFalse)
-
-		return []Value{v}
+		return vars
 
 	case *ast.Func:
 		if x.Package != nil {
