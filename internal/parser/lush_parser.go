@@ -55,7 +55,7 @@ func lushParserInit() {
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 43, 321, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 43, 322, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15,
 		2, 16, 7, 16, 2, 17, 7, 17, 2, 18, 7, 18, 2, 19, 7, 19, 2, 20, 7, 20, 2,
@@ -78,26 +78,26 @@ func lushParserInit() {
 		12, 3, 12, 202, 8, 12, 1, 12, 1, 12, 1, 13, 1, 13, 1, 13, 1, 13, 3, 13,
 		210, 8, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1,
 		13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13,
-		1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 3, 13, 239, 8,
-		13, 1, 13, 1, 13, 3, 13, 243, 8, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13,
-		1, 13, 5, 13, 251, 8, 13, 10, 13, 12, 13, 254, 9, 13, 1, 14, 1, 14, 1,
-		14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 3, 14, 267,
-		8, 14, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 5, 15, 274, 8, 15, 10, 15, 12,
-		15, 277, 9, 15, 1, 15, 3, 15, 280, 8, 15, 3, 15, 282, 8, 15, 1, 15, 1,
-		15, 1, 16, 1, 16, 1, 17, 1, 17, 1, 18, 1, 18, 1, 19, 1, 19, 1, 20, 1, 20,
-		1, 21, 1, 21, 1, 21, 1, 21, 5, 21, 300, 8, 21, 10, 21, 12, 21, 303, 9,
-		21, 3, 21, 305, 8, 21, 1, 21, 1, 21, 1, 21, 1, 21, 3, 21, 311, 8, 21, 1,
-		22, 1, 22, 1, 22, 1, 22, 3, 22, 317, 8, 22, 1, 23, 1, 23, 1, 23, 0, 1,
-		26, 24, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,
+		1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 3, 13, 236, 8, 13, 1, 13, 1, 13, 3,
+		13, 240, 8, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 5, 13, 248, 8,
+		13, 10, 13, 12, 13, 251, 9, 13, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14,
+		1, 14, 3, 14, 260, 8, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 3,
+		14, 268, 8, 14, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 5, 15, 275, 8, 15, 10,
+		15, 12, 15, 278, 9, 15, 1, 15, 3, 15, 281, 8, 15, 3, 15, 283, 8, 15, 1,
+		15, 1, 15, 1, 16, 1, 16, 1, 17, 1, 17, 1, 18, 1, 18, 1, 19, 1, 19, 1, 20,
+		1, 20, 1, 21, 1, 21, 1, 21, 1, 21, 5, 21, 301, 8, 21, 10, 21, 12, 21, 304,
+		9, 21, 3, 21, 306, 8, 21, 1, 21, 1, 21, 1, 21, 1, 21, 3, 21, 312, 8, 21,
+		1, 22, 1, 22, 1, 22, 1, 22, 3, 22, 318, 8, 22, 1, 23, 1, 23, 1, 23, 0,
+		1, 26, 24, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,
 		34, 36, 38, 40, 42, 44, 46, 0, 6, 1, 0, 15, 16, 1, 0, 18, 20, 1, 0, 16,
-		17, 1, 0, 21, 26, 1, 0, 3, 4, 1, 0, 8, 10, 348, 0, 51, 1, 0, 0, 0, 2, 66,
+		17, 1, 0, 21, 26, 1, 0, 3, 4, 1, 0, 8, 10, 349, 0, 51, 1, 0, 0, 0, 2, 66,
 		1, 0, 0, 0, 4, 78, 1, 0, 0, 0, 6, 86, 1, 0, 0, 0, 8, 88, 1, 0, 0, 0, 10,
 		114, 1, 0, 0, 0, 12, 140, 1, 0, 0, 0, 14, 143, 1, 0, 0, 0, 16, 153, 1,
 		0, 0, 0, 18, 161, 1, 0, 0, 0, 20, 173, 1, 0, 0, 0, 22, 182, 1, 0, 0, 0,
-		24, 201, 1, 0, 0, 0, 26, 209, 1, 0, 0, 0, 28, 266, 1, 0, 0, 0, 30, 268,
-		1, 0, 0, 0, 32, 285, 1, 0, 0, 0, 34, 287, 1, 0, 0, 0, 36, 289, 1, 0, 0,
-		0, 38, 291, 1, 0, 0, 0, 40, 293, 1, 0, 0, 0, 42, 310, 1, 0, 0, 0, 44, 316,
-		1, 0, 0, 0, 46, 318, 1, 0, 0, 0, 48, 50, 3, 4, 2, 0, 49, 48, 1, 0, 0, 0,
+		24, 201, 1, 0, 0, 0, 26, 209, 1, 0, 0, 0, 28, 267, 1, 0, 0, 0, 30, 269,
+		1, 0, 0, 0, 32, 286, 1, 0, 0, 0, 34, 288, 1, 0, 0, 0, 36, 290, 1, 0, 0,
+		0, 38, 292, 1, 0, 0, 0, 40, 294, 1, 0, 0, 0, 42, 311, 1, 0, 0, 0, 44, 317,
+		1, 0, 0, 0, 46, 319, 1, 0, 0, 0, 48, 50, 3, 4, 2, 0, 49, 48, 1, 0, 0, 0,
 		50, 53, 1, 0, 0, 0, 51, 49, 1, 0, 0, 0, 51, 52, 1, 0, 0, 0, 52, 58, 1,
 		0, 0, 0, 53, 51, 1, 0, 0, 0, 54, 57, 3, 6, 3, 0, 55, 57, 3, 8, 4, 0, 56,
 		54, 1, 0, 0, 0, 56, 55, 1, 0, 0, 0, 57, 60, 1, 0, 0, 0, 58, 56, 1, 0, 0,
@@ -154,51 +154,51 @@ func lushParserInit() {
 		201, 202, 1, 0, 0, 0, 202, 203, 1, 0, 0, 0, 203, 204, 3, 30, 15, 0, 204,
 		25, 1, 0, 0, 0, 205, 206, 6, 13, -1, 0, 206, 210, 3, 28, 14, 0, 207, 208,
 		7, 0, 0, 0, 208, 210, 3, 26, 13, 9, 209, 205, 1, 0, 0, 0, 209, 207, 1,
-		0, 0, 0, 210, 252, 1, 0, 0, 0, 211, 212, 10, 6, 0, 0, 212, 213, 7, 1, 0,
-		0, 213, 251, 3, 26, 13, 7, 214, 215, 10, 5, 0, 0, 215, 216, 7, 2, 0, 0,
-		216, 251, 3, 26, 13, 6, 217, 218, 10, 4, 0, 0, 218, 219, 7, 3, 0, 0, 219,
-		251, 3, 26, 13, 5, 220, 221, 10, 3, 0, 0, 221, 222, 5, 13, 0, 0, 222, 251,
-		3, 26, 13, 4, 223, 224, 10, 2, 0, 0, 224, 225, 5, 14, 0, 0, 225, 251, 3,
+		0, 0, 0, 210, 249, 1, 0, 0, 0, 211, 212, 10, 6, 0, 0, 212, 213, 7, 1, 0,
+		0, 213, 248, 3, 26, 13, 7, 214, 215, 10, 5, 0, 0, 215, 216, 7, 2, 0, 0,
+		216, 248, 3, 26, 13, 6, 217, 218, 10, 4, 0, 0, 218, 219, 7, 3, 0, 0, 219,
+		248, 3, 26, 13, 5, 220, 221, 10, 3, 0, 0, 221, 222, 5, 13, 0, 0, 222, 248,
+		3, 26, 13, 4, 223, 224, 10, 2, 0, 0, 224, 225, 5, 14, 0, 0, 225, 248, 3,
 		26, 13, 3, 226, 227, 10, 1, 0, 0, 227, 228, 5, 34, 0, 0, 228, 229, 3, 26,
-		13, 0, 229, 230, 5, 35, 0, 0, 230, 231, 3, 26, 13, 2, 231, 251, 1, 0, 0,
-		0, 232, 233, 10, 10, 0, 0, 233, 234, 5, 37, 0, 0, 234, 251, 3, 30, 15,
-		0, 235, 236, 10, 8, 0, 0, 236, 238, 5, 31, 0, 0, 237, 239, 3, 26, 13, 0,
-		238, 237, 1, 0, 0, 0, 238, 239, 1, 0, 0, 0, 239, 240, 1, 0, 0, 0, 240,
-		242, 5, 35, 0, 0, 241, 243, 3, 26, 13, 0, 242, 241, 1, 0, 0, 0, 242, 243,
-		1, 0, 0, 0, 243, 244, 1, 0, 0, 0, 244, 251, 5, 32, 0, 0, 245, 246, 10,
-		7, 0, 0, 246, 247, 5, 31, 0, 0, 247, 248, 3, 26, 13, 0, 248, 249, 5, 32,
-		0, 0, 249, 251, 1, 0, 0, 0, 250, 211, 1, 0, 0, 0, 250, 214, 1, 0, 0, 0,
-		250, 217, 1, 0, 0, 0, 250, 220, 1, 0, 0, 0, 250, 223, 1, 0, 0, 0, 250,
-		226, 1, 0, 0, 0, 250, 232, 1, 0, 0, 0, 250, 235, 1, 0, 0, 0, 250, 245,
-		1, 0, 0, 0, 251, 254, 1, 0, 0, 0, 252, 250, 1, 0, 0, 0, 252, 253, 1, 0,
-		0, 0, 253, 27, 1, 0, 0, 0, 254, 252, 1, 0, 0, 0, 255, 267, 3, 36, 18, 0,
-		256, 267, 3, 38, 19, 0, 257, 267, 3, 40, 20, 0, 258, 267, 3, 34, 17, 0,
-		259, 267, 3, 32, 16, 0, 260, 267, 3, 30, 15, 0, 261, 262, 5, 27, 0, 0,
-		262, 263, 3, 26, 13, 0, 263, 264, 5, 28, 0, 0, 264, 267, 1, 0, 0, 0, 265,
-		267, 3, 42, 21, 0, 266, 255, 1, 0, 0, 0, 266, 256, 1, 0, 0, 0, 266, 257,
-		1, 0, 0, 0, 266, 258, 1, 0, 0, 0, 266, 259, 1, 0, 0, 0, 266, 260, 1, 0,
-		0, 0, 266, 261, 1, 0, 0, 0, 266, 265, 1, 0, 0, 0, 267, 29, 1, 0, 0, 0,
-		268, 269, 5, 39, 0, 0, 269, 281, 5, 27, 0, 0, 270, 275, 3, 26, 13, 0, 271,
-		272, 5, 33, 0, 0, 272, 274, 3, 26, 13, 0, 273, 271, 1, 0, 0, 0, 274, 277,
-		1, 0, 0, 0, 275, 273, 1, 0, 0, 0, 275, 276, 1, 0, 0, 0, 276, 279, 1, 0,
-		0, 0, 277, 275, 1, 0, 0, 0, 278, 280, 5, 33, 0, 0, 279, 278, 1, 0, 0, 0,
-		279, 280, 1, 0, 0, 0, 280, 282, 1, 0, 0, 0, 281, 270, 1, 0, 0, 0, 281,
-		282, 1, 0, 0, 0, 282, 283, 1, 0, 0, 0, 283, 284, 5, 28, 0, 0, 284, 31,
-		1, 0, 0, 0, 285, 286, 5, 39, 0, 0, 286, 33, 1, 0, 0, 0, 287, 288, 5, 38,
-		0, 0, 288, 35, 1, 0, 0, 0, 289, 290, 5, 41, 0, 0, 290, 37, 1, 0, 0, 0,
-		291, 292, 5, 42, 0, 0, 292, 39, 1, 0, 0, 0, 293, 294, 7, 4, 0, 0, 294,
-		41, 1, 0, 0, 0, 295, 304, 5, 31, 0, 0, 296, 301, 3, 26, 13, 0, 297, 298,
-		5, 33, 0, 0, 298, 300, 3, 26, 13, 0, 299, 297, 1, 0, 0, 0, 300, 303, 1,
-		0, 0, 0, 301, 299, 1, 0, 0, 0, 301, 302, 1, 0, 0, 0, 302, 305, 1, 0, 0,
-		0, 303, 301, 1, 0, 0, 0, 304, 296, 1, 0, 0, 0, 304, 305, 1, 0, 0, 0, 305,
-		306, 1, 0, 0, 0, 306, 311, 5, 32, 0, 0, 307, 308, 5, 31, 0, 0, 308, 309,
-		5, 32, 0, 0, 309, 311, 3, 46, 23, 0, 310, 295, 1, 0, 0, 0, 310, 307, 1,
-		0, 0, 0, 311, 43, 1, 0, 0, 0, 312, 317, 3, 46, 23, 0, 313, 314, 5, 31,
-		0, 0, 314, 315, 5, 32, 0, 0, 315, 317, 3, 44, 22, 0, 316, 312, 1, 0, 0,
-		0, 316, 313, 1, 0, 0, 0, 317, 45, 1, 0, 0, 0, 318, 319, 7, 5, 0, 0, 319,
-		47, 1, 0, 0, 0, 36, 51, 56, 58, 66, 71, 73, 86, 96, 99, 107, 110, 122,
-		125, 133, 136, 149, 151, 168, 171, 177, 187, 196, 201, 209, 238, 242, 250,
-		252, 266, 275, 279, 281, 301, 304, 310, 316,
+		13, 0, 229, 230, 5, 35, 0, 0, 230, 231, 3, 26, 13, 2, 231, 248, 1, 0, 0,
+		0, 232, 233, 10, 8, 0, 0, 233, 235, 5, 31, 0, 0, 234, 236, 3, 26, 13, 0,
+		235, 234, 1, 0, 0, 0, 235, 236, 1, 0, 0, 0, 236, 237, 1, 0, 0, 0, 237,
+		239, 5, 35, 0, 0, 238, 240, 3, 26, 13, 0, 239, 238, 1, 0, 0, 0, 239, 240,
+		1, 0, 0, 0, 240, 241, 1, 0, 0, 0, 241, 248, 5, 32, 0, 0, 242, 243, 10,
+		7, 0, 0, 243, 244, 5, 31, 0, 0, 244, 245, 3, 26, 13, 0, 245, 246, 5, 32,
+		0, 0, 246, 248, 1, 0, 0, 0, 247, 211, 1, 0, 0, 0, 247, 214, 1, 0, 0, 0,
+		247, 217, 1, 0, 0, 0, 247, 220, 1, 0, 0, 0, 247, 223, 1, 0, 0, 0, 247,
+		226, 1, 0, 0, 0, 247, 232, 1, 0, 0, 0, 247, 242, 1, 0, 0, 0, 248, 251,
+		1, 0, 0, 0, 249, 247, 1, 0, 0, 0, 249, 250, 1, 0, 0, 0, 250, 27, 1, 0,
+		0, 0, 251, 249, 1, 0, 0, 0, 252, 268, 3, 36, 18, 0, 253, 268, 3, 38, 19,
+		0, 254, 268, 3, 40, 20, 0, 255, 268, 3, 34, 17, 0, 256, 268, 3, 32, 16,
+		0, 257, 258, 5, 39, 0, 0, 258, 260, 5, 37, 0, 0, 259, 257, 1, 0, 0, 0,
+		259, 260, 1, 0, 0, 0, 260, 261, 1, 0, 0, 0, 261, 268, 3, 30, 15, 0, 262,
+		263, 5, 27, 0, 0, 263, 264, 3, 26, 13, 0, 264, 265, 5, 28, 0, 0, 265, 268,
+		1, 0, 0, 0, 266, 268, 3, 42, 21, 0, 267, 252, 1, 0, 0, 0, 267, 253, 1,
+		0, 0, 0, 267, 254, 1, 0, 0, 0, 267, 255, 1, 0, 0, 0, 267, 256, 1, 0, 0,
+		0, 267, 259, 1, 0, 0, 0, 267, 262, 1, 0, 0, 0, 267, 266, 1, 0, 0, 0, 268,
+		29, 1, 0, 0, 0, 269, 270, 5, 39, 0, 0, 270, 282, 5, 27, 0, 0, 271, 276,
+		3, 26, 13, 0, 272, 273, 5, 33, 0, 0, 273, 275, 3, 26, 13, 0, 274, 272,
+		1, 0, 0, 0, 275, 278, 1, 0, 0, 0, 276, 274, 1, 0, 0, 0, 276, 277, 1, 0,
+		0, 0, 277, 280, 1, 0, 0, 0, 278, 276, 1, 0, 0, 0, 279, 281, 5, 33, 0, 0,
+		280, 279, 1, 0, 0, 0, 280, 281, 1, 0, 0, 0, 281, 283, 1, 0, 0, 0, 282,
+		271, 1, 0, 0, 0, 282, 283, 1, 0, 0, 0, 283, 284, 1, 0, 0, 0, 284, 285,
+		5, 28, 0, 0, 285, 31, 1, 0, 0, 0, 286, 287, 5, 39, 0, 0, 287, 33, 1, 0,
+		0, 0, 288, 289, 5, 38, 0, 0, 289, 35, 1, 0, 0, 0, 290, 291, 5, 41, 0, 0,
+		291, 37, 1, 0, 0, 0, 292, 293, 5, 42, 0, 0, 293, 39, 1, 0, 0, 0, 294, 295,
+		7, 4, 0, 0, 295, 41, 1, 0, 0, 0, 296, 305, 5, 31, 0, 0, 297, 302, 3, 26,
+		13, 0, 298, 299, 5, 33, 0, 0, 299, 301, 3, 26, 13, 0, 300, 298, 1, 0, 0,
+		0, 301, 304, 1, 0, 0, 0, 302, 300, 1, 0, 0, 0, 302, 303, 1, 0, 0, 0, 303,
+		306, 1, 0, 0, 0, 304, 302, 1, 0, 0, 0, 305, 297, 1, 0, 0, 0, 305, 306,
+		1, 0, 0, 0, 306, 307, 1, 0, 0, 0, 307, 312, 5, 32, 0, 0, 308, 309, 5, 31,
+		0, 0, 309, 310, 5, 32, 0, 0, 310, 312, 3, 46, 23, 0, 311, 296, 1, 0, 0,
+		0, 311, 308, 1, 0, 0, 0, 312, 43, 1, 0, 0, 0, 313, 318, 3, 46, 23, 0, 314,
+		315, 5, 31, 0, 0, 315, 316, 5, 32, 0, 0, 316, 318, 3, 46, 23, 0, 317, 313,
+		1, 0, 0, 0, 317, 314, 1, 0, 0, 0, 318, 45, 1, 0, 0, 0, 319, 320, 7, 5,
+		0, 0, 320, 47, 1, 0, 0, 0, 37, 51, 56, 58, 66, 71, 73, 86, 96, 99, 107,
+		110, 122, 125, 133, 136, 149, 151, 168, 171, 177, 187, 196, 201, 209, 235,
+		239, 247, 249, 259, 267, 276, 280, 282, 302, 305, 311, 317,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -3290,8 +3290,6 @@ type IExpressionContext interface {
 	LOR() antlr.TerminalNode
 	QUESTION() antlr.TerminalNode
 	COLON() antlr.TerminalNode
-	DOT() antlr.TerminalNode
-	Func_() IFuncContext
 	LSQ() antlr.TerminalNode
 	RSQ() antlr.TerminalNode
 
@@ -3502,26 +3500,6 @@ func (s *ExpressionContext) COLON() antlr.TerminalNode {
 	return s.GetToken(LushParserCOLON, 0)
 }
 
-func (s *ExpressionContext) DOT() antlr.TerminalNode {
-	return s.GetToken(LushParserDOT, 0)
-}
-
-func (s *ExpressionContext) Func_() IFuncContext {
-	var t antlr.RuleContext
-	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IFuncContext); ok {
-			t = ctx.(antlr.RuleContext)
-			break
-		}
-	}
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(IFuncContext)
-}
-
 func (s *ExpressionContext) LSQ() antlr.TerminalNode {
 	return s.GetToken(LushParserLSQ, 0)
 }
@@ -3608,7 +3586,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 		goto errorExit
 	}
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
-	p.SetState(252)
+	p.SetState(249)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -3623,7 +3601,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.TriggerExitRuleEvent()
 			}
 			_prevctx = localctx
-			p.SetState(250)
+			p.SetState(247)
 			p.GetErrorHandler().Sync(p)
 			if p.HasError() {
 				goto errorExit
@@ -3807,45 +3785,23 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 
 			case 7:
 				localctx = NewExpressionContext(p, _parentctx, _parentState)
-				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
-				p.SetState(232)
-
-				if !(p.Precpred(p.GetParserRuleContext(), 10)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 10)", ""))
-					goto errorExit
-				}
-				{
-					p.SetState(233)
-					p.Match(LushParserDOT)
-					if p.HasError() {
-						// Recognition error - abort rule
-						goto errorExit
-					}
-				}
-				{
-					p.SetState(234)
-					p.Func_()
-				}
-
-			case 8:
-				localctx = NewExpressionContext(p, _parentctx, _parentState)
 				localctx.(*ExpressionContext).slice = _prevctx
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
-				p.SetState(235)
+				p.SetState(232)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
 					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
 					goto errorExit
 				}
 				{
-					p.SetState(236)
+					p.SetState(233)
 					p.Match(LushParserLSQ)
 					if p.HasError() {
 						// Recognition error - abort rule
 						goto errorExit
 					}
 				}
-				p.SetState(238)
+				p.SetState(235)
 				p.GetErrorHandler().Sync(p)
 				if p.HasError() {
 					goto errorExit
@@ -3854,7 +3810,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 
 				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7423985287192) != 0 {
 					{
-						p.SetState(237)
+						p.SetState(234)
 
 						var _x = p.expression(0)
 
@@ -3863,14 +3819,14 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 
 				}
 				{
-					p.SetState(240)
+					p.SetState(237)
 					p.Match(LushParserCOLON)
 					if p.HasError() {
 						// Recognition error - abort rule
 						goto errorExit
 					}
 				}
-				p.SetState(242)
+				p.SetState(239)
 				p.GetErrorHandler().Sync(p)
 				if p.HasError() {
 					goto errorExit
@@ -3879,7 +3835,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 
 				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7423985287192) != 0 {
 					{
-						p.SetState(241)
+						p.SetState(238)
 
 						var _x = p.expression(0)
 
@@ -3888,7 +3844,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 
 				}
 				{
-					p.SetState(244)
+					p.SetState(241)
 					p.Match(LushParserRSQ)
 					if p.HasError() {
 						// Recognition error - abort rule
@@ -3896,18 +3852,18 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 					}
 				}
 
-			case 9:
+			case 8:
 				localctx = NewExpressionContext(p, _parentctx, _parentState)
 				localctx.(*ExpressionContext).index = _prevctx
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
-				p.SetState(245)
+				p.SetState(242)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 7)) {
 					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
 					goto errorExit
 				}
 				{
-					p.SetState(246)
+					p.SetState(243)
 					p.Match(LushParserLSQ)
 					if p.HasError() {
 						// Recognition error - abort rule
@@ -3915,14 +3871,14 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 					}
 				}
 				{
-					p.SetState(247)
+					p.SetState(244)
 
 					var _x = p.expression(0)
 
 					localctx.(*ExpressionContext).position = _x
 				}
 				{
-					p.SetState(248)
+					p.SetState(245)
 					p.Match(LushParserRSQ)
 					if p.HasError() {
 						// Recognition error - abort rule
@@ -3935,7 +3891,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 			}
 
 		}
-		p.SetState(254)
+		p.SetState(251)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -3966,6 +3922,12 @@ type IAtomContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// GetNamespace returns the namespace token.
+	GetNamespace() antlr.Token
+
+	// SetNamespace sets the namespace token.
+	SetNamespace(antlr.Token)
+
 	// GetGroup returns the group rule contexts.
 	GetGroup() IExpressionContext
 
@@ -3979,6 +3941,8 @@ type IAtomContext interface {
 	EnvVar() IEnvVarContext
 	Var_() IVarContext
 	Func_() IFuncContext
+	DOT() antlr.TerminalNode
+	ID() antlr.TerminalNode
 	LPAREN() antlr.TerminalNode
 	RPAREN() antlr.TerminalNode
 	Expression() IExpressionContext
@@ -3990,8 +3954,9 @@ type IAtomContext interface {
 
 type AtomContext struct {
 	antlr.BaseParserRuleContext
-	parser antlr.Parser
-	group  IExpressionContext
+	parser    antlr.Parser
+	namespace antlr.Token
+	group     IExpressionContext
 }
 
 func NewEmptyAtomContext() *AtomContext {
@@ -4020,6 +3985,10 @@ func NewAtomContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokin
 }
 
 func (s *AtomContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *AtomContext) GetNamespace() antlr.Token { return s.namespace }
+
+func (s *AtomContext) SetNamespace(v antlr.Token) { s.namespace = v }
 
 func (s *AtomContext) GetGroup() IExpressionContext { return s.group }
 
@@ -4121,6 +4090,14 @@ func (s *AtomContext) Func_() IFuncContext {
 	return t.(IFuncContext)
 }
 
+func (s *AtomContext) DOT() antlr.TerminalNode {
+	return s.GetToken(LushParserDOT, 0)
+}
+
+func (s *AtomContext) ID() antlr.TerminalNode {
+	return s.GetToken(LushParserID, 0)
+}
+
 func (s *AtomContext) LPAREN() antlr.TerminalNode {
 	return s.GetToken(LushParserLPAREN, 0)
 }
@@ -4182,59 +4159,86 @@ func (s *AtomContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 func (p *LushParser) Atom() (localctx IAtomContext) {
 	localctx = NewAtomContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 28, LushParserRULE_atom)
-	p.SetState(266)
+	p.SetState(267)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 
-	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 28, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 29, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(255)
+			p.SetState(252)
 			p.String_()
 		}
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(256)
+			p.SetState(253)
 			p.Number()
 		}
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(257)
+			p.SetState(254)
 			p.Bool_()
 		}
 
 	case 4:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(258)
+			p.SetState(255)
 			p.EnvVar()
 		}
 
 	case 5:
 		p.EnterOuterAlt(localctx, 5)
 		{
-			p.SetState(259)
+			p.SetState(256)
 			p.Var_()
 		}
 
 	case 6:
 		p.EnterOuterAlt(localctx, 6)
+		p.SetState(259)
+		p.GetErrorHandler().Sync(p)
+
+		if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 28, p.GetParserRuleContext()) == 1 {
+			{
+				p.SetState(257)
+
+				var _m = p.Match(LushParserID)
+
+				localctx.(*AtomContext).namespace = _m
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
+			}
+			{
+				p.SetState(258)
+				p.Match(LushParserDOT)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
+			}
+
+		} else if p.HasError() { // JIM
+			goto errorExit
+		}
 		{
-			p.SetState(260)
+			p.SetState(261)
 			p.Func_()
 		}
 
 	case 7:
 		p.EnterOuterAlt(localctx, 7)
 		{
-			p.SetState(261)
+			p.SetState(262)
 			p.Match(LushParserLPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -4242,14 +4246,14 @@ func (p *LushParser) Atom() (localctx IAtomContext) {
 			}
 		}
 		{
-			p.SetState(262)
+			p.SetState(263)
 
 			var _x = p.expression(0)
 
 			localctx.(*AtomContext).group = _x
 		}
 		{
-			p.SetState(263)
+			p.SetState(264)
 			p.Match(LushParserRPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -4260,7 +4264,7 @@ func (p *LushParser) Atom() (localctx IAtomContext) {
 	case 8:
 		p.EnterOuterAlt(localctx, 8)
 		{
-			p.SetState(265)
+			p.SetState(266)
 			p.Array()
 		}
 
@@ -4421,7 +4425,7 @@ func (p *LushParser) Func_() (localctx IFuncContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(268)
+		p.SetState(269)
 		p.Match(LushParserID)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -4429,14 +4433,14 @@ func (p *LushParser) Func_() (localctx IFuncContext) {
 		}
 	}
 	{
-		p.SetState(269)
+		p.SetState(270)
 		p.Match(LushParserLPAREN)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
 	}
-	p.SetState(281)
+	p.SetState(282)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -4445,22 +4449,22 @@ func (p *LushParser) Func_() (localctx IFuncContext) {
 
 	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7423985287192) != 0 {
 		{
-			p.SetState(270)
+			p.SetState(271)
 			p.expression(0)
 		}
-		p.SetState(275)
+		p.SetState(276)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
 		}
-		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 29, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 30, p.GetParserRuleContext())
 		if p.HasError() {
 			goto errorExit
 		}
 		for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1 {
 				{
-					p.SetState(271)
+					p.SetState(272)
 					p.Match(LushParserCOMMA)
 					if p.HasError() {
 						// Recognition error - abort rule
@@ -4468,22 +4472,22 @@ func (p *LushParser) Func_() (localctx IFuncContext) {
 					}
 				}
 				{
-					p.SetState(272)
+					p.SetState(273)
 					p.expression(0)
 				}
 
 			}
-			p.SetState(277)
+			p.SetState(278)
 			p.GetErrorHandler().Sync(p)
 			if p.HasError() {
 				goto errorExit
 			}
-			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 29, p.GetParserRuleContext())
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 30, p.GetParserRuleContext())
 			if p.HasError() {
 				goto errorExit
 			}
 		}
-		p.SetState(279)
+		p.SetState(280)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -4492,7 +4496,7 @@ func (p *LushParser) Func_() (localctx IFuncContext) {
 
 		if _la == LushParserCOMMA {
 			{
-				p.SetState(278)
+				p.SetState(279)
 				p.Match(LushParserCOMMA)
 				if p.HasError() {
 					// Recognition error - abort rule
@@ -4504,7 +4508,7 @@ func (p *LushParser) Func_() (localctx IFuncContext) {
 
 	}
 	{
-		p.SetState(283)
+		p.SetState(284)
 		p.Match(LushParserRPAREN)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -4598,7 +4602,7 @@ func (p *LushParser) Var_() (localctx IVarContext) {
 	p.EnterRule(localctx, 32, LushParserRULE_var)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(285)
+		p.SetState(286)
 		p.Match(LushParserID)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -4692,7 +4696,7 @@ func (p *LushParser) EnvVar() (localctx IEnvVarContext) {
 	p.EnterRule(localctx, 34, LushParserRULE_envVar)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(287)
+		p.SetState(288)
 		p.Match(LushParserENVVAR)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -4786,7 +4790,7 @@ func (p *LushParser) String_() (localctx IStringContext) {
 	p.EnterRule(localctx, 36, LushParserRULE_string)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(289)
+		p.SetState(290)
 		p.Match(LushParserSTRING)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -4880,7 +4884,7 @@ func (p *LushParser) Number() (localctx INumberContext) {
 	p.EnterRule(localctx, 38, LushParserRULE_number)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(291)
+		p.SetState(292)
 		p.Match(LushParserNUMBER)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -4981,7 +4985,7 @@ func (p *LushParser) Bool_() (localctx IBoolContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(293)
+		p.SetState(294)
 		_la = p.GetTokenStream().LA(1)
 
 		if !(_la == LushParserTRUE || _la == LushParserFALSE) {
@@ -5153,24 +5157,24 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 	p.EnterRule(localctx, 42, LushParserRULE_array)
 	var _la int
 
-	p.SetState(310)
+	p.SetState(311)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 
-	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 34, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 35, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(295)
+			p.SetState(296)
 			p.Match(LushParserLSQ)
 			if p.HasError() {
 				// Recognition error - abort rule
 				goto errorExit
 			}
 		}
-		p.SetState(304)
+		p.SetState(305)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -5179,10 +5183,10 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 
 		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7423985287192) != 0 {
 			{
-				p.SetState(296)
+				p.SetState(297)
 				p.expression(0)
 			}
-			p.SetState(301)
+			p.SetState(302)
 			p.GetErrorHandler().Sync(p)
 			if p.HasError() {
 				goto errorExit
@@ -5191,7 +5195,7 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 
 			for _la == LushParserCOMMA {
 				{
-					p.SetState(297)
+					p.SetState(298)
 					p.Match(LushParserCOMMA)
 					if p.HasError() {
 						// Recognition error - abort rule
@@ -5199,11 +5203,11 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 					}
 				}
 				{
-					p.SetState(298)
+					p.SetState(299)
 					p.expression(0)
 				}
 
-				p.SetState(303)
+				p.SetState(304)
 				p.GetErrorHandler().Sync(p)
 				if p.HasError() {
 					goto errorExit
@@ -5213,7 +5217,7 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 
 		}
 		{
-			p.SetState(306)
+			p.SetState(307)
 			p.Match(LushParserRSQ)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -5224,7 +5228,7 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(307)
+			p.SetState(308)
 			p.Match(LushParserLSQ)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -5232,7 +5236,7 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 			}
 		}
 		{
-			p.SetState(308)
+			p.SetState(309)
 			p.Match(LushParserRSQ)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -5240,7 +5244,7 @@ func (p *LushParser) Array() (localctx IArrayContext) {
 			}
 		}
 		{
-			p.SetState(309)
+			p.SetState(310)
 			p.PrimitiveType()
 		}
 
@@ -5269,16 +5273,15 @@ type ITypeContext interface {
 	GetParser() antlr.Parser
 
 	// GetArrayType returns the arrayType rule contexts.
-	GetArrayType() ITypeContext
+	GetArrayType() IPrimitiveTypeContext
 
 	// SetArrayType sets the arrayType rule contexts.
-	SetArrayType(ITypeContext)
+	SetArrayType(IPrimitiveTypeContext)
 
 	// Getter signatures
 	PrimitiveType() IPrimitiveTypeContext
 	LSQ() antlr.TerminalNode
 	RSQ() antlr.TerminalNode
-	Type_() ITypeContext
 
 	// IsTypeContext differentiates from other interfaces.
 	IsTypeContext()
@@ -5287,7 +5290,7 @@ type ITypeContext interface {
 type TypeContext struct {
 	antlr.BaseParserRuleContext
 	parser    antlr.Parser
-	arrayType ITypeContext
+	arrayType IPrimitiveTypeContext
 }
 
 func NewEmptyTypeContext() *TypeContext {
@@ -5317,9 +5320,9 @@ func NewTypeContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokin
 
 func (s *TypeContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *TypeContext) GetArrayType() ITypeContext { return s.arrayType }
+func (s *TypeContext) GetArrayType() IPrimitiveTypeContext { return s.arrayType }
 
-func (s *TypeContext) SetArrayType(v ITypeContext) { s.arrayType = v }
+func (s *TypeContext) SetArrayType(v IPrimitiveTypeContext) { s.arrayType = v }
 
 func (s *TypeContext) PrimitiveType() IPrimitiveTypeContext {
 	var t antlr.RuleContext
@@ -5345,22 +5348,6 @@ func (s *TypeContext) RSQ() antlr.TerminalNode {
 	return s.GetToken(LushParserRSQ, 0)
 }
 
-func (s *TypeContext) Type_() ITypeContext {
-	var t antlr.RuleContext
-	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(ITypeContext); ok {
-			t = ctx.(antlr.RuleContext)
-			break
-		}
-	}
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(ITypeContext)
-}
-
 func (s *TypeContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -5382,7 +5369,7 @@ func (s *TypeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 func (p *LushParser) Type_() (localctx ITypeContext) {
 	localctx = NewTypeContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 44, LushParserRULE_type)
-	p.SetState(316)
+	p.SetState(317)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -5392,14 +5379,14 @@ func (p *LushParser) Type_() (localctx ITypeContext) {
 	case LushParserSTRING_TYPE, LushParserINT_TYPE, LushParserBOOL_TYPE:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(312)
+			p.SetState(313)
 			p.PrimitiveType()
 		}
 
 	case LushParserLSQ:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(313)
+			p.SetState(314)
 			p.Match(LushParserLSQ)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -5407,7 +5394,7 @@ func (p *LushParser) Type_() (localctx ITypeContext) {
 			}
 		}
 		{
-			p.SetState(314)
+			p.SetState(315)
 			p.Match(LushParserRSQ)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -5415,9 +5402,9 @@ func (p *LushParser) Type_() (localctx ITypeContext) {
 			}
 		}
 		{
-			p.SetState(315)
+			p.SetState(316)
 
-			var _x = p.Type_()
+			var _x = p.PrimitiveType()
 
 			localctx.(*TypeContext).arrayType = _x
 		}
@@ -5525,7 +5512,7 @@ func (p *LushParser) PrimitiveType() (localctx IPrimitiveTypeContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(318)
+		p.SetState(319)
 		_la = p.GetTokenStream().LA(1)
 
 		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&1792) != 0) {
@@ -5601,12 +5588,9 @@ func (p *LushParser) Expression_Sempred(localctx antlr.RuleContext, predIndex in
 		return p.Precpred(p.GetParserRuleContext(), 1)
 
 	case 7:
-		return p.Precpred(p.GetParserRuleContext(), 10)
-
-	case 8:
 		return p.Precpred(p.GetParserRuleContext(), 8)
 
-	case 9:
+	case 8:
 		return p.Precpred(p.GetParserRuleContext(), 7)
 
 	default:

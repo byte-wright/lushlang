@@ -72,3 +72,14 @@ tests:
       println(s[0], s[i + 1], "xyz"[i])
     expected: |
       a c y
+
+  - name: package call in an expression
+    description: the operators around a call apply to its result
+    code: |
+      import "strings"
+
+      println(!strings.hasPrefix("abc", "a"), strings.trimPrefix("xabc", "x")[1], strings.trimPrefix("xabc", "x")[1:])
+      println(strings.indexOf("abc", "c") * 2 + 1)
+    expected: |
+      false b bc
+      5

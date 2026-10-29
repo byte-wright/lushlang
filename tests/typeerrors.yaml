@@ -381,3 +381,10 @@ tests:
     errors:
       - "typeerrors/duplicate parameters.lsh Ln:1 Col:15 parameter a is already defined"
       - "typeerrors/duplicate parameters.lsh Ln:4 Col:25 parameter a is already defined"
+  - name: number out of range
+    description: bash numbers have 64 bits
+    code: |
+      println(99999999999999999999)
+      println(9223372036854775807)
+    errors:
+      - "typeerrors/number out of range.lsh Ln:1 Col:9 number 99999999999999999999 is too big for an int"

@@ -242,15 +242,17 @@ func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
 }
 
 func (v *Visitor) VisitFuncStatement(ctx *FuncStatementContext) any {
-	f := ctx.Func_().Accept(v).(*ast.Func)
+	return &ast.FuncStatement{Call: v.call(ctx.GetNamespace(), ctx.Func_())}
+}
 
-	if ctx.GetNamespace() != nil {
-		return &ast.FuncStatement{
-			Call: &ast.Method{Namespace: ctx.GetNamespace().GetText(), Func: f},
-		}
+func (v *Visitor) call(namespace antlr.Token, ctx IFuncContext) ast.Expression {
+	f := ctx.Accept(v).(*ast.Func)
+
+	if namespace != nil {
+		return &ast.Method{Namespace: namespace.GetText(), Func: f}
 	}
 
-	return &ast.FuncStatement{Call: f}
+	return f
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
@@ -260,14 +262,6 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 
 	a := ctx.Expression(0).Accept(v).(ast.Expression)
 	loc := v.loc(ctx)
-
-	// method call
-	if ctx.Func_() != nil {
-		return &ast.Method{
-			Namespace: a.(*ast.Var).Name,
-			Func:      ctx.Func_().Accept(v).(*ast.Func),
-		}
-	}
 
 	// unary ops
 	if ctx.GetUnary_op() != nil {
@@ -392,13 +386,15 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 	}
 
 	if ctx.Number() != nil {
-		v, err := strconv.Atoi(ctx.Number().GetText())
+		txt := ctx.Number().GetText()
+		n, err := strconv.Atoi(txt)
+		// the lexer only lets digits through, so it can only be too big
 		if err != nil {
-			panic(err)
+			v.errors = append(v.errors, &ast.ASTError{Location: v.loc(ctx), Message: fmt.Sprintf("number %v is too big for an int", txt)})
 		}
 
 		return &ast.Number{
-			Value: v,
+			Value: n,
 		}
 	}
 
@@ -418,7 +414,7 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 	}
 
 	if ctx.Func_() != nil {
-		return ctx.Func_().Accept(v)
+		return v.call(ctx.GetNamespace(), ctx.Func_())
 	}
 
 	if ctx.GetGroup() != nil {
@@ -479,7 +475,7 @@ func (v *Visitor) VisitArray(ctx *ArrayContext) any {
 func (v *Visitor) VisitType(ctx *TypeContext) any {
 	if ctx.GetArrayType() != nil {
 		return &common.ArrayType{
-			ElementType: ctx.GetArrayType().Accept(v).(*common.BasicType),
+			ElementType: &common.BasicType{Type: ctx.GetArrayType().Accept(v).(common.PrimitiveType)},
 		}
 	}
 

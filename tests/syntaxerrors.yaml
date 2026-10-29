@@ -22,3 +22,27 @@ tests:
       }
     errors:
       - "syntaxerrors/return value on the next line.lsh Ln:3 Col:5 no viable alternative at input '1'"
+
+  - name: call on a value
+    description: only package functions can be called with a dot, values have no methods
+    code: |
+      println("abc".hasPrefix("a"))
+    errors:
+      - "syntaxerrors/call on a value.lsh Ln:1 Col:14 mismatched input '.' expecting {')', ','}"
+      - "syntaxerrors/call on a value.lsh Ln:1 Col:29 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', ID}"
+
+  - name: call on the result of a call
+    code: |
+      import "strings"
+      println(strings.trimPrefix("abc", "a").hasPrefix("b"))
+    errors:
+      - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:39 mismatched input '.' expecting {')', ','}"
+      - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:54 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', ID}"
+
+  - name: nested array type
+    description: bash arrays can't be nested
+    code: |
+      func f(a [][]int) {
+      }
+    errors:
+      - "syntaxerrors/nested array type.lsh Ln:1 Col:12 mismatched input '[' expecting {'string', 'int', 'bool'}"

@@ -75,7 +75,6 @@ funcStatement: (namespace = ID DOT)? func;
 
 expression
     : atom
-    | expression DOT func
     | unary_op = (MINUS | NOT) expression
     | slice = expression LSQ from = expression? COLON to =
         expression? RSQ
@@ -109,7 +108,7 @@ atom
     | bool
     | envVar
     | var
-    | func
+    | (namespace = ID DOT)? func
     | LPAREN group = expression RPAREN
     | array
     ;
@@ -139,7 +138,8 @@ array
 
 type
     : primitiveType
-    | LSQ RSQ arrayType = type
+    // bash arrays can't be nested
+    | LSQ RSQ arrayType = primitiveType
     ;
 
 primitiveType
