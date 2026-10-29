@@ -26,6 +26,7 @@ type Test struct {
 	Name     string   `json:"name"`
 	Only     bool     `json:"only"`
 	Code     string   `json:"code"`
+	Args     []string `json:"args"`
 	Expected string   `json:"expected"`
 	Stderr   string   `json:"stderr"`
 	Exit     int      `json:"exit"`
@@ -128,7 +129,7 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						cmd := exec.Command("bash", file)
+						cmd := exec.Command("bash", append([]string{file}, tc.Args...)...)
 						cmd.Env = append(os.Environ(), "LUSH_TEST=hello", "lush_test=env")
 
 						// Create buffers to capture stdout and stderr

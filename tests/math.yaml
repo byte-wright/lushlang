@@ -27,3 +27,11 @@ tests:
     expected: |
       2 + 4 * 3 = 14
       (2 + 4) * 3 = 18
+
+  - name: Unary operators apply to an indexed value
+    code: |
+      a = [1, 2]
+      flags = [true, false]
+      println(-a[0], -a[1] * 2 + 3, !flags[1], !flags[0] || false)
+    expected: |
+      -1 -1 true false

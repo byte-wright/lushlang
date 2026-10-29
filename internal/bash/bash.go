@@ -45,9 +45,11 @@ func (b *bash) translate() {
 
 	// generated variables start with L_: identifiers can't start with an uppercase
 	// letter, and none of bash's own variables starts with L_
+	// inside of functions, $@ are the function's arguments
 	b.print(`
 L_bool_0=true
 L_bool_1=false
+L_args=("$@")
 `)
 
 	ufncs := []string{}
@@ -267,6 +269,9 @@ func (b *bash) atom(a bcode.Atom) string {
 
 	case *bcode.EnvVarValue:
 		return "\"$" + at.Name + "\""
+
+	case *bcode.ArgsValue:
+		return `("${L_args[@]}")`
 
 	case *bcode.ArrayValue:
 		params := []string{}

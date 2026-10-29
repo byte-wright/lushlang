@@ -34,6 +34,9 @@ bcode.Len type:
 bcode.EnvVarValue type:
   $${.Name}
 
+bcode.ArgsValue type:
+  args()
+
 bcode.Func type:
   {if .Return}@{.Return} = {end-}
   ${.FullName}(@{.Parameters})

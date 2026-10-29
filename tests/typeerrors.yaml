@@ -386,5 +386,22 @@ tests:
     code: |
       println(99999999999999999999)
       println(9223372036854775807)
+      println([99999999999999999999][0])
     errors:
       - "typeerrors/number out of range.lsh Ln:1 Col:9 number 99999999999999999999 is too big for an int"
+      - "typeerrors/number out of range.lsh Ln:3 Col:10 number 99999999999999999999 is too big for an int"
+  - name: env var names
+    description: names starting with a digit and _ are shell parameters, not environment variables
+    code: |
+      println($1, $10)
+      println($V_x, $L_ret0, $_)
+      println($HOME_1, $lush_test)
+    errors:
+      - "typeerrors/env var names.lsh Ln:1 Col:9 $1 is not an environment variable, the script's arguments are in args()"
+      - "typeerrors/env var names.lsh Ln:1 Col:13 $10 is not an environment variable, the script's arguments are in args()"
+      - "typeerrors/env var names.lsh Ln:2 Col:24 $_ is not an environment variable"
+  - name: args takes no arguments
+    code: |
+      a = args("x")
+    errors:
+      - "typeerrors/args takes no arguments.lsh Ln:1 Col:5 args takes 0 arguments, not 1"

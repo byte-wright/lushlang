@@ -16,6 +16,13 @@ func (e *EnvVarValue) Type() common.Type {
 	return &common.BasicType{Type: common.String}
 }
 
+// ArgsValue is a copy of the script's arguments.
+type ArgsValue struct{}
+
+func (a *ArgsValue) Type() common.Type {
+	return &common.ArrayType{ElementType: &common.BasicType{Type: common.String}}
+}
+
 type NumberValue struct {
 	Value int
 }

@@ -294,6 +294,9 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		}
 
 		switch x.Name {
+		case "args":
+			return []Value{block.setTmp(&ArgsValue{})}
+
 		case "len":
 			val := c.evalExpression(block, x.Parameters[0])
 			return block.setTmps(&Len{

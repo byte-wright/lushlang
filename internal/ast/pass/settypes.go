@@ -241,6 +241,19 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 
 	case *ast.Array:
 		t.array(exp)
+
+	case *ast.EnvVar:
+		t.envVar(exp)
+	}
+}
+
+func (t *setTypesPass) envVar(v *ast.EnvVar) {
+	switch {
+	case v.Name[0] >= '0' && v.Name[0] <= '9':
+		t.errorf(v.Location, "$%v is not an environment variable, the script's arguments are in args()", v.Name)
+
+	case v.Name == "_":
+		t.errorf(v.Location, "$_ is not an environment variable")
 	}
 }
 
@@ -545,6 +558,14 @@ func builtin(name string, args []common.Type) ([]common.Type, bool, error) {
 
 		if !args[0].IsArray() && !args[0].Is(stringType) {
 			return tps, true, fmt.Errorf("argument 1 of len must be an array or string, not %v", args[0].Print())
+		}
+
+		return tps, true, nil
+
+	case "args":
+		tps := []common.Type{stringArrayType}
+		if len(args) != 0 {
+			return tps, true, fmt.Errorf("args takes %v, not %v", count(0, "argument"), len(args))
 		}
 
 		return tps, true, nil

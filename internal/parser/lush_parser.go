@@ -153,19 +153,19 @@ func lushParserInit() {
 		0, 199, 200, 5, 39, 0, 0, 200, 202, 5, 37, 0, 0, 201, 199, 1, 0, 0, 0,
 		201, 202, 1, 0, 0, 0, 202, 203, 1, 0, 0, 0, 203, 204, 3, 30, 15, 0, 204,
 		25, 1, 0, 0, 0, 205, 206, 6, 13, -1, 0, 206, 210, 3, 28, 14, 0, 207, 208,
-		7, 0, 0, 0, 208, 210, 3, 26, 13, 9, 209, 205, 1, 0, 0, 0, 209, 207, 1,
+		7, 0, 0, 0, 208, 210, 3, 26, 13, 7, 209, 205, 1, 0, 0, 0, 209, 207, 1,
 		0, 0, 0, 210, 249, 1, 0, 0, 0, 211, 212, 10, 6, 0, 0, 212, 213, 7, 1, 0,
 		0, 213, 248, 3, 26, 13, 7, 214, 215, 10, 5, 0, 0, 215, 216, 7, 2, 0, 0,
 		216, 248, 3, 26, 13, 6, 217, 218, 10, 4, 0, 0, 218, 219, 7, 3, 0, 0, 219,
 		248, 3, 26, 13, 5, 220, 221, 10, 3, 0, 0, 221, 222, 5, 13, 0, 0, 222, 248,
 		3, 26, 13, 4, 223, 224, 10, 2, 0, 0, 224, 225, 5, 14, 0, 0, 225, 248, 3,
 		26, 13, 3, 226, 227, 10, 1, 0, 0, 227, 228, 5, 34, 0, 0, 228, 229, 3, 26,
-		13, 0, 229, 230, 5, 35, 0, 0, 230, 231, 3, 26, 13, 2, 231, 248, 1, 0, 0,
-		0, 232, 233, 10, 8, 0, 0, 233, 235, 5, 31, 0, 0, 234, 236, 3, 26, 13, 0,
+		13, 0, 229, 230, 5, 35, 0, 0, 230, 231, 3, 26, 13, 1, 231, 248, 1, 0, 0,
+		0, 232, 233, 10, 9, 0, 0, 233, 235, 5, 31, 0, 0, 234, 236, 3, 26, 13, 0,
 		235, 234, 1, 0, 0, 0, 235, 236, 1, 0, 0, 0, 236, 237, 1, 0, 0, 0, 237,
 		239, 5, 35, 0, 0, 238, 240, 3, 26, 13, 0, 239, 238, 1, 0, 0, 0, 239, 240,
 		1, 0, 0, 0, 240, 241, 1, 0, 0, 0, 241, 248, 5, 32, 0, 0, 242, 243, 10,
-		7, 0, 0, 243, 244, 5, 31, 0, 0, 244, 245, 3, 26, 13, 0, 245, 246, 5, 32,
+		8, 0, 0, 243, 244, 5, 31, 0, 0, 244, 245, 3, 26, 13, 0, 245, 246, 5, 32,
 		0, 0, 246, 248, 1, 0, 0, 0, 247, 211, 1, 0, 0, 0, 247, 214, 1, 0, 0, 0,
 		247, 217, 1, 0, 0, 0, 247, 220, 1, 0, 0, 0, 247, 223, 1, 0, 0, 0, 247,
 		226, 1, 0, 0, 0, 247, 232, 1, 0, 0, 0, 247, 242, 1, 0, 0, 0, 248, 251,
@@ -3578,7 +3578,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 		}
 		{
 			p.SetState(208)
-			p.expression(9)
+			p.expression(7)
 		}
 
 	default:
@@ -3780,7 +3780,7 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				{
 					p.SetState(230)
-					p.expression(2)
+					p.expression(1)
 				}
 
 			case 7:
@@ -3789,8 +3789,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(232)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 9)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 9)", ""))
 					goto errorExit
 				}
 				{
@@ -3858,8 +3858,8 @@ func (p *LushParser) expression(_p int) (localctx IExpressionContext) {
 				p.PushNewRecursionContext(localctx, _startState, LushParserRULE_expression)
 				p.SetState(242)
 
-				if !(p.Precpred(p.GetParserRuleContext(), 7)) {
-					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
+				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
 					goto errorExit
 				}
 				{
@@ -5588,10 +5588,10 @@ func (p *LushParser) Expression_Sempred(localctx antlr.RuleContext, predIndex in
 		return p.Precpred(p.GetParserRuleContext(), 1)
 
 	case 7:
-		return p.Precpred(p.GetParserRuleContext(), 8)
+		return p.Precpred(p.GetParserRuleContext(), 9)
 
 	case 8:
-		return p.Precpred(p.GetParserRuleContext(), 7)
+		return p.Precpred(p.GetParserRuleContext(), 8)
 
 	default:
 		panic("No predicate with index: " + fmt.Sprint(predIndex))

@@ -20,6 +20,7 @@ Its in no way optimized and quite rudimentary.
   - arrays (very slow)
   - functions with params and (multiple) return params
   - if, else if, else and for
+  - environment variables as `$NAME`, the script's arguments as `args()`
   - modules
 
 Tests
@@ -68,6 +69,7 @@ the compiled bash code:
 
     L_bool_0=true
     L_bool_1=false
+    L_args=("$@")
 
     lsh__println() {
     local i=1

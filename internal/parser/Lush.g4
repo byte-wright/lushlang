@@ -75,10 +75,10 @@ funcStatement: (namespace = ID DOT)? func;
 
 expression
     : atom
-    | unary_op = (MINUS | NOT) expression
     | slice = expression LSQ from = expression? COLON to =
         expression? RSQ
     | index = expression LSQ position = expression RSQ
+    | unary_op = (MINUS | NOT) expression
     | expression mul_op = (
         MUL
         | DIV
@@ -98,7 +98,7 @@ expression
     ) expression
     | expression LAND expression
     | expression LOR expression
-    | ternary = expression QUESTION expression COLON
+    | <assoc = right> ternary = expression QUESTION expression COLON
         expression
     ;
 

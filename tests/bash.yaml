@@ -60,3 +60,23 @@ tests:
       println(lush_test, $lush_test, env(), out[0])
     expected: |
       mine env env env
+
+  - name: script arguments
+    description: they are the same inside of functions
+    args: ["a b", "", "c"]
+    code: |
+      func count() int {
+        return len(args())
+      }
+      a = args()
+      println(len(a), count(), a[0], a[2])
+      println(args()[1] == "")
+    expected: |
+      3 3 a b c
+      true
+
+  - name: no script arguments
+    code: |
+      println(len(args()))
+    expected: |
+      0

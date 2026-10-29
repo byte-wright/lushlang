@@ -295,11 +295,10 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 
 	// index
 	if ctx.GetIndex() != nil {
-		value := ctx.index.Accept(v).(ast.Expression)
 		position := ctx.position.Accept(v).(ast.Expression)
 
 		return &ast.Index{
-			Value:    value,
+			Value:    a,
 			Position: position,
 			Location: loc,
 		}
@@ -450,7 +449,8 @@ func (v *Visitor) VisitEnvVar(ctx *EnvVarContext) any {
 	id := ctx.ENVVAR().GetText()
 	id = id[1:]
 	return &ast.EnvVar{
-		Name: id,
+		Name:     id,
+		Location: v.loc(ctx),
 	}
 }
 
