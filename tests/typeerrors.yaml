@@ -339,12 +339,19 @@ tests:
       d = []
       e = [1, nope]
       f = [1, 2, 3]
+      g = ["x", ["y"]]
+      h = [pair()]
+      func pair() int, string {
+        return 1, "a"
+      }
     errors:
       - "typeerrors/array elements.lsh Ln:1 Col:5 array element 2 must be of type int, not string"
       - "typeerrors/array elements.lsh Ln:2 Col:5 array element 1 can't be of type []int"
       - "typeerrors/array elements.lsh Ln:3 Col:5 array element 1 can't be of type []int"
       - "typeerrors/array elements.lsh Ln:4 Col:5 empty array needs an element type, like []int"
       - "typeerrors/array elements.lsh Ln:5 Col:9 variable 'nope' is not defined"
+      - "typeerrors/array elements.lsh Ln:7 Col:5 array element 2 can't be of type []string"
+      - "typeerrors/array elements.lsh Ln:8 Col:5 array element 2 must be of type int, not string"
   - name: duplicate functions
     code: |
       func f() int {

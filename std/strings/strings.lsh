@@ -24,11 +24,23 @@ func trimSuffix(s string, suffix string) string ```
 ```
 
 func indexOf(s string, sub string) int ```
-  local pos=$(awk -v a="$s" -v b="$sub" 'BEGIN{print index(a,b)}')
-  if [ "$pos" -eq 0 ]; then
-    L_ret0=-1
+  if [[ "$s" == *"$sub"* ]]; then
+    local before="${s%%"$sub"*}"
+    L_ret0="${#before}"
   else
-    L_ret0=$((pos - 1))
+    L_ret0=-1
+  fi
+```
+
+func cut(s string, sep string) string, string, bool ```
+  if [[ "$s" == *"$sep"* ]]; then
+    L_ret0="${s%%"$sep"*}"
+    L_ret1="${s#*"$sep"}"
+    L_ret2=true
+  else
+    L_ret0="$s"
+    L_ret1=""
+    L_ret2=false
   fi
 ```
 

@@ -46,8 +46,30 @@ tests:
       import "strings"
 
       println(strings.indexOf("abrcdrrerrfr", "rr"))
+      println(strings.indexOf("C:\\new", "n"), strings.indexOf("a\\tb", "b"))
+      println(strings.indexOf("a*b", "*"), strings.indexOf("ab", "*"), strings.indexOf("abc", "x"))
+      println(strings.indexOf("abc", ""), strings.indexOf("", ""), strings.indexOf("", "a"))
     expected: |
       5
+      3 3
+      1 -1 -1
+      0 0 -1
+
+  - name: cut
+    description: Cut splits at the first separator, without one the whole string comes first
+    code: |
+      import "strings"
+
+      before, after, found = strings.cut("feature-login-page", "-")
+      println(before, after, found)
+      before, after, found = strings.cut("main", "-")
+      println(before, after + "|", found)
+      before, after, found = strings.cut("C:\\new*", "\\")
+      println(before, after, found)
+    expected: |
+      feature login-page true
+      main | false
+      C: new* true
 
 
   - name: escapes
