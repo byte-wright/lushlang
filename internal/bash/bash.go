@@ -128,18 +128,21 @@ func (b *bash) block(block *bcode.Block) {
 
 			cmdl := strings.Join(cmds, " ")
 
-			// stderr goes through a file because a process substitution runs in a
-			// subshell and can't set our variables. The exit code must be read
-			// right after the command substitution, local would overwrite $?.
+			// stdout and stderr go through files: a command substitution would strip
+			// trailing empty lines, and a process substitution runs in a subshell and
+			// can't set our variables. The command gets a subshell, so builtins like cd
+			// and exit don't change the script. Its exit code must be read right after it.
+			// The lines are read in a loop, readarray needs bash 4.
 			b.print("local L_stdout L_stderr")
+			b.print("L_stdout=$(mktemp)")
 			b.print("L_stderr=$(mktemp)")
-			b.print("L_stdout=$(" + cmdl + " 2> \"$L_stderr\")")
+			b.print("(" + cmdl + ") > \"$L_stdout\" 2> \"$L_stderr\"")
 			b.print("local " + cmd.Err.Name + "=$?")
 			b.print("local -a " + cmd.Stdout.Name + " " + cmd.Stderr.Name)
-			// printf instead of <<<, which would turn no output into one empty line
-			b.print("readarray -t " + cmd.Stdout.Name + " < <(printf '%s' \"$L_stdout\")")
-			b.print("readarray -t " + cmd.Stderr.Name + " < \"$L_stderr\"")
-			b.print("rm -f \"$L_stderr\"")
+			b.print("local L_line")
+			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + cmd.Stdout.Name + `+=("$L_line"); done < "$L_stdout"`)
+			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + cmd.Stderr.Name + `+=("$L_line"); done < "$L_stderr"`)
+			b.print("rm -f \"$L_stdout\" \"$L_stderr\"")
 
 		case *bcode.Params:
 			b.params(cmd.Vars)
@@ -175,22 +178,22 @@ func (b *bash) atom(a bcode.Atom) string {
 			// both atoms are quoted words, putting them side by side concatenates them
 			return b.atom(at.Left) + b.atom(at.Right)
 		}
-		return "$(( " + b.atom(at.Left) + " + " + b.atom(at.Right) + " ))"
+		return "$(( " + b.arith(at.Left) + " + " + b.arith(at.Right) + " ))"
 
 	case *bcode.Sub:
-		return "$(( " + b.atom(at.Left) + " - " + b.atom(at.Right) + " ))"
+		return "$(( " + b.arith(at.Left) + " - " + b.arith(at.Right) + " ))"
 
 	case *bcode.Minus:
-		return "$(( -" + b.atom(at.Expression) + " ))"
+		return "$(( -" + b.arith(at.Expression) + " ))"
 
 	case *bcode.Mul:
-		return "$(( " + b.atom(at.Left) + " * " + b.atom(at.Right) + " ))"
+		return "$(( " + b.arith(at.Left) + " * " + b.arith(at.Right) + " ))"
 
 	case *bcode.Div:
-		return "$(( " + b.atom(at.Left) + " / " + b.atom(at.Right) + " ))"
+		return "$(( " + b.arith(at.Left) + " / " + b.arith(at.Right) + " ))"
 
 	case *bcode.Mod:
-		return "$(( " + b.atom(at.Left) + " % " + b.atom(at.Right) + " ))"
+		return "$(( " + b.arith(at.Left) + " % " + b.arith(at.Right) + " ))"
 
 	case *bcode.Equal:
 		b.print("[ " + b.atom(at.Left) + " " + equalOp(at.Left) + " " + b.atom(at.Right) + " ]")
@@ -232,8 +235,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		b.useFunc("checkSlice")
 		b.print("lsh__checkSlice " + from + " " + to + " " + length(at.Value) + " " + b.location(at.Location))
 
-		// bash doesn't accept a quoted offset, "${a[@]:"$i"}" is a syntax error
-		bounds := ":$(( " + from + " )):$(( " + to + " - " + from + " ))}"
+		bounds := ":$(( " + b.arith(at.From) + " )):$(( " + b.arith(at.To) + " - " + b.arith(at.From) + " ))}"
 		if at.Value.Type().IsArray() {
 			return "(\"${" + at.Value.Name + "[@]" + bounds + "\")"
 		}
@@ -250,7 +252,7 @@ func (b *bash) atom(a bcode.Atom) string {
 		if at.Value.Type().IsArray() {
 			return "\"${" + at.Value.Name + "[" + position + "]}\""
 		}
-		return "\"${" + at.Value.Name + ":$(( " + position + " )):1}\""
+		return "\"${" + at.Value.Name + ":$(( " + b.arith(at.Position) + " )):1}\""
 
 	case *bcode.NumberValue:
 		return strconv.Itoa(at.Value)
@@ -286,6 +288,14 @@ func (b *bash) atom(a bcode.Atom) string {
 		fmt.Printf("no valid atom %T\n", at)
 	}
 	return "unknown"
+}
+
+// bash 3.2 doesn't remove double quotes in $(( )), "$a" + 1 is a syntax error there
+func (b *bash) arith(a bcode.Atom) string {
+	if v, isVar := a.(*bcode.VarValue); isVar {
+		return v.Name
+	}
+	return b.atom(a)
 }
 
 // params binds the positional arguments. mkFuncParams passes an array as its

@@ -20,6 +20,7 @@ func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTErro
 
 	parser.BuildParseTrees = true
 	tree := parser.Program()
+	listener.uppercaseNames(stream)
 
 	// the visitor can't handle the incomplete tree of a source with syntax errors
 	if len(listener.errors) > 0 {
@@ -75,6 +76,7 @@ func ParsePkgFile(p *ast.Program, pkg *ast.Package, code, name string) []*ast.AS
 
 	parser.BuildParseTrees = true
 	tree := parser.Package_()
+	listener.uppercaseNames(stream)
 
 	if len(listener.errors) > 0 {
 		return listener.errors

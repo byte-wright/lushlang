@@ -207,7 +207,7 @@ tests:
       }
       return 1
     errors:
-      - "typeerrors/return values.lsh Ln:12 Col:1 return outside of a function"
+      - "typeerrors/return values.lsh Ln:12 Col:1 return outside of a function can't have values"
       - "typeerrors/return values.lsh Ln:2 Col:3 return value 1 of one must be of type int, not string"
       - "typeerrors/return values.lsh Ln:5 Col:3 function two returns 2 values, not 1"
       - "typeerrors/return values.lsh Ln:9 Col:5 function none returns 0 values, not 1"

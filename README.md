@@ -20,13 +20,21 @@ Its in no way optimized and quite rudimentary.
   - arrays (very slow)
   - functions with params and (multiple) return params
   - if, else if, else and for
+  - `return` outside of functions ends the script
   - environment variables as `$NAME`, the script's arguments as `args()`
+  - names start with a lowercase letter or `_`, so they can't clash with bash's
+    variables like `PATH` and `IFS`
   - modules
+  - the scripts need bash 3.2 or newer, so they also run with macOS's `/bin/bash`
 
 Tests
 -----
 
 [test cases](tests) are defined in .yaml files with code, output and possible compiler errors.
+
+Every test runs with the local bash and in Docker with bash 3.2 and 5.3, the oldest and
+the newest supported version. The Docker runs are skipped when Docker isn't available,
+`go test -run TestAll/local ./tests/` runs only the local ones.
 
 Example
 -------
@@ -48,7 +56,7 @@ the compiled bash code:
     function lsh_main_sumGt() {
       local V_a="${1}"
       local V_b="${2}"
-      local L_t3=$(( "$V_a" + "$V_b" ))
+      local L_t3=$(( V_a + V_b ))
       local L_t4="$L_t3"
       [ "$V_a" -gt "$V_b" ]
       local L_i="L_bool_$?"

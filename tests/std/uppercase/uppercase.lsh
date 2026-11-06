@@ -1,0 +1,3 @@
+func echo(IFS string) ```
+  printf '%s\n' "$IFS"
+```

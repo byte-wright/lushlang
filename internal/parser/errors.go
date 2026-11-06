@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
 	"github.com/byte-wright/lush/internal/common"
@@ -23,6 +25,17 @@ func (l *errorListener) SyntaxError(_ antlr.Recognizer, _ any, line, column int,
 		},
 		Message: msg,
 	})
+}
+
+// lowercase names can't clash with bash's variables like PATH and IFS, or with the
+// generated L_ ones
+func (l *errorListener) uppercaseNames(stream *antlr.CommonTokenStream) {
+	for _, tk := range stream.GetAllTokens() {
+		name := tk.GetText()
+		if tk.GetTokenType() == LushLexerID && name[0] >= 'A' && name[0] <= 'Z' {
+			l.SyntaxError(nil, nil, tk.GetLine(), tk.GetColumn(), fmt.Sprintf("name %v must start with a lowercase letter", name), nil)
+		}
+	}
 }
 
 // listen replaces antlr's default listener, which prints to stderr and lets parsing go on.

@@ -193,7 +193,9 @@ DOT: '.';
 
 ENVVAR: '$' [a-zA-Z_0-9]+;
 
-ID: [a-z_] [a-zA-Z_0-9]*;
+// names must start lowercase, uppercase ones are only lexed so that they get one error
+// instead of one per letter
+ID: [a-zA-Z_] [a-zA-Z_0-9]*;
 ASSIGN: '=';
 
 STRING

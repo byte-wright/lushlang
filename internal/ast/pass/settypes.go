@@ -289,8 +289,11 @@ func (t *setTypesPass) array(a *ast.Array) {
 
 func (t *setTypesPass) returnStatement(st *ast.ReturnStatement) {
 	fd := t.funcDef
+	// outside of functions it ends the script, like a return in Go's main
 	if fd == nil {
-		t.errorf(st.Location, "return outside of a function")
+		if len(st.Expressions) > 0 {
+			t.errorf(st.Location, "return outside of a function can't have values")
+		}
 		return
 	}
 

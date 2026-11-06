@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +15,10 @@ import (
 	"github.com/byte-wright/lush/internal/bash"
 	"github.com/byte-wright/lush/internal/bcode"
 	"github.com/byte-wright/lush/internal/parser"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	"github.com/moby/moby/api/types/container"
+	"github.com/testcontainers/testcontainers-go"
+	tcexec "github.com/testcontainers/testcontainers-go/exec"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,6 +39,13 @@ type Test struct {
 }
 
 var scripts = "scripts"
+
+// 3.2 is the oldest supported bash, macOS still ships it
+var images = []string{"bash:3.2", "bash:5.3"}
+
+var env = []string{"LUSH_TEST=hello", "lush_test=env"}
+
+type runner func(t *testing.T, file string, args []string) (stdout, stderr string, exit int)
 
 func TestAll(t *testing.T) {
 	os.RemoveAll(scripts)
@@ -70,12 +82,27 @@ func TestAll(t *testing.T) {
 		}
 	}
 
+	t.Run("local", func(t *testing.T) {
+		runSuites(t, suites, only, runLocal)
+	})
+
+	for _, image := range images {
+		t.Run(image, func(t *testing.T) {
+			testcontainers.SkipIfProviderIsNotHealthy(t)
+			runSuites(t, suites, only, startContainer(t, image))
+		})
+	}
+
+	if only {
+		t.Errorf("Test allways fails when only activated")
+	}
+}
+
+func runSuites(t *testing.T, suites []*TestSuite, only bool, run runner) {
 	for _, suite := range suites {
 		t.Run(suite.Name, func(t *testing.T) {
-			suite := suite
-
 			folder := filepath.Join(scripts, suite.Name)
-			err = os.MkdirAll(folder, 0o700)
+			err := os.MkdirAll(folder, 0o700)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -83,6 +110,8 @@ func TestAll(t *testing.T) {
 			for _, tc := range suite.Tests {
 				if !only || tc.Only {
 					t.Run(tc.Name, func(t *testing.T) {
+						t.Parallel()
+
 						prog, errors, err := parser.Parse(string(tc.Code), suite.Name+"/"+tc.Name+".lsh", "./std", os.DirFS("../std"))
 						if err != nil {
 							t.Fatal(err)
@@ -129,38 +158,73 @@ func TestAll(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						cmd := exec.Command("bash", append([]string{file}, tc.Args...)...)
-						cmd.Env = append(os.Environ(), "LUSH_TEST=hello", "lush_test=env")
-
-						// Create buffers to capture stdout and stderr
-						stdoutBuf := &bytes.Buffer{}
-						stderrBuf := &bytes.Buffer{}
-						cmd.Stdout = stdoutBuf
-						cmd.Stderr = stderrBuf
-
-						// Run the command
-						err = cmd.Run()
-						exit := 0
-						if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
-							exit = exitErr.ExitCode()
-						} else if err != nil {
-							t.Fatal(err)
-						}
-
-						// Capture stdout
-						stdout := stdoutBuf.String()
+						stdout, stderr, exit := run(t, file, tc.Args)
 
 						expect.Value(t, "result", stdout).ToBe(tc.Expected)
-						expect.Value(t, "stderr", stderrBuf.String()).ToBe(tc.Stderr)
+						expect.Value(t, "stderr", stderr).ToBe(tc.Stderr)
 						expect.Value(t, "exit code", exit).ToBe(tc.Exit)
 					})
 				}
 			}
 		})
 	}
+}
 
-	if only {
-		t.Errorf("Test allways fails when only activated")
+func runLocal(t *testing.T, file string, args []string) (string, string, int) {
+	cmd := exec.Command("bash", append([]string{file}, args...)...)
+	cmd.Env = append(os.Environ(), env...)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	err := cmd.Run()
+	exit := 0
+	if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
+		exit = exitErr.ExitCode()
+	} else if err != nil {
+		t.Fatal(err)
+	}
+
+	return stdout.String(), stderr.String(), exit
+}
+
+func startContainer(t *testing.T, image string) runner {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctr, err := testcontainers.Run(context.Background(), image,
+		testcontainers.WithCmd("sleep", "infinity"),
+		testcontainers.WithHostConfigModifier(func(hc *container.HostConfig) {
+			// a mount instead of copies: the scripts are written while the tests run,
+			// and some tests read files from the tests folder
+			hc.Binds = []string{wd + ":/tests:ro"}
+		}),
+	)
+	// sleep ignores SIGTERM as the container's first process, stopping would wait for 10s
+	testcontainers.CleanupContainer(t, ctr, testcontainers.StopTimeout(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return func(t *testing.T, file string, args []string) (string, string, int) {
+		exit, output, err := ctr.Exec(context.Background(), append([]string{"bash", file}, args...),
+			tcexec.WithWorkingDir("/tests"), tcexec.WithEnv(env))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		stdout := &bytes.Buffer{}
+		stderr := &bytes.Buffer{}
+		_, err = stdcopy.StdCopy(stdout, stderr, output)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return stdout.String(), stderr.String(), exit
 	}
 }
 

@@ -46,3 +46,26 @@ tests:
       }
     errors:
       - "syntaxerrors/nested array type.lsh Ln:1 Col:12 mismatched input '[' expecting {'string', 'int', 'bool'}"
+
+  - name: uppercase names
+    description: names start lowercase, so they can't clash with bash variables like PATH or IFS
+    code: |
+      import "strings"
+      URL = "x"
+      myURL = URL + $HOME_DIR
+      before, _, _ = strings.Cut(myURL, "/")
+      func Fetch(IFS string) {
+      }
+    errors:
+      - "syntaxerrors/uppercase names.lsh Ln:2 Col:1 name URL must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh Ln:3 Col:9 name URL must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh Ln:4 Col:24 name Cut must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh Ln:5 Col:6 name Fetch must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh Ln:5 Col:12 name IFS must start with a lowercase letter"
+
+  - name: uppercase names in a package
+    description: parameters of external functions keep their names in bash, so IFS would change how bash splits words
+    code: |
+      import "/uppercase"
+    errors:
+      - "std/uppercase/uppercase.lsh Ln:1 Col:11 name IFS must start with a lowercase letter"

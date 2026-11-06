@@ -20,3 +20,28 @@ tests:
     expected: |
       1 out 2 err2 3
       0 0 0
+
+  - name: trailing empty lines
+    description: they are lines like the others, a command substitution would strip them
+    code: |
+      o, e, code = execVar("printf", "a\n\nb\n\n\n")
+      println(len(o), o[1] == "", o[2], o[4] == "")
+      o, e, code = execVar("echo")
+      println(len(o), o[0] == "")
+      o, e, code = execVar("printf", "a\nb")
+      println(len(o), o[1])
+    expected: |
+      5 true b true
+      1 true
+      2 b
+
+  - name: commands run in a subshell
+    description: builtins like cd and exit don't change the script
+    code: |
+      before, _, _ = execVar("pwd")
+      _, _, code = execVar("cd", "/")
+      after, _, _ = execVar("pwd")
+      _, _, status = execVar("exit", "3")
+      println(code, before[0] == after[0], status)
+    expected: |
+      0 true 3

@@ -192,6 +192,22 @@ tests:
     expected: |
       5
 
+  - name: return at the top level ends the script
+    description: like a return in Go's main, also from inside of a loop
+    code: |
+      for i = 0; i < 5; i = i + 1 {
+        if i == 2 {
+          println("stop")
+          return
+        }
+        println(i)
+      }
+      println("not reached")
+    expected: |
+      0
+      1
+      stop
+
   - name: function shadows a builtin
     description: like in Go, a function of the package wins over the builtin of the same name
     code: |
