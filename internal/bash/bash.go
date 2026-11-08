@@ -145,10 +145,11 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("L_stderr=$(mktemp)")
 			b.print("(" + cmdl + ") > \"$L_stdout\" 2> \"$L_stderr\"")
 			b.print("local " + cmd.Err.Name + "=$?")
-			b.print("local -a " + cmd.Stdout.Name + " " + cmd.Stderr.Name)
+			// without =() a call in a loop would keep the lines of the previous iteration
+			b.print("local -a " + cmd.Stdout.Name + "=() " + cmd.Stderr.Name + "=()")
 			b.print("local L_line")
-			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + cmd.Stdout.Name + `+=("$L_line"); done < "$L_stdout"`)
-			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + cmd.Stderr.Name + `+=("$L_line"); done < "$L_stderr"`)
+			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + appendInPlace(cmd.Stdout.Name, `"$L_line"`) + `; done < "$L_stdout"`)
+			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + appendInPlace(cmd.Stderr.Name, `"$L_line"`) + `; done < "$L_stderr"`)
 			b.print("rm -f \"$L_stdout\" \"$L_stderr\"")
 
 		case *bcode.Params:
@@ -165,12 +166,13 @@ func (b *bash) block(block *bcode.Block) {
 			}
 			arr := cmd.Array.(*bcode.VarValue)
 
-			b.print(`if [ "${#` + arr.Name + `[@]}" -eq 0 ]; then`)
-			b.print(`  local L_tmp_array=(` + strings.Join(params, " ") + `)`)
-			b.print("else")
-			b.print(`  local L_tmp_array=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
-			b.print("fi")
-			b.print("local " + cmd.Target.Name + `=("${L_tmp_array[@]}")`)
+			if arr.Name == cmd.Target.Name {
+				for _, p := range params {
+					b.print(appendInPlace(arr.Name, p))
+				}
+			} else {
+				b.print("local " + cmd.Target.Name + `=("${` + arr.Name + `[@]}" ` + strings.Join(params, " ") + `)`)
+			}
 
 		default:
 			fmt.Printf("no valid statement in bash transpiler %T\n", c)
@@ -327,6 +329,11 @@ func (b *bash) params(vars []*bcode.VarValue) {
 
 		pos++
 	}
+}
+
+func appendInPlace(array, value string) string {
+	// a+=(x) is quadratic on bash 3.2
+	return array + "[${#" + array + "[@]}]=" + value
 }
 
 func length(v *bcode.VarValue) string {

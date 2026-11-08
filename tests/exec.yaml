@@ -45,3 +45,15 @@ tests:
       println(code, before[0] == after[0], status)
     expected: |
       0 true 3
+
+  - name: call in a loop
+    description: every call starts with empty output, the previous iteration's lines are gone
+    code: |
+      for i = 0; i < 3; i = i + 1 {
+        o, e, _ = execVar("bash", "-c", "echo out; echo err >&2")
+        println(len(o), len(e))
+      }
+    expected: |
+      1 1
+      1 1
+      1 1

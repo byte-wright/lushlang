@@ -381,6 +381,14 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 }
 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
+	// every assignment and call copies an array, so nothing else can see this one grow
+	if call := selfAppend(ass); call != nil {
+		array := c.evalExpression(b, call.Parameters[0])[0].(*VarValue)
+		b.add(&Append{Array: array, Elements: c.evalExpressions(b, call.Parameters[1:]), Target: array})
+
+		return
+	}
+
 	targets := map[string]bool{}
 	for _, target := range ass.Targets {
 		targets[c.targetName(target)] = true
@@ -409,6 +417,27 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 			b.set(v, results[i])
 		}
 	}
+}
+
+func selfAppend(ass *ast.Assignment) *ast.Func {
+	// in a, b = append(a, "x"), a the second value has to be the old a
+	if len(ass.Targets) != 1 || len(ass.Expressions) != 1 {
+		return nil
+	}
+
+	// without elements there would be no bash line, and bash rejects an empty if body
+	call, isCall := ass.Expressions[0].(*ast.Func)
+	if !isCall || call.Package != nil || call.Name != "append" || len(call.Parameters) < 2 {
+		return nil
+	}
+
+	array, isVar := call.Parameters[0].(*ast.Var)
+	target := ass.Targets[0]
+	if !isVar || array.Name != target.Name || array.GlobalOf != target.GlobalOf {
+		return nil
+	}
+
+	return call
 }
 
 func (c *Compiler) targetName(target *ast.AssignmentTarget) string {

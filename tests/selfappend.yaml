@@ -1,0 +1,159 @@
+order: 3
+name: Self append
+tests:
+  - name: awkward values and an empty start
+    code: |
+      import "strings"
+
+      names = []string
+      names = append(names, "", "a b", "*", "it's")
+      names = append(names, names[1], names[len(names) - 1])
+      println(len(names), strings.join(names, "|"))
+    expected: |
+      6 |a b|*|it's|a b|it's
+
+  - name: elements are read before growing
+    code: |
+      n = [7, 8]
+      n = append(n, len(n), len(n))
+      println(len(n), n[2], n[3])
+    expected: |
+      4 2 2
+
+  - name: copies and callers are left alone
+    code: |
+      import "strings"
+
+      func grow(a []string) []string {
+        a = append(a, "param")
+        return a
+      }
+
+      a = ["x"]
+      b = a
+      a = append(a, "y")
+      c = grow(a)
+      println(strings.join(a, ","), strings.join(b, ","), strings.join(c, ","))
+    expected: |
+      x,y x x,y,param
+
+  - name: several targets keep the old value
+    code: |
+      import "strings"
+
+      a = ["x"]
+      b = ["y"]
+      a, b = append(a, "1"), a
+      println(strings.join(a, ","), strings.join(b, ","))
+    expected: |
+      x,1 x
+
+  - name: several targets crossed
+    code: |
+      import "strings"
+
+      a = ["a"]
+      b = ["b"]
+      a, b = append(b, "1"), append(a, "2")
+      println(strings.join(a, ","), strings.join(b, ","))
+    expected: |
+      b,1 a,2
+
+  - name: global from a function
+    code: |
+      import "strings"
+
+      var log = []string
+
+      func add(s string) {
+        global log = append(log, s)
+      }
+
+      add("a")
+      add("b")
+      println(strings.join(log, ","))
+    expected: |
+      a,b
+
+  - name: global written by an element
+    code: |
+      import "strings"
+
+      var log = []string
+
+      func touch() string {
+        global log = append(log, "inner")
+        return "outer"
+      }
+
+      global log = append(log, touch())
+      println(strings.join(log, ","))
+    expected: |
+      inner,outer
+
+  - name: no elements as the only statement of a block
+    code: |
+      a = ["x"]
+      if true {
+        a = append(a)
+      }
+      println(len(a))
+    expected: |
+      1
+
+  - name: for header
+    code: |
+      for a = []string; len(a) < 3; a = append(a, "x") {
+        println(len(a))
+      }
+    expected: |
+      0
+      1
+      2
+
+  - name: inside blocks reaches the outer variable
+    code: |
+      a = ["x"]
+      for i = 0; i < 2; i = i + 1 {
+        if true {
+          a = append(a, "y")
+        }
+      }
+      println(len(a))
+    expected: |
+      3
+
+  - name: reset in a loop
+    code: |
+      for i = 0; i < 2; i = i + 1 {
+        a = []string
+        a = append(a, "x")
+        println(len(a))
+      }
+    expected: |
+      1
+      1
+
+  - name: a function named append
+    code: |
+      func append(a []string, s string) []string {
+        return ["replaced"]
+      }
+
+      a = ["x"]
+      a = append(a, "y")
+      println(len(a), a[0])
+    expected: |
+      1 replaced
+
+  - name: from a slice and args
+    code: |
+      a = ["x", "y", "z"]
+      a = a[1:3]
+      a = append(a, "w")
+      b = args()
+      b = append(b, "end")
+      println(len(a), a[0], a[2], len(b), b[0], b[2])
+    args: [one, two]
+    expected: |
+      3 y w 3 one end
