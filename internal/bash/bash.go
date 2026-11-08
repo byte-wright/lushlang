@@ -85,7 +85,14 @@ func (b *bash) block(block *bcode.Block) {
 	for _, c := range block.Commands {
 		switch cmd := c.(type) {
 		case *bcode.Assignment:
-			b.print("local " + cmd.Var.Name + "=" + b.atom(cmd.Value))
+			// declare -g needs bash 4.2, and no local can hide a G_ name, so a plain
+			// assignment reaches the global from any function
+			scope := "local "
+			if cmd.Global {
+				scope = ""
+			}
+
+			b.print(scope + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
 			b.print(b.funcName(cmd) + " " + b.mkFuncParams(cmd))

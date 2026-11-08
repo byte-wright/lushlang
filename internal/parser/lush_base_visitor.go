@@ -20,6 +20,10 @@ func (v *BaseLushVisitor) VisitImportStatement(ctx *ImportStatementContext) inte
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitVarDef(ctx *VarDefContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitStatement(ctx *StatementContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -53,6 +57,10 @@ func (v *BaseLushVisitor) VisitBlock(ctx *BlockContext) interface{} {
 }
 
 func (v *BaseLushVisitor) VisitAssignment(ctx *AssignmentContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitGlobalAssignment(ctx *GlobalAssignmentContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

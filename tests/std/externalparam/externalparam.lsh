@@ -1,0 +1,9 @@
+var s = "global"
+
+func echo(s string) string ```
+  L_ret0="$s"
+```
+
+func value() string {
+  return s
+}

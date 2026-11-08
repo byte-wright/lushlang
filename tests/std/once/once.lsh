@@ -1,0 +1,6 @@
+var value = load()
+
+func load() int {
+  println("loading")
+  return 7
+}

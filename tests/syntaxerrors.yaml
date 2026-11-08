@@ -29,7 +29,7 @@ tests:
       println("abc".hasPrefix("a"))
     errors:
       - "syntaxerrors/call on a value.lsh Ln:1 Col:14 mismatched input '.' expecting {')', ','}"
-      - "syntaxerrors/call on a value.lsh Ln:1 Col:29 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', ID}"
+      - "syntaxerrors/call on a value.lsh Ln:1 Col:29 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', 'var', 'global', ID}"
 
   - name: call on the result of a call
     code: |
@@ -37,7 +37,7 @@ tests:
       println(strings.trimPrefix("abc", "a").hasPrefix("b"))
     errors:
       - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:39 mismatched input '.' expecting {')', ','}"
-      - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:54 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', ID}"
+      - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:54 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', 'var', 'global', ID}"
 
   - name: nested array type
     description: bash arrays can't be nested

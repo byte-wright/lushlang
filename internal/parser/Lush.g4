@@ -5,6 +5,7 @@ program
     : importStatement* (
         statement
         | funcDef
+        | varDef
     )* EOF
     ;
 
@@ -12,13 +13,17 @@ package
     : importStatement* (
         funcDef
         | externalFuncDef
+        | varDef
     )* EOF
     ;
 
 importStatement: IMPORT STRING;
 
+varDef: VAR assignment;
+
 statement
     : assignment
+    | globalAssignment
     | funcStatement
     | if
     | for
@@ -71,6 +76,8 @@ assignment
     )*
     ;
 
+globalAssignment: GLOBAL assignment;
+
 funcStatement: (namespace = ID DOT)? func;
 
 expression
@@ -119,7 +126,7 @@ func
     )? RPAREN
     ;
 
-var: ID;
+var: (namespace = ID DOT)? name = ID;
 
 envVar: ENVVAR;
 
@@ -161,6 +168,8 @@ INT_TYPE: 'int';
 BOOL_TYPE: 'bool';
 FUNC: 'func';
 RETURN: 'return';
+VAR: 'var';
+GLOBAL: 'global';
 
 LAND: '&&';
 LOR: '||';

@@ -13,6 +13,8 @@ type Program struct {
 	// File is the main file, Root is part of it
 	File *File
 
+	InitOrder []*VarDef
+
 	packages      []*Package
 	addedPackages map[string]*Package
 }
@@ -20,6 +22,8 @@ type Program struct {
 type Package struct {
 	Path             string
 	Name             string
+	VarDefs          []*VarDef
+	Globals          *Block
 	FuncDefs         []*FuncDef
 	ExternalFuncDefs []*ExternalFuncDef
 	// Location is the import that added the package, it's nil for main
@@ -27,14 +31,14 @@ type Package struct {
 }
 
 // File holds the imports of a source file, they are only visible inside that file. Its
-// functions are visible in the whole package.
+// functions and globals are visible in the whole package.
 type File struct {
 	Package *Package
 	Imports map[string]*Package
 }
 
 func NewProgram() *Program {
-	main := &Package{Name: "main"}
+	main := &Package{Name: "main", Globals: &Block{}}
 
 	return &Program{
 		Root:          &Block{},
@@ -61,6 +65,7 @@ func (p *Program) AddImport(path string, loc *common.Location) *Package {
 	pkg = &Package{
 		Path:     path,
 		Name:     filepath.Base(path),
+		Globals:  &Block{},
 		Location: loc,
 	}
 	p.packages = append(p.packages, pkg)

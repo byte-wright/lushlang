@@ -8,6 +8,13 @@ ast.Program type:
   {if .Packages}
   {end-}
 
+  {for vd in .Main.VarDefs-}
+  @{vd}
+  {end-}
+
+  {if .Main.VarDefs}
+  {end-}
+
   {for fd in .Main.FuncDefs-}
   @{fd}
   {end-}
@@ -49,8 +56,11 @@ ast.Block type:
   @{st}
   {-end}
 
+ast.VarDef type:
+  var @{.Assignment}
+
 ast.Assignment type:
-  {for i, n, first in .Targets}{if !first}, {end}${n.Name}{end}
+  {if .Global}global {end}{for i, n, first in .Targets}{if !first}, {end}${n.Name}{end}
   ${-" = "-}
   @{.Expressions}
 
@@ -88,7 +98,7 @@ ast.Bool type:
   ${.Value}
 
 ast.Var type:
-  ${.Name}
+  {if .Namespace}${.Namespace}.{end}${.Name}
 
 ast.EnvVar type:
   $${.Name}

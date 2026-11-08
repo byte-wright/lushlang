@@ -39,6 +39,11 @@ func (c *Compiler) evalProgram() {
 		tmpVar: c.prog,
 		vars:   map[string]*VarValue{},
 	}
+
+	for _, vd := range c.ast.InitOrder {
+		c.evalAssignment(c.prog.Main, vd.Assignment)
+	}
+
 	c.evalBlock(c.prog.Main, c.ast.Root)
 
 	c.addFuncs(c.namespaces[c.ast.Main], c.ast.Main.FuncDefs)
@@ -61,7 +66,6 @@ func identifier(name string) string {
 func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 	for _, fd := range funcDefs {
 		block := &Block{
-			parent: c.prog.Main,
 			tmpVar: c.prog,
 			vars:   map[string]*VarValue{},
 		}
@@ -94,7 +98,6 @@ func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFuncDef) {
 	for _, fd := range funcDefs {
 		block := &Block{
-			parent: c.prog.Main,
 			tmpVar: c.prog,
 			vars:   map[string]*VarValue{},
 		}
@@ -163,6 +166,18 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 		return []Value{&BoolValue{Value: x.Value}}
 
 	case *ast.Var:
+		if x.GlobalOf != nil {
+			global := &VarValue{Name: c.globalName(x.GlobalOf, x.Name), T: x.Type}
+
+			// a call later in the expression can write the global, so a + f() has to read
+			// a first. Copying a whole array for every read would be too slow.
+			if x.Type.IsArray() {
+				return []Value{global}
+			}
+
+			return []Value{block.setTmp(global)}
+		}
+
 		current := block.getVisibleVar(varName(x.Name))
 		if current == nil {
 			panic(fmt.Sprintf("var not defined %v", x.Name))
@@ -368,7 +383,7 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 	targets := map[string]bool{}
 	for _, target := range ass.Targets {
-		targets[varName(target.Name)] = true
+		targets[c.targetName(target)] = true
 	}
 
 	results := []Value{}
@@ -383,10 +398,29 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 	}
 
 	for i, target := range ass.Targets {
-		if target.Name != "_" {
-			b.set(&VarValue{Name: varName(target.Name), T: results[i].Type()}, results[i])
+		if target.Name == "_" {
+			continue
+		}
+
+		v := &VarValue{Name: c.targetName(target), T: results[i].Type()}
+		if target.GlobalOf != nil {
+			b.add(&Assignment{Var: v, Value: results[i], Global: true})
+		} else {
+			b.set(v, results[i])
 		}
 	}
+}
+
+func (c *Compiler) targetName(target *ast.AssignmentTarget) string {
+	if target.GlobalOf != nil {
+		return c.globalName(target.GlobalOf, target.Name)
+	}
+
+	return varName(target.Name)
+}
+
+func (c *Compiler) globalName(pkg *ast.Package, name string) string {
+	return "G_" + c.namespaces[pkg] + "_" + name
 }
 
 // evalLogical evaluates b only when a doesn't decide the result already,

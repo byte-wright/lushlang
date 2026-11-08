@@ -32,8 +32,6 @@ type setTypesPass struct {
 func SetTypes(ast *ast.Program) []*ast.ASTError {
 	te := &setTypesPass{
 		ast: ast,
-		// Root is visited before the function bodies
-		file: ast.File,
 	}
 
 	te.declarations(ast.Main)
@@ -41,9 +39,23 @@ func SetTypes(ast *ast.Program) []*ast.ASTError {
 		te.declarations(pkg)
 	}
 
+	te.varDefs()
+
+	// Root is visited before the function bodies
+	te.file = ast.File
+
 	Visit(ast, te)
 
 	return te.errors
+}
+
+func (t *setTypesPass) varDefs() {
+	c := &context{ast: t.ast, visitor: t}
+
+	for _, vd := range t.ast.InitOrder {
+		t.file, t.block = vd.File, vd.File.Package.Globals
+		c.evalStatement(vd.Assignment)
+	}
 }
 
 // declarations reports functions and parameters that are defined twice. Calls would be
@@ -157,12 +169,17 @@ func (t *setTypesPass) assignment(st *ast.Assignment) {
 			continue
 		}
 
-		v := t.block.GetVar(target.Name)
+		block := t.block
+		if target.GlobalOf != nil {
+			block = target.GlobalOf.Globals
+		}
+
+		v := block.GetVar(target.Name)
 		if v != nil && !known([]common.Type{v.Type, types[i]}) {
 			continue
 		}
 
-		err := t.block.SetVar(target.Name, types[i])
+		err := block.SetVar(target.Name, types[i])
 		if err != nil {
 			t.errors = append(t.errors, &ast.ASTError{Location: target.Location, Message: err.Error()})
 		}
@@ -178,14 +195,7 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 		t.call(exp.Namespace, exp.Func)
 
 	case *ast.Var:
-		v := t.block.GetVar(exp.Name)
-		if exp.Name == "_" {
-			t.errorf(exp.Location, "cannot use _ as value")
-		} else if v == nil {
-			t.errorf(exp.Location, "variable '%v' is not defined", exp.Name)
-		} else {
-			exp.Type = v.Type
-		}
+		t.variable(exp)
 
 	case *ast.Minus:
 		t.unary(exp.Location, "-", exp.Expression, intType)
@@ -244,6 +254,31 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 
 	case *ast.EnvVar:
 		t.envVar(exp)
+	}
+}
+
+func (t *setTypesPass) variable(x *ast.Var) {
+	switch {
+	case x.Name == "_":
+		t.errorf(x.Location, "cannot use _ as value")
+
+	case x.GlobalOf != nil:
+		x.Type = x.GlobalOf.Globals.GetVar(x.Name).Type
+
+	case x.Namespace != "" && t.file.Imports[x.Namespace] == nil:
+		t.errorf(x.Location, "namespace %v not found", x.Namespace)
+
+	case x.Namespace != "":
+		t.errorf(x.Location, "variable %v in namespace %v not found", x.Name, x.Namespace)
+
+	default:
+		v := t.block.GetVar(x.Name)
+		if v == nil {
+			t.errorf(x.Location, "variable '%v' is not defined", x.Name)
+			return
+		}
+
+		x.Type = v.Type
 	}
 }
 

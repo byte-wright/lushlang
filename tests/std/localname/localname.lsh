@@ -1,0 +1,4 @@
+func run() int {
+  total = 1
+  return total + 1
+}

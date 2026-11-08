@@ -1,0 +1,9 @@
+import "strings"
+
+var host = strings.trimSuffix("example.com/", "/")
+var base = "https://" + host + path
+var calls = 0
+
+func url() string {
+  return base
+}

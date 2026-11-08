@@ -1,0 +1,724 @@
+order: 3
+name: Globals
+tests:
+  - name: function reads a global
+    code: |
+      var greeting = "hello"
+
+      func greet() {
+        println(greeting)
+      }
+
+      greet()
+    expected: |
+      hello
+
+  - name: env var cleaned up by a package function
+    code: |
+      import "strings"
+
+      var value = strings.trimSuffix($LUSH_TEST, "lo")
+
+      func show() {
+        println(value)
+      }
+
+      show()
+    expected: |
+      hel
+
+  - name: own function in an initial value
+    code: |
+      var value = clean($LUSH_TEST)
+
+      func clean(s string) string {
+        return s + "!"
+      }
+
+      println(value)
+    expected: |
+      hello!
+
+  - name: builtins in an initial value
+    args: ["a", "b"]
+    code: |
+      var all = args()
+      var count = len(all)
+
+      println(count, all[1])
+    expected: |
+      2 b
+
+  - name: initial values run before the top level
+    code: |
+      println(value)
+
+      var value = load()
+
+      func load() int {
+        println("loading")
+        return 1
+      }
+
+      println("done")
+    expected: |
+      loading
+      1
+      done
+
+  - name: function writes a global
+    code: |
+      var count = 0
+
+      func increment() {
+        global count = count + 1
+      }
+
+      increment()
+      increment()
+      println(count)
+    expected: |
+      2
+
+  - name: write from a nested call and block
+    code: |
+      var state = "before"
+
+      func outer() {
+        if true {
+          inner()
+        }
+      }
+
+      func inner() {
+        for i = 0; i < 1; i = i + 1 {
+          global state = "after"
+        }
+      }
+
+      outer()
+      println(state)
+    expected: |
+      after
+
+  - name: write at the top level
+    code: |
+      var state = 1
+
+      global state = state + 1
+      println(state)
+    expected: |
+      2
+
+  - name: function writes a global without being a dependency
+    code: |
+      var a = 1
+
+      func f() int {
+        global a = a + 1
+        return a
+      }
+
+      println(f())
+      println(a)
+    expected: |
+      2
+      2
+
+  - name: read before a call that writes the global
+    description: expressions are evaluated from left to right
+    code: |
+      var a = 1
+
+      func f() int {
+        global a = a + 1
+        return a
+      }
+
+      println(a, f())
+      x = a + f()
+      println(x, a)
+    expected: |
+      1 2
+      5 3
+
+  - name: loop condition reads the global again
+    code: |
+      var limit = 3
+
+      func shrink() {
+        global limit = limit - 1
+      }
+
+      n = 0
+      for i = 0; i < limit; i = i + 1 {
+        shrink()
+        n = n + 1
+      }
+
+      println(n, limit)
+    expected: |
+      2 1
+
+  - name: value types
+    code: |
+      var text = "a  b"
+      var word = "hello"
+      var number = 6
+      var on = true
+      var off = !on
+
+      println(text, number * 2 + 1, on, off, on ? "yes" : "no")
+      if on {
+        println(len(word), word[1:3], word[0])
+      }
+    expected: |
+      a  b 13 true false yes
+      5 el h
+
+  - name: array global
+    code: |
+      var items = ["a b", "c"]
+      var none = []string
+
+      func add(s string) {
+        global items = append(items, s)
+      }
+
+      func count(a []string) int {
+        return len(a)
+      }
+
+      add("d  e")
+      println(len(items), items[0], items[2], len(none), count(items), len(items[1:]))
+
+      copied = items
+      copied = append(copied, "f")
+      println(len(copied), len(items))
+    expected: |
+      3 a b d  e 0 3 2
+      4 3
+
+  - name: swap
+    code: |
+      var a = 1
+      var b = 2
+
+      global a, b = b, a
+      println(a, b)
+    expected: |
+      2 1
+
+  - name: several values from one call
+    code: |
+      import "strings"
+
+      var before, after, found = strings.cut("a-b", "-")
+      var first, _, _ = strings.cut("c-d", "-")
+
+      println(before, after, found, first)
+    expected: |
+      a b true c
+
+  - name: blank definition still runs
+    code: |
+      var _ = load()
+
+      func load() int {
+        println("loading")
+        return 1
+      }
+    expected: |
+      loading
+
+  - name: global named like an env var
+    code: |
+      var lush_test = "global"
+
+      func show() {
+        println($lush_test, lush_test)
+      }
+
+      show()
+    expected: |
+      env global
+
+  - name: forward reference
+    code: |
+      var a = b + 1
+      var b = c + 1
+      var c = 1
+
+      println(a, b, c)
+    expected: |
+      3 2 1
+
+  - name: dependency through a function
+    code: |
+      var a = double()
+      var b = 2
+
+      func double() int {
+        return through() * 2
+      }
+
+      func through() int {
+        return b
+      }
+
+      println(a)
+    expected: |
+      4
+
+  - name: write in an initial value is not overwritten
+    description: the write counts as a dependency, so b's own initial value runs first
+    code: |
+      var a = setB()
+      var b = 0
+
+      func setB() int {
+        global b = 5
+        return 1
+      }
+
+      println(a, b)
+    expected: |
+      1 5
+
+  - name: recursion in an initial value
+    code: |
+      var total = sum(3)
+      var step = 2
+
+      func sum(n int) int {
+        if n == 0 {
+          return 0
+        }
+
+        return step + sum(n - 1)
+      }
+
+      println(total)
+    expected: |
+      6
+
+  - name: mutual recursion in an initial value
+    code: |
+      var even = isEven(4)
+
+      func isEven(n int) bool {
+        if n == 0 {
+          return true
+        }
+
+        return isOdd(n - 1)
+      }
+
+      func isOdd(n int) bool {
+        if n == 0 {
+          return false
+        }
+
+        return isEven(n - 1)
+      }
+
+      println(even)
+    expected: |
+      true
+
+  - name: package global
+    description: visible in the whole package, also in its other files
+    code: |
+      import "/settings"
+
+      println(settings.host, settings.url())
+      settings.count()
+      println(settings.count(), settings.calls)
+    expected: |
+      example.com https://example.com/api
+      2 2
+
+  - name: same global name in two packages
+    code: |
+      import "/settings"
+      import "/other"
+
+      var host = "main"
+
+      println(host, settings.host, other.get())
+    expected: |
+      main example.com other.org
+
+  - name: package global in an initial value
+    code: |
+      import "/settings"
+
+      var address = settings.host + ":80"
+
+      println(address)
+    expected: |
+      example.com:80
+
+  - name: package initializes once
+    code: |
+      import "/once"
+      import "/usesonce"
+
+      println(once.value, usesonce.read())
+    expected: |
+      loading
+      7 7
+
+  - name: import cycle
+    description: the order comes from references, not from imports
+    code: |
+      import "/importloopa"
+
+      println(importloopa.a)
+    expected: |
+      11
+
+  - name: external parameter named like a global
+    description: the bash code of an external function can't see globals
+    code: |
+      import "/externalparam"
+
+      println(externalparam.echo("param"), externalparam.value())
+    expected: |
+      param global
+
+  - name: local named like a global of another package
+    code: |
+      import "/settings"
+      import "/localname"
+
+      var total = 5
+      host = "local"
+
+      println(host, settings.host, localname.run(), total)
+    expected: |
+      local example.com 2 5
+
+  - name: function local named like a top level variable
+    description: functions can't see the top level, each variable keeps its own type
+    code: |
+      x = "a"
+
+      func f() int {
+        x = 1
+        return x + 1
+      }
+
+      func g(x int) int {
+        return x * 2
+      }
+
+      println(f(), g(2), x)
+    expected: |
+      2 4 a
+
+  - name: plain assignment in a function
+    code: |
+      var count = 0
+
+      func f() {
+        count = 1
+      }
+    errors:
+      - globals/plain assignment in a function.lsh Ln:4 Col:3 count is a global variable, write it with global count = ... or use another name
+
+  - name: plain assignment at the top level
+    code: |
+      var count = 0
+
+      count = 1
+    errors:
+      - globals/plain assignment at the top level.lsh Ln:3 Col:1 count is a global variable, write it with global count = ... or use another name
+
+  - name: loop variable named like a global
+    code: |
+      var i = 0
+
+      func f() {
+        for i = 0; i < 1; i = i + 1 {
+        }
+      }
+    errors:
+      - globals/loop variable named like a global.lsh Ln:4 Col:7 i is a global variable, write it with global i = ... or use another name
+      - globals/loop variable named like a global.lsh Ln:4 Col:21 i is a global variable, write it with global i = ... or use another name
+
+  - name: parameter named like a global
+    code: |
+      var host = ""
+
+      func f(host string) {
+      }
+    errors:
+      - globals/parameter named like a global.lsh Ln:3 Col:8 parameter host has the name of a global variable
+
+  - name: name clash is not reported as a cycle
+    code: |
+      var a = f(1)
+
+      func f(a int) int {
+        return a
+      }
+    errors:
+      - globals/name clash is not reported as a cycle.lsh Ln:3 Col:8 parameter a has the name of a global variable
+
+  - name: write to an undefined global
+    code: |
+      func f() {
+        global missing = 1
+      }
+    errors:
+      - globals/write to an undefined global.lsh Ln:2 Col:10 global variable missing is not defined
+
+  - name: write to a local with global
+    code: |
+      x = 1
+      global x = 2
+    errors:
+      - globals/write to a local with global.lsh Ln:2 Col:8 global variable x is not defined
+
+  - name: defined twice
+    code: |
+      var a = 1
+      var a = "s"
+    errors:
+      - globals/defined twice.lsh Ln:2 Col:5 global variable a is already defined at globals/defined twice.lsh Ln:1 Col:5
+
+  - name: defined twice in one statement
+    code: |
+      var a, a = 1, 2
+    errors:
+      - globals/defined twice in one statement.lsh Ln:1 Col:8 global variable a is already defined at globals/defined twice in one statement.lsh Ln:1 Col:5
+
+  - name: defined in two files of a package
+    code: |
+      import "/dupglobal"
+    errors:
+      - std/dupglobal/b.lsh Ln:1 Col:5 global variable x is already defined at std/dupglobal/a.lsh Ln:1 Col:5
+
+  - name: wrong type in a write
+    code: |
+      var count = 0
+
+      func f() {
+        global count = "s"
+      }
+    errors:
+      - globals/wrong type in a write.lsh Ln:4 Col:10 you cannot assign an string value to the variable 'count' of type int
+
+  - name: wrong number of values
+    code: |
+      var a, b = 1
+
+      println(a, b)
+    errors:
+      - globals/wrong number of values.lsh Ln:1 Col:5 Wrong number of expressions
+
+  - name: operator on a global
+    code: |
+      var text = "a"
+
+      println(text * 2)
+    errors:
+      - globals/operator on a global.lsh Ln:3 Col:9 operator '*' can't be used with string and int
+
+  - name: initial value without a value
+    code: |
+      var a = f()
+
+      func f() {
+      }
+    errors:
+      - globals/initial value without a value.lsh Ln:1 Col:9 f doesn't return a value
+
+  - name: unknown function in an initial value
+    code: |
+      var a = missing()
+    errors:
+      - globals/unknown function in an initial value.lsh Ln:1 Col:9 function missing not found
+
+  - name: top level variable in an initial value
+    code: |
+      b = 1
+      var a = b
+
+      println(a)
+    errors:
+      - globals/top level variable in an initial value.lsh Ln:2 Col:9 variable 'b' is not defined
+
+  - name: unknown namespace
+    code: |
+      println(nope.value)
+    errors:
+      - globals/unknown namespace.lsh Ln:1 Col:9 namespace nope not found
+
+  - name: unknown global in a namespace
+    code: |
+      import "/settings"
+
+      println(settings.missing)
+    errors:
+      - globals/unknown global in a namespace.lsh Ln:3 Col:9 variable missing in namespace settings not found
+
+  - name: package global needs its namespace
+    code: |
+      import "/settings"
+
+      println(host)
+    errors:
+      - globals/package global needs its namespace.lsh Ln:3 Col:9 variable 'host' is not defined
+
+  - name: package does not see the globals of main
+    code: |
+      import "/noglobals"
+
+      var fromMain = 1
+
+      println(noglobals.run())
+    errors:
+      - std/noglobals/noglobals.lsh Ln:2 Col:10 variable 'fromMain' is not defined
+
+  - name: self reference
+    code: |
+      var a = a
+    errors:
+      - "globals/self reference.lsh Ln:1 Col:5 initialization cycle: a -> a"
+
+  - name: cycle of variables
+    code: |
+      var a = b
+      var b = a
+    errors:
+      - "globals/cycle of variables.lsh Ln:1 Col:5 initialization cycle: a -> b -> a"
+
+  - name: cycle through a function
+    code: |
+      var a = f()
+
+      func f() int {
+        return a
+      }
+    errors:
+      - "globals/cycle through a function.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+
+  - name: cycle through nested functions
+    code: |
+      var a = f()
+
+      func f() int {
+        return g()
+      }
+
+      func g() int {
+        return a
+      }
+    errors:
+      - "globals/cycle through nested functions.lsh Ln:1 Col:5 initialization cycle: a -> f -> g -> a"
+
+  - name: cycle through a write
+    code: |
+      var a = f()
+
+      func f() int {
+        global a = 1
+        return 1
+      }
+    errors:
+      - "globals/cycle through a write.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+
+  - name: cycle through a branch that never runs
+    code: |
+      var a = f(false)
+
+      func f(use bool) int {
+        if use {
+          return a
+        }
+
+        return 1
+      }
+    errors:
+      - "globals/cycle through a branch that never runs.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+
+  - name: cycle found through a function that was already followed
+    code: |
+      var a = f()
+      var b = g()
+
+      func f() int {
+        return b
+      }
+
+      func g() int {
+        return f()
+      }
+    errors:
+      - "globals/cycle found through a function that was already followed.lsh Ln:2 Col:5 initialization cycle: b -> g -> f -> b"
+
+  - name: two cycles through one function
+    code: |
+      var a = f()
+      var b = f()
+
+      func f() int {
+        return a + b
+      }
+    errors:
+      - "globals/two cycles through one function.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+      - "globals/two cycles through one function.lsh Ln:2 Col:5 initialization cycle: b -> f -> b"
+
+  - name: cycle of a definition with several variables
+    code: |
+      var a, b = f()
+
+      func f() int, int {
+        return a, 1
+      }
+    errors:
+      - "globals/cycle of a definition with several variables.lsh Ln:1 Col:5 initialization cycle: a, b -> f -> a, b"
+
+  - name: cycle across packages
+    code: |
+      import "/initloopa"
+    errors:
+      - "std/initloopa/a.lsh Ln:3 Col:5 initialization cycle: initloopa.a -> initloopb.viaA -> initloopa.read -> initloopa.a"
+
+  - name: var in a function
+    code: |
+      func f() {
+        var a = 1
+      }
+    errors:
+      - "globals/var in a function.lsh Ln:2 Col:3 extraneous input 'var' expecting {'if', 'for', 'return', 'global', '}', ID}"
+
+  - name: global at the top level of a package
+    code: |
+      import "/globalattop"
+    errors:
+      - "std/globalattop/globalattop.lsh Ln:1 Col:1 mismatched input 'global' expecting {<EOF>, 'import', 'func', 'var'}"
+
+  - name: write to the global of another package
+    code: |
+      import "/settings"
+
+      global settings.host = "x"
+    errors:
+      - "globals/write to the global of another package.lsh Ln:3 Col:16 mismatched input '.' expecting {',', '='}"
+
+  - name: plain write to the global of another package
+    code: |
+      import "/settings"
+
+      settings.host = "x"
+    errors:
+      - "globals/plain write to the global of another package.lsh Ln:3 Col:15 mismatched input '=' expecting '('"
+
+  - name: uppercase global
+    code: |
+      var Host = 1
+    errors:
+      - globals/uppercase global.lsh Ln:1 Col:5 name Host must start with a lowercase letter

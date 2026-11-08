@@ -1,0 +1,7 @@
+import "/importloopb"
+
+var a = importloopb.b + 1
+
+func ten() int {
+  return 10
+}

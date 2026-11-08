@@ -63,6 +63,14 @@ func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTErro
 	}
 
 	errs := append(v.errors, astpass.SetParent(prog)...)
+
+	// the types of globals are inferred in init order, without it there are only
+	// follow-up errors
+	initErrs := astpass.SetInitOrder(prog)
+	if len(initErrs) > 0 {
+		return nil, append(errs, initErrs...), nil
+	}
+
 	errs = append(errs, astpass.SetTypes(prog)...)
 
 	return prog, errs, nil

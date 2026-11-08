@@ -1,0 +1,5 @@
+import "/initloopa"
+
+func viaA() int {
+  return initloopa.read()
+}

@@ -17,6 +17,9 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#importStatement.
 	VisitImportStatement(ctx *ImportStatementContext) interface{}
 
+	// Visit a parse tree produced by LushParser#varDef.
+	VisitVarDef(ctx *VarDefContext) interface{}
+
 	// Visit a parse tree produced by LushParser#statement.
 	VisitStatement(ctx *StatementContext) interface{}
 
@@ -43,6 +46,9 @@ type LushVisitor interface {
 
 	// Visit a parse tree produced by LushParser#assignment.
 	VisitAssignment(ctx *AssignmentContext) interface{}
+
+	// Visit a parse tree produced by LushParser#globalAssignment.
+	VisitGlobalAssignment(ctx *GlobalAssignmentContext) interface{}
 
 	// Visit a parse tree produced by LushParser#funcStatement.
 	VisitFuncStatement(ctx *FuncStatementContext) interface{}

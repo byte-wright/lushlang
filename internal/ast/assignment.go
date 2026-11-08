@@ -6,9 +6,16 @@ type Assignment struct {
 	Location    *common.Location
 	Targets     []*AssignmentTarget
 	Expressions []Expression
+	Global      bool
 }
 
 type AssignmentTarget struct {
 	Location *common.Location
 	Name     string
+	GlobalOf *Package
+}
+
+type VarDef struct {
+	Assignment *Assignment
+	File       *File
 }

@@ -22,6 +22,7 @@ type parseTarget interface {
 	addMainStatement(ast.Statement)
 	addFuncDef(*ast.FuncDef)
 	addExternalFuncDef(*ast.ExternalFuncDef)
+	addVarDef(*ast.VarDef)
 }
 
 func newVisitor(name string, target parseTarget) *Visitor {
@@ -54,6 +55,7 @@ func (v *Visitor) locTk(c antlr.Token) *common.Location {
 
 func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 	v.imports(ctx.AllImportStatement())
+	v.varDefs(ctx.AllVarDef())
 
 	for _, st := range ctx.AllStatement() {
 		statement := st.Accept(v)
@@ -70,6 +72,7 @@ func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 
 func (v *Visitor) VisitPackage(ctx *PackageContext) any {
 	v.imports(ctx.AllImportStatement())
+	v.varDefs(ctx.AllVarDef())
 
 	for _, fd := range ctx.AllFuncDef() {
 		funcDef := fd.Accept(v)
@@ -97,9 +100,23 @@ func (v *Visitor) imports(imps []IImportStatementContext) {
 	}
 }
 
+func (v *Visitor) varDefs(defs []IVarDefContext) {
+	for _, def := range defs {
+		v.Target.addVarDef(def.Accept(v).(*ast.VarDef))
+	}
+}
+
+func (v *Visitor) VisitVarDef(ctx *VarDefContext) any {
+	return &ast.VarDef{Assignment: ctx.Assignment().Accept(v).(*ast.Assignment)}
+}
+
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 	if ctx.Assignment() != nil {
 		return ctx.Assignment().Accept(v)
+	}
+
+	if ctx.GlobalAssignment() != nil {
+		return ctx.GlobalAssignment().Accept(v)
 	}
 
 	if ctx.FuncStatement() != nil {
@@ -239,6 +256,13 @@ func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
 			return x.Accept(v).(ast.Expression)
 		}),
 	}
+}
+
+func (v *Visitor) VisitGlobalAssignment(ctx *GlobalAssignmentContext) any {
+	assignment := ctx.Assignment().Accept(v).(*ast.Assignment)
+	assignment.Global = true
+
+	return assignment
 }
 
 func (v *Visitor) VisitFuncStatement(ctx *FuncStatementContext) any {
@@ -439,9 +463,15 @@ func (v *Visitor) VisitFunc(ctx *FuncContext) any {
 }
 
 func (v *Visitor) VisitVar(ctx *VarContext) any {
+	namespace := ""
+	if ctx.GetNamespace() != nil {
+		namespace = ctx.GetNamespace().GetText()
+	}
+
 	return &ast.Var{
-		Name:     ctx.ID().GetText(),
-		Location: v.loc(ctx),
+		Namespace: namespace,
+		Name:      ctx.GetName().GetText(),
+		Location:  v.loc(ctx),
 	}
 }
 

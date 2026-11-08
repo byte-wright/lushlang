@@ -130,10 +130,12 @@ type Method struct {
 }
 
 type Var struct {
-	Name     string
-	Location *common.Location
+	Namespace string
+	Name      string
+	Location  *common.Location
 	// calculated
-	Type common.Type
+	Type     common.Type
+	GlobalOf *Package
 }
 
 type Number struct {

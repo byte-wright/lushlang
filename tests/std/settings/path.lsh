@@ -1,0 +1,6 @@
+var path = "/api"
+
+func count() int {
+  global calls = calls + 1
+  return calls
+}
