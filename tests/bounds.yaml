@@ -77,3 +77,16 @@ tests:
     stderr: |
       bounds/index error in a function.lsh Ln:2 Col:10 index out of range [0] with length 0
     exit: 2
+
+  - name: utf-8 index past the end
+    description: the length in the message counts characters
+    env: [LC_ALL=C]
+    code: |
+      s = "€€"
+      println(s[1])
+      println(s[2])
+    expected: |
+      €
+    stderr: |
+      bounds/utf-8 index past the end.lsh Ln:3 Col:9 index out of range [2] with length 2
+    exit: 2

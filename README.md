@@ -17,6 +17,10 @@ Its in no way optimized and quite rudimentary.
 
   - math and comparison operators
   - int, string, bools and type inference
+  - strings are UTF-8: `len`, indexes and slices count characters (Unicode code points),
+    whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
+    This needs a UTF-8 locale on the system, which nearly every system has. Without one,
+    a script that uses these operations exits with code 2 before it starts
   - arrays (very slow)
   - functions with params and (multiple) return params
   - if, else if, else and for

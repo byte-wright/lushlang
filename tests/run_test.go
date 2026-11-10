@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -32,6 +33,7 @@ type Test struct {
 	Only     bool     `json:"only"`
 	Code     string   `json:"code"`
 	Args     []string `json:"args"`
+	Env      []string `json:"env"`
 	Expected string   `json:"expected"`
 	Stderr   string   `json:"stderr"`
 	Exit     int      `json:"exit"`
@@ -45,7 +47,7 @@ var images = []string{"bash:3.2", "bash:5.3"}
 
 var env = []string{"LUSH_TEST=hello", "lush_test=env"}
 
-type runner func(t *testing.T, file string, args []string) (stdout, stderr string, exit int)
+type runner func(t *testing.T, file string, args, env []string) (stdout, stderr string, exit int)
 
 func TestAll(t *testing.T) {
 	os.RemoveAll(scripts)
@@ -158,7 +160,7 @@ func runSuites(t *testing.T, suites []*TestSuite, only bool, run runner) {
 							t.Fatal(err)
 						}
 
-						stdout, stderr, exit := run(t, file, tc.Args)
+						stdout, stderr, exit := run(t, file, tc.Args, slices.Concat(env, tc.Env))
 
 						expect.Value(t, "result", stdout).ToBe(tc.Expected)
 						expect.Value(t, "stderr", stderr).ToBe(tc.Stderr)
@@ -170,7 +172,7 @@ func runSuites(t *testing.T, suites []*TestSuite, only bool, run runner) {
 	}
 }
 
-func runLocal(t *testing.T, file string, args []string) (string, string, int) {
+func runLocal(t *testing.T, file string, args, env []string) (string, string, int) {
 	cmd := exec.Command("bash", append([]string{file}, args...)...)
 	cmd.Env = append(os.Environ(), env...)
 
@@ -210,7 +212,7 @@ func startContainer(t *testing.T, image string) runner {
 		t.Fatal(err)
 	}
 
-	return func(t *testing.T, file string, args []string) (string, string, int) {
+	return func(t *testing.T, file string, args, env []string) (string, string, int) {
 		exit, output, err := ctr.Exec(context.Background(), append([]string{"bash", file}, args...),
 			tcexec.WithWorkingDir("/tests"), tcexec.WithEnv(env))
 		if err != nil {

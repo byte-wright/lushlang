@@ -2,6 +2,7 @@ package bash
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -68,6 +69,11 @@ L_args=("$@")
 		b.print("lsh__" + fn + "() {")
 		b.print(iFunc.code)
 		b.print("}\n")
+	}
+
+	// before main, a script stops before it does anything when it can't run
+	if b.usedFuncs["findUtf8"] {
+		b.print("lsh__findUtf8")
 	}
 
 	b.print(`main "$@"`)
@@ -156,6 +162,7 @@ func (b *bash) block(block *bcode.Block) {
 			b.params(cmd.Vars)
 
 		case *bcode.Code:
+			b.useHelpersIn(cmd.Code)
 			b.print(cmd.Code)
 
 		case *bcode.Append:
@@ -239,29 +246,41 @@ func (b *bash) atom(a bcode.Atom) string {
 		b.print("local L_i=\"L_bool_$?\"")
 		return "${!L_i}"
 
+	// the str helpers return in L_ret0, it's safe to read because bcode assigns
+	// every Len, Index and Slice to a variable right away
 	case *bcode.Slice:
 		from, to := b.atom(at.From), b.atom(at.To)
+		if !at.Value.Type().IsArray() {
+			b.useFunc("strSlice")
+			b.print("lsh__strSlice " + b.atom(at.Value) + " " + from + " " + to + " " + b.location(at.Location))
+			return `"$L_ret0"`
+		}
+
 		b.useFunc("checkSlice")
-		b.print("lsh__checkSlice " + from + " " + to + " " + length(at.Value) + " " + b.location(at.Location))
+		b.print("lsh__checkSlice " + from + " " + to + " " + arrayLength(at.Value) + " " + b.location(at.Location))
 
 		bounds := ":$(( " + b.arith(at.From) + " )):$(( " + b.arith(at.To) + " - " + b.arith(at.From) + " ))}"
-		if at.Value.Type().IsArray() {
-			return "(\"${" + at.Value.Name + "[@]" + bounds + "\")"
-		}
-		return "\"${" + at.Value.Name + bounds + "\""
+		return "(\"${" + at.Value.Name + "[@]" + bounds + "\")"
 
 	case *bcode.Len:
-		return length(at.Parameter)
+		if !at.Parameter.Type().IsArray() {
+			b.useFunc("strLen")
+			b.print("lsh__strLen " + b.atom(at.Parameter))
+			return `"$L_ret0"`
+		}
+		return arrayLength(at.Parameter)
 
 	case *bcode.Index:
 		position := b.atom(at.Position)
-		b.useFunc("checkIndex")
-		b.print("lsh__checkIndex " + position + " " + length(at.Value) + " " + b.location(at.Location))
-
-		if at.Value.Type().IsArray() {
-			return "\"${" + at.Value.Name + "[" + position + "]}\""
+		if !at.Value.Type().IsArray() {
+			b.useFunc("strIndex")
+			b.print("lsh__strIndex " + b.atom(at.Value) + " " + position + " " + b.location(at.Location))
+			return `"$L_ret0"`
 		}
-		return "\"${" + at.Value.Name + ":$(( " + b.arith(at.Position) + " )):1}\""
+
+		b.useFunc("checkIndex")
+		b.print("lsh__checkIndex " + position + " " + arrayLength(at.Value) + " " + b.location(at.Location))
+		return "\"${" + at.Value.Name + "[" + position + "]}\""
 
 	case *bcode.NumberValue:
 		return strconv.Itoa(at.Value)
@@ -336,11 +355,8 @@ func appendInPlace(array, value string) string {
 	return array + "[${#" + array + "[@]}]=" + value
 }
 
-func length(v *bcode.VarValue) string {
-	if v.Type().IsArray() {
-		return "\"${#" + v.Name + "[@]}\""
-	}
-	return "\"${#" + v.Name + "}\""
+func arrayLength(v *bcode.VarValue) string {
+	return "\"${#" + v.Name + "[@]}\""
 }
 
 func (b *bash) location(l *common.Location) string {
@@ -387,7 +403,30 @@ func (b *bash) funcName(f *bcode.Func) string {
 }
 
 func (b *bash) useFunc(name string) {
+	if b.usedFuncs[name] {
+		return
+	}
 	b.usedFuncs[name] = true
+
+	f, isHelper := funcs[name]
+	if isHelper {
+		for _, u := range f.uses {
+			b.useFunc(u)
+		}
+	}
+}
+
+var helperCall = regexp.MustCompile(`\blsh__([A-Za-z0-9]+)`)
+
+// useHelpersIn finds the helpers that the bash body of an external function calls,
+// like lsh__strLen in std.
+func (b *bash) useHelpersIn(code string) {
+	for _, m := range helperCall.FindAllStringSubmatch(code, -1) {
+		_, isHelper := funcs[m[1]]
+		if isHelper {
+			b.useFunc(m[1])
+		}
+	}
 }
 
 func (b *bash) print(line string) {

@@ -105,3 +105,41 @@ tests:
     expected: |
       false b bc
       5
+
+  - name: utf-8
+    description: len, index and slice count characters, not bytes
+    code: |
+      import "strings"
+
+      s = "héllo€"
+      println(len(s), s[1], s[5], s[1:4], s[3:])
+      println(strings.indexOf("héllo wörld", "w"), strings.indexOf("€uro", "u"))
+    expected: |
+      6 é € éll lo€
+      6 1
+
+  - name: utf-8 in the C locale
+    description: the user's locale doesn't change how strings count, and commands and env reads still see it
+    env: [LC_ALL=C]
+    code: |
+      import "strings"
+
+      s = "héllo€"
+      println(len(s), s[1], s[5], s[1:4], s[3:])
+      println(strings.indexOf("héllo wörld", "w"), strings.indexOf("€uro", "u"))
+      out, _, _ = execVar("printenv", "LC_ALL")
+      println($LC_ALL, out[0])
+    expected: |
+      6 é € éll lo€
+      6 1
+      C C
+
+  - name: invalid utf-8
+    description: every byte that isn't part of a valid character counts as one
+    env: [LC_ALL=C]
+    code: |
+      out, _, _ = execVar("printf", "a\\377b\\303")
+      s = out[0]
+      println(len(s), s[2])
+    expected: |
+      4 b
