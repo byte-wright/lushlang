@@ -35,6 +35,18 @@ tests:
       1 true
       2 b
 
+  - name: generated functions are no commands
+    description: the script's own bash functions don't shadow commands, main would run the script again
+    code: |
+      func f() {
+      }
+      _, e, code = execVar("main")
+      _, _, helper = execVar("lsh__println", "x")
+      _, _, fn = execVar("lsh_main_f")
+      println(code, len(e), helper, fn)
+    expected: |
+      127 1 127 127
+
   - name: commands run in a subshell
     description: builtins like cd and exit don't change the script
     code: |
