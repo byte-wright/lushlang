@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
@@ -36,6 +37,24 @@ func (l *errorListener) uppercaseNames(stream *antlr.CommonTokenStream) {
 			l.SyntaxError(nil, nil, tk.GetLine(), tk.GetColumn(), fmt.Sprintf("name %v must start with a lowercase letter", name), nil)
 		}
 	}
+}
+
+var nameShape = regexp.MustCompile(`^[a-z_][a-zA-Z_0-9]*$`)
+
+// invalidPackageName tells why code can't refer to a package by its folder name, like
+// my-pkg or if. It's empty for a valid name.
+func invalidPackageName(name string) string {
+	if !nameShape.MatchString(name) {
+		return "must start with a lowercase letter or _ and contain only letters, digits and _"
+	}
+
+	lexer := NewLushLexer(antlr.NewInputStream(name))
+	lexer.RemoveErrorListeners()
+	if lexer.NextToken().GetTokenType() != LushLexerID {
+		return "is a keyword"
+	}
+
+	return ""
 }
 
 // listen replaces antlr's default listener, which prints to stderr and lets parsing go on.

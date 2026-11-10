@@ -86,6 +86,19 @@ tests:
       - import/missing package.lsh Ln:3 Col:1 package "/../std" not found
       - std/broken/broken.lsh Ln:1 Col:1 package "/missing" not found
 
+  - name: invalid package name
+    description: code can't refer to these packages, the error is at the import instead of misleading ones at a use
+    code: |
+      import "/my-pkg"
+      import "/MyPkg"
+      import "/if"
+
+      println(my-pkg.foo())
+    errors:
+      - import/invalid package name.lsh Ln:1 Col:1 package "/my-pkg" can't be used, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _
+      - import/invalid package name.lsh Ln:2 Col:1 package "/MyPkg" can't be used, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _
+      - import/invalid package name.lsh Ln:3 Col:1 package "/if" can't be used, the folder name if is a keyword
+
   - name: package function shadows a builtin only in its package
     code: |
       import "/shadow"

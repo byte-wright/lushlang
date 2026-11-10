@@ -42,6 +42,12 @@ func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTErro
 	for i := 0; i < len(prog.Packages()); i++ {
 		pkg := prog.Packages()[i]
 
+		invalid := invalidPackageName(pkg.Name)
+		if invalid != "" {
+			pkgErrs = append(pkgErrs, &ast.ASTError{Location: pkg.Location, Message: fmt.Sprintf("package %q can't be used, the folder name %v %v", pkg.Path, pkg.Name, invalid)})
+			continue
+		}
+
 		files, err := resolver.resolve(pkg.Path)
 		// an invalid path is one that leaves the root, like /../x
 		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrInvalid) {
