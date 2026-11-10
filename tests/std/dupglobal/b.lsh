@@ -1,1 +1,1 @@
-var x = "s"
+global x = "s"

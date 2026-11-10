@@ -1,6 +1,6 @@
 import "/initloopb"
 
-var a = initloopb.viaA()
+global a = initloopb.viaA()
 
 func read() int {
   return a

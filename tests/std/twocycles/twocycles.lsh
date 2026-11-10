@@ -1,0 +1,6 @@
+global a = f()
+global b = f()
+
+func f() int {
+  return a + b
+}

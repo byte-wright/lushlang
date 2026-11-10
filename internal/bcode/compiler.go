@@ -40,8 +40,8 @@ func (c *Compiler) evalProgram() {
 		vars:   map[string]*VarValue{},
 	}
 
-	for _, vd := range c.ast.InitOrder {
-		c.evalAssignment(c.prog.Main, vd.Assignment)
+	for _, def := range c.ast.InitOrder {
+		c.evalAssignment(c.prog.Main, def.Assignment)
 	}
 
 	c.evalBlock(c.prog.Main, c.ast.Root)

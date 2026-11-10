@@ -15,7 +15,7 @@ type AssignmentTarget struct {
 	GlobalOf *Package
 }
 
-type VarDef struct {
+type GlobalDef struct {
 	Assignment *Assignment
 	File       *File
 }

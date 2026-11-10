@@ -1,4 +1,4 @@
-var value = load()
+global value = load()
 
 func load() int {
   println("loading")

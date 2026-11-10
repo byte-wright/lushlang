@@ -8,13 +8,6 @@ ast.Program type:
   {if .Packages}
   {end-}
 
-  {for vd in .Main.VarDefs-}
-  @{vd}
-  {end-}
-
-  {if .Main.VarDefs}
-  {end-}
-
   {for fd in .Main.FuncDefs-}
   @{fd}
   {end-}
@@ -55,9 +48,6 @@ ast.Block type:
   {end-}
   @{st}
   {-end}
-
-ast.VarDef type:
-  var @{.Assignment}
 
 ast.Assignment type:
   {if .Global}global {end}{for i, n, first in .Targets}{if !first}, {end}${n.Name}{end}

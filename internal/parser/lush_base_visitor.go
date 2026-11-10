@@ -20,10 +20,6 @@ func (v *BaseLushVisitor) VisitImportStatement(ctx *ImportStatementContext) inte
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseLushVisitor) VisitVarDef(ctx *VarDefContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseLushVisitor) VisitStatement(ctx *StatementContext) interface{} {
 	return v.VisitChildren(ctx)
 }

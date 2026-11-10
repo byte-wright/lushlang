@@ -26,9 +26,8 @@ func (m *mainTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
 	panic("external func devs only in packages allowed")
 }
 
-func (m *mainTarget) addVarDef(d *ast.VarDef) {
-	d.File = m.prog.File
-	m.prog.Main.VarDefs = append(m.prog.Main.VarDefs, d)
+func (m *mainTarget) addGlobalDef(d *ast.GlobalDef) {
+	panic("global defs only in packages allowed")
 }
 
 type pkgTarget struct {
@@ -53,7 +52,7 @@ func (l *pkgTarget) addExternalFuncDef(f *ast.ExternalFuncDef) {
 	l.file.Package.ExternalFuncDefs = append(l.file.Package.ExternalFuncDefs, f)
 }
 
-func (l *pkgTarget) addVarDef(d *ast.VarDef) {
+func (l *pkgTarget) addGlobalDef(d *ast.GlobalDef) {
 	d.File = l.file
-	l.file.Package.VarDefs = append(l.file.Package.VarDefs, d)
+	l.file.Package.GlobalDefs = append(l.file.Package.GlobalDefs, d)
 }

@@ -13,16 +13,18 @@ type Program struct {
 	// File is the main file, Root is part of it
 	File *File
 
-	InitOrder []*VarDef
+	// InitOrder holds the GlobalDefs of all packages, in the order they get their values
+	InitOrder []*GlobalDef
 
 	packages      []*Package
 	addedPackages map[string]*Package
 }
 
 type Package struct {
-	Path             string
-	Name             string
-	VarDefs          []*VarDef
+	Path string
+	Name string
+	// GlobalDefs is empty for main, its globals are defined by global assignments in Root
+	GlobalDefs       []*GlobalDef
 	Globals          *Block
 	FuncDefs         []*FuncDef
 	ExternalFuncDefs []*ExternalFuncDef

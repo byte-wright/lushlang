@@ -39,7 +39,7 @@ func SetTypes(ast *ast.Program) []*ast.ASTError {
 		te.declarations(pkg)
 	}
 
-	te.varDefs()
+	te.globalDefs()
 
 	// Root is visited before the function bodies
 	te.file = ast.File
@@ -49,12 +49,12 @@ func SetTypes(ast *ast.Program) []*ast.ASTError {
 	return te.errors
 }
 
-func (t *setTypesPass) varDefs() {
+func (t *setTypesPass) globalDefs() {
 	c := &context{ast: t.ast, visitor: t}
 
-	for _, vd := range t.ast.InitOrder {
-		t.file, t.block = vd.File, vd.File.Package.Globals
-		c.evalStatement(vd.Assignment)
+	for _, def := range t.ast.InitOrder {
+		t.file, t.block = def.File, def.File.Package.Globals
+		c.evalStatement(def.Assignment)
 	}
 }
 

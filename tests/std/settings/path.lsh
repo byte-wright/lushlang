@@ -1,4 +1,4 @@
-var path = "/api"
+global path = "/api"
 
 func count() int {
   global calls = calls + 1

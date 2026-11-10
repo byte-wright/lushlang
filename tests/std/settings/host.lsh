@@ -1,8 +1,8 @@
 import "strings"
 
-var host = strings.trimSuffix("example.com/", "/")
-var base = "https://" + host + path
-var calls = 0
+global host = strings.trimSuffix("example.com/", "/")
+global base = "https://" + host + path
+global calls = 0
 
 func url() string {
   return base

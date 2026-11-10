@@ -63,7 +63,7 @@ tests:
     code: |
       import "strings"
 
-      var log = []string
+      global log = []string
 
       func add(s string) {
         global log = append(log, s)
@@ -79,7 +79,7 @@ tests:
     code: |
       import "strings"
 
-      var log = []string
+      global log = []string
 
       func touch() string {
         global log = append(log, "inner")

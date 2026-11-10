@@ -3,7 +3,7 @@ name: Globals
 tests:
   - name: function reads a global
     code: |
-      var greeting = "hello"
+      global greeting = "hello"
 
       func greet() {
         println(greeting)
@@ -17,7 +17,7 @@ tests:
     code: |
       import "strings"
 
-      var value = strings.trimSuffix($LUSH_TEST, "lo")
+      global value = strings.trimSuffix($LUSH_TEST, "lo")
 
       func show() {
         println(value)
@@ -29,7 +29,7 @@ tests:
 
   - name: own function in an initial value
     code: |
-      var value = clean($LUSH_TEST)
+      global value = clean($LUSH_TEST)
 
       func clean(s string) string {
         return s + "!"
@@ -42,33 +42,47 @@ tests:
   - name: builtins in an initial value
     args: ["a", "b"]
     code: |
-      var all = args()
-      var count = len(all)
+      global all = args()
+      global count = len(all)
 
       println(count, all[1])
     expected: |
       2 b
 
-  - name: initial values run before the top level
+  - name: assigned in source order
     code: |
-      println(value)
+      println("start")
 
-      var value = load()
+      global value = load()
 
       func load() int {
         println("loading")
         return 1
       }
 
-      println("done")
+      println(value)
     expected: |
+      start
       loading
       1
-      done
+
+  - name: function called after the assignment
+    description: a function may use a global that is assigned later in the source, only the call has to come after it
+    code: |
+      func log(m string) {
+        if verbose {
+          println(m)
+        }
+      }
+
+      global verbose = true
+      log("start")
+    expected: |
+      start
 
   - name: function writes a global
     code: |
-      var count = 0
+      global count = 0
 
       func increment() {
         global count = count + 1
@@ -82,7 +96,7 @@ tests:
 
   - name: write from a nested call and block
     code: |
-      var state = "before"
+      global state = "before"
 
       func outer() {
         if true {
@@ -103,7 +117,7 @@ tests:
 
   - name: write at the top level
     code: |
-      var state = 1
+      global state = 1
 
       global state = state + 1
       println(state)
@@ -112,7 +126,7 @@ tests:
 
   - name: function writes a global without being a dependency
     code: |
-      var a = 1
+      global a = 1
 
       func f() int {
         global a = a + 1
@@ -128,7 +142,7 @@ tests:
   - name: read before a call that writes the global
     description: expressions are evaluated from left to right
     code: |
-      var a = 1
+      global a = 1
 
       func f() int {
         global a = a + 1
@@ -144,7 +158,7 @@ tests:
 
   - name: loop condition reads the global again
     code: |
-      var limit = 3
+      global limit = 3
 
       func shrink() {
         global limit = limit - 1
@@ -162,11 +176,11 @@ tests:
 
   - name: value types
     code: |
-      var text = "a  b"
-      var word = "hello"
-      var number = 6
-      var on = true
-      var off = !on
+      global text = "a  b"
+      global word = "hello"
+      global number = 6
+      global on = true
+      global off = !on
 
       println(text, number * 2 + 1, on, off, on ? "yes" : "no")
       if on {
@@ -178,8 +192,8 @@ tests:
 
   - name: array global
     code: |
-      var items = ["a b", "c"]
-      var none = []string
+      global items = ["a b", "c"]
+      global none = []string
 
       func add(s string) {
         global items = append(items, s)
@@ -201,8 +215,8 @@ tests:
 
   - name: swap
     code: |
-      var a = 1
-      var b = 2
+      global a = 1
+      global b = 2
 
       global a, b = b, a
       println(a, b)
@@ -213,8 +227,8 @@ tests:
     code: |
       import "strings"
 
-      var before, after, found = strings.cut("a-b", "-")
-      var first, _, _ = strings.cut("c-d", "-")
+      global before, after, found = strings.cut("a-b", "-")
+      global first, _, _ = strings.cut("c-d", "-")
 
       println(before, after, found, first)
     expected: |
@@ -222,7 +236,7 @@ tests:
 
   - name: blank definition still runs
     code: |
-      var _ = load()
+      global _ = load()
 
       func load() int {
         println("loading")
@@ -233,7 +247,7 @@ tests:
 
   - name: global named like an env var
     code: |
-      var lush_test = "global"
+      global lush_test = "global"
 
       func show() {
         println($lush_test, lush_test)
@@ -243,52 +257,19 @@ tests:
     expected: |
       env global
 
-  - name: forward reference
+  - name: package globals are sorted by their references
+    description: a package has no statements, so its globals get their values in the order their references need, also through functions. A write counts too, so c's own initial value doesn't overwrite it
     code: |
-      var a = b + 1
-      var b = c + 1
-      var c = 1
+      import "/initorder"
 
-      println(a, b, c)
+      println(initorder.a, initorder.b, initorder.c)
     expected: |
-      3 2 1
-
-  - name: dependency through a function
-    code: |
-      var a = double()
-      var b = 2
-
-      func double() int {
-        return through() * 2
-      }
-
-      func through() int {
-        return b
-      }
-
-      println(a)
-    expected: |
-      4
-
-  - name: write in an initial value is not overwritten
-    description: the write counts as a dependency, so b's own initial value runs first
-    code: |
-      var a = setB()
-      var b = 0
-
-      func setB() int {
-        global b = 5
-        return 1
-      }
-
-      println(a, b)
-    expected: |
-      1 5
+      4 1 5
 
   - name: recursion in an initial value
     code: |
-      var total = sum(3)
-      var step = 2
+      global step = 2
+      global total = sum(3)
 
       func sum(n int) int {
         if n == 0 {
@@ -304,7 +285,7 @@ tests:
 
   - name: mutual recursion in an initial value
     code: |
-      var even = isEven(4)
+      global even = isEven(4)
 
       func isEven(n int) bool {
         if n == 0 {
@@ -343,7 +324,7 @@ tests:
       import "/settings"
       import "/other"
 
-      var host = "main"
+      global host = "main"
 
       println(host, settings.host, other.get())
     expected: |
@@ -353,7 +334,7 @@ tests:
     code: |
       import "/settings"
 
-      var address = settings.host + ":80"
+      global address = settings.host + ":80"
 
       println(address)
     expected: |
@@ -392,7 +373,7 @@ tests:
       import "/settings"
       import "/localname"
 
-      var total = 5
+      global total = 5
       host = "local"
 
       println(host, settings.host, localname.run(), total)
@@ -419,7 +400,7 @@ tests:
 
   - name: plain assignment in a function
     code: |
-      var count = 0
+      global count = 0
 
       func f() {
         count = 1
@@ -429,7 +410,7 @@ tests:
 
   - name: plain assignment at the top level
     code: |
-      var count = 0
+      global count = 0
 
       count = 1
     errors:
@@ -437,7 +418,7 @@ tests:
 
   - name: loop variable named like a global
     code: |
-      var i = 0
+      global i = 0
 
       func f() {
         for i = 0; i < 1; i = i + 1 {
@@ -449,22 +430,22 @@ tests:
 
   - name: parameter named like a global
     code: |
-      var host = ""
+      global host = ""
 
       func f(host string) {
       }
     errors:
       - globals/parameter named like a global.lsh Ln:3 Col:8 parameter host has the name of a global variable
 
-  - name: name clash is not reported as a cycle
+  - name: name clash is not reported as an early use
     code: |
-      var a = f(1)
+      global a = f(1)
 
       func f(a int) int {
         return a
       }
     errors:
-      - globals/name clash is not reported as a cycle.lsh Ln:3 Col:8 parameter a has the name of a global variable
+      - globals/name clash is not reported as an early use.lsh Ln:3 Col:8 parameter a has the name of a global variable
 
   - name: write to an undefined global
     code: |
@@ -474,35 +455,38 @@ tests:
     errors:
       - globals/write to an undefined global.lsh Ln:2 Col:10 global variable missing is not defined
 
-  - name: write to a local with global
+  - name: global in a block does not define it
+    description: only the top level outside of blocks defines a global, a block might not run
+    code: |
+      if true {
+        global x = 1
+      }
+    errors:
+      - globals/global in a block does not define it.lsh Ln:2 Col:10 global variable x is not defined
+
+  - name: local named like a later global
     code: |
       x = 1
       global x = 2
     errors:
-      - globals/write to a local with global.lsh Ln:2 Col:8 global variable x is not defined
+      - globals/local named like a later global.lsh Ln:1 Col:1 x is a global variable, write it with global x = ... or use another name
 
-  - name: defined twice
+  - name: assigned again with another type
     code: |
-      var a = 1
-      var a = "s"
+      global a = 1
+      global a = "s"
     errors:
-      - globals/defined twice.lsh Ln:2 Col:5 global variable a is already defined at globals/defined twice.lsh Ln:1 Col:5
-
-  - name: defined twice in one statement
-    code: |
-      var a, a = 1, 2
-    errors:
-      - globals/defined twice in one statement.lsh Ln:1 Col:8 global variable a is already defined at globals/defined twice in one statement.lsh Ln:1 Col:5
+      - globals/assigned again with another type.lsh Ln:2 Col:8 you cannot assign an string value to the variable 'a' of type int
 
   - name: defined in two files of a package
     code: |
       import "/dupglobal"
     errors:
-      - std/dupglobal/b.lsh Ln:1 Col:5 global variable x is already defined at std/dupglobal/a.lsh Ln:1 Col:5
+      - std/dupglobal/b.lsh Ln:1 Col:8 global variable x is already defined at std/dupglobal/a.lsh Ln:1 Col:8
 
   - name: wrong type in a write
     code: |
-      var count = 0
+      global count = 0
 
       func f() {
         global count = "s"
@@ -512,15 +496,15 @@ tests:
 
   - name: wrong number of values
     code: |
-      var a, b = 1
+      global a, b = 1
 
       println(a, b)
     errors:
-      - globals/wrong number of values.lsh Ln:1 Col:5 Wrong number of expressions
+      - globals/wrong number of values.lsh Ln:1 Col:8 Wrong number of expressions
 
   - name: operator on a global
     code: |
-      var text = "a"
+      global text = "a"
 
       println(text * 2)
     errors:
@@ -528,27 +512,28 @@ tests:
 
   - name: initial value without a value
     code: |
-      var a = f()
+      global a = f()
 
       func f() {
       }
     errors:
-      - globals/initial value without a value.lsh Ln:1 Col:9 f doesn't return a value
+      - globals/initial value without a value.lsh Ln:1 Col:12 f doesn't return a value
 
   - name: unknown function in an initial value
     code: |
-      var a = missing()
+      global a = missing()
     errors:
-      - globals/unknown function in an initial value.lsh Ln:1 Col:9 function missing not found
+      - globals/unknown function in an initial value.lsh Ln:1 Col:12 function missing not found
 
-  - name: top level variable in an initial value
+  - name: top level variable in the value of a global
+    description: the value is evaluated in place, so it can use what the top level defined before
     code: |
       b = 1
-      var a = b
+      global a = b
 
       println(a)
-    errors:
-      - globals/top level variable in an initial value.lsh Ln:2 Col:9 variable 'b' is not defined
+    expected: |
+      1
 
   - name: unknown namespace
     code: |
@@ -576,63 +561,92 @@ tests:
     code: |
       import "/noglobals"
 
-      var fromMain = 1
+      global fromMain = 1
 
       println(noglobals.run())
     errors:
       - std/noglobals/noglobals.lsh Ln:2 Col:10 variable 'fromMain' is not defined
 
+  - name: read before the assignment
+    code: |
+      global a = b + 1
+      global b = 1
+    errors:
+      - globals/read before the assignment.lsh Ln:1 Col:12 b is used before it is assigned at globals/read before the assignment.lsh Ln:2 Col:8
+
   - name: self reference
     code: |
-      var a = a
+      global a = a
     errors:
-      - "globals/self reference.lsh Ln:1 Col:5 initialization cycle: a -> a"
+      - globals/self reference.lsh Ln:1 Col:12 a is used before it is assigned at globals/self reference.lsh Ln:1 Col:8
 
-  - name: cycle of variables
+  - name: use in a block before the assignment
     code: |
-      var a = b
-      var b = a
+      if true {
+        println(x)
+      }
+      for i = 0; i < 1; i = i + 1 {
+        global x = 2
+      }
+      global x = 1
     errors:
-      - "globals/cycle of variables.lsh Ln:1 Col:5 initialization cycle: a -> b -> a"
+      - globals/use in a block before the assignment.lsh Ln:2 Col:11 x is used before it is assigned at globals/use in a block before the assignment.lsh Ln:7 Col:8
+      - globals/use in a block before the assignment.lsh Ln:5 Col:10 x is used before it is assigned at globals/use in a block before the assignment.lsh Ln:7 Col:8
 
-  - name: cycle through a function
+  - name: call before the assignment
     code: |
-      var a = f()
+      log("start")
+      global verbose = true
+
+      func log(m string) {
+        if verbose {
+          println(m)
+        }
+      }
+    errors:
+      - globals/call before the assignment.lsh Ln:1 Col:1 log uses verbose before it is assigned at globals/call before the assignment.lsh Ln:2 Col:8
+
+  - name: call in the value of the global it uses
+    code: |
+      global a = f()
 
       func f() int {
         return a
       }
     errors:
-      - "globals/cycle through a function.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+      - globals/call in the value of the global it uses.lsh Ln:1 Col:12 f uses a before it is assigned at globals/call in the value of the global it uses.lsh Ln:1 Col:8
 
-  - name: cycle through nested functions
+  - name: use through nested functions before the assignment
     code: |
-      var a = f()
+      global a = f()
+      global b = 2
 
       func f() int {
-        return g()
+        return g() * 2
       }
 
       func g() int {
-        return a
+        return b
       }
     errors:
-      - "globals/cycle through nested functions.lsh Ln:1 Col:5 initialization cycle: a -> f -> g -> a"
+      - globals/use through nested functions before the assignment.lsh Ln:1 Col:12 f -> g uses b before it is assigned at globals/use through nested functions before the assignment.lsh Ln:2 Col:8
 
-  - name: cycle through a write
+  - name: write through a call before the assignment
+    description: the assignment would overwrite the value the function wrote
     code: |
-      var a = f()
+      global a = setB()
+      global b = 0
 
-      func f() int {
-        global a = 1
+      func setB() int {
+        global b = 5
         return 1
       }
     errors:
-      - "globals/cycle through a write.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+      - globals/write through a call before the assignment.lsh Ln:1 Col:12 setB uses b before it is assigned at globals/write through a call before the assignment.lsh Ln:2 Col:8
 
-  - name: cycle through a branch that never runs
+  - name: use in a branch that never runs
     code: |
-      var a = f(false)
+      global a = f(false)
 
       func f(use bool) int {
         if use {
@@ -642,64 +656,48 @@ tests:
         return 1
       }
     errors:
-      - "globals/cycle through a branch that never runs.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
+      - globals/use in a branch that never runs.lsh Ln:1 Col:12 f uses a before it is assigned at globals/use in a branch that never runs.lsh Ln:1 Col:8
 
-  - name: cycle found through a function that was already followed
+  - name: one error per global and statement
     code: |
-      var a = f()
-      var b = g()
+      global a = f() + g() + b
+      global b = 1
 
       func f() int {
         return b
       }
 
       func g() int {
-        return f()
+        return b
       }
     errors:
-      - "globals/cycle found through a function that was already followed.lsh Ln:2 Col:5 initialization cycle: b -> g -> f -> b"
+      - globals/one error per global and statement.lsh Ln:1 Col:12 f uses b before it is assigned at globals/one error per global and statement.lsh Ln:2 Col:8
 
-  - name: two cycles through one function
+  - name: cycle in a package found through a function that was already followed
     code: |
-      var a = f()
-      var b = f()
-
-      func f() int {
-        return a + b
-      }
+      import "/cyclefollowed"
     errors:
-      - "globals/two cycles through one function.lsh Ln:1 Col:5 initialization cycle: a -> f -> a"
-      - "globals/two cycles through one function.lsh Ln:2 Col:5 initialization cycle: b -> f -> b"
+      - "std/cyclefollowed/cyclefollowed.lsh Ln:2 Col:8 initialization cycle: cyclefollowed.b -> cyclefollowed.g -> cyclefollowed.f -> cyclefollowed.b"
 
-  - name: cycle of a definition with several variables
+  - name: two cycles in a package through one function
     code: |
-      var a, b = f()
-
-      func f() int, int {
-        return a, 1
-      }
+      import "/twocycles"
     errors:
-      - "globals/cycle of a definition with several variables.lsh Ln:1 Col:5 initialization cycle: a, b -> f -> a, b"
+      - "std/twocycles/twocycles.lsh Ln:1 Col:8 initialization cycle: twocycles.a -> twocycles.f -> twocycles.a"
+      - "std/twocycles/twocycles.lsh Ln:2 Col:8 initialization cycle: twocycles.b -> twocycles.f -> twocycles.b"
 
   - name: cycle across packages
     code: |
       import "/initloopa"
     errors:
-      - "std/initloopa/a.lsh Ln:3 Col:5 initialization cycle: initloopa.a -> initloopb.viaA -> initloopa.read -> initloopa.a"
+      - "std/initloopa/a.lsh Ln:3 Col:8 initialization cycle: initloopa.a -> initloopb.viaA -> initloopa.read -> initloopa.a"
 
-  - name: var in a function
+  - name: var is no keyword
     code: |
-      func f() {
-        var a = 1
-      }
-    errors:
-      - "globals/var in a function.lsh Ln:2 Col:3 extraneous input 'var' expecting {'if', 'for', 'return', 'global', '}', ID}"
-
-  - name: global at the top level of a package
-    code: |
-      import "/globalattop"
-    errors:
-      - "std/globalattop/globalattop.lsh Ln:1 Col:1 mismatched input 'global' expecting {<EOF>, 'import', 'func', 'var'}"
+      var = 1
+      println(var)
+    expected: |
+      1
 
   - name: write to the global of another package
     code: |
@@ -719,6 +717,6 @@ tests:
 
   - name: uppercase global
     code: |
-      var Host = 1
+      global Host = 1
     errors:
-      - globals/uppercase global.lsh Ln:1 Col:5 name Host must start with a lowercase letter
+      - globals/uppercase global.lsh Ln:1 Col:8 name Host must start with a lowercase letter

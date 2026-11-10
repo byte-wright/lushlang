@@ -35,23 +35,27 @@ Its in no way optimized and quite rudimentary.
 Globals
 -------
 
-`var` declares a global at the top level of a file. It's visible in the whole package,
-other packages can read it as `pkg.name`.
+`global x = ...` at the top level of a file defines a global. It's visible in the whole
+package, other packages can read it as `pkg.name`.
 
       import "strings"
 
-      var host = strings.trimSuffix($DEPLOY_HOST, "/")
-      var retries = 0
+      global host = strings.trimSuffix($DEPLOY_HOST, "/")
+      global retries = 0
 
       func retry() {
         global retries = retries + 1
       }
 
-  - every `var` gets its value once, before the top level of the script runs and after
-    everything it reads or writes, also through the functions it calls. A cycle is a
-    compile error, even through a branch that never runs
-  - apart from that, imported packages come first, then main, each in source order
-  - only `global x = ...` writes a global, and only inside its package. A plain
+  - in main, the first `global x = ...` at the top level, outside of blocks, defines the
+    global. It runs where it stands, like any other statement. Using the global in a
+    statement before it, also through the functions that statement calls, is a compile
+    error, even in a branch that never runs
+  - a package has no statements, so its globals get their values before main runs. Each
+    one comes after everything it reads or writes, also through the functions it calls,
+    and a cycle is a compile error. Apart from that, imported packages come first, each in
+    source order
+  - every write needs `global` too, and only works inside the global's package. A plain
     `x = ...` with the name of a global is a compile error, so adding a global can't
     silently change what a function does
   - locals and parameters can't have the name of a global of their package

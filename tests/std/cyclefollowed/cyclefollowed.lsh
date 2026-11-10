@@ -1,0 +1,10 @@
+global a = f()
+global b = g()
+
+func f() int {
+  return b
+}
+
+func g() int {
+  return f()
+}

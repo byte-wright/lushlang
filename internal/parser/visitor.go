@@ -22,7 +22,7 @@ type parseTarget interface {
 	addMainStatement(ast.Statement)
 	addFuncDef(*ast.FuncDef)
 	addExternalFuncDef(*ast.ExternalFuncDef)
-	addVarDef(*ast.VarDef)
+	addGlobalDef(*ast.GlobalDef)
 }
 
 func newVisitor(name string, target parseTarget) *Visitor {
@@ -55,7 +55,6 @@ func (v *Visitor) locTk(c antlr.Token) *common.Location {
 
 func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 	v.imports(ctx.AllImportStatement())
-	v.varDefs(ctx.AllVarDef())
 
 	for _, st := range ctx.AllStatement() {
 		statement := st.Accept(v)
@@ -72,7 +71,10 @@ func (v *Visitor) VisitProgram(ctx *ProgramContext) any {
 
 func (v *Visitor) VisitPackage(ctx *PackageContext) any {
 	v.imports(ctx.AllImportStatement())
-	v.varDefs(ctx.AllVarDef())
+
+	for _, ga := range ctx.AllGlobalAssignment() {
+		v.Target.addGlobalDef(&ast.GlobalDef{Assignment: ga.Accept(v).(*ast.Assignment)})
+	}
 
 	for _, fd := range ctx.AllFuncDef() {
 		funcDef := fd.Accept(v)
@@ -98,16 +100,6 @@ func (v *Visitor) imports(imps []IImportStatementContext) {
 			v.errors = append(v.errors, &ast.ASTError{Location: loc, Message: err.Error()})
 		}
 	}
-}
-
-func (v *Visitor) varDefs(defs []IVarDefContext) {
-	for _, def := range defs {
-		v.Target.addVarDef(def.Accept(v).(*ast.VarDef))
-	}
-}
-
-func (v *Visitor) VisitVarDef(ctx *VarDefContext) any {
-	return &ast.VarDef{Assignment: ctx.Assignment().Accept(v).(*ast.Assignment)}
 }
 
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {

@@ -1,0 +1,17 @@
+global a = double()
+global b = setC()
+global c = 0
+global two = 2
+
+func double() int {
+  return through() * 2
+}
+
+func through() int {
+  return two
+}
+
+func setC() int {
+  global c = 5
+  return 1
+}
