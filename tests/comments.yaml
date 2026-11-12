@@ -1,0 +1,59 @@
+order: 1
+name: Comments
+tests:
+  - name: Line comments
+    code: |
+      // a comment on its own line
+      x = 1 // a comment after a statement
+      //no space after the slashes
+      // println("not run")
+
+      func add(a int, b int) int { // after the opening brace
+        // inside a function
+        return a + b // after a return value
+      }
+
+      if x == 1 {
+        println(add(x, 2)) // after a call
+      } // after the closing brace
+    expected: |
+      3
+
+  - name: Return without value before a comment
+    code: |
+      func f() {
+        println("a")
+        return // ends here
+      }
+
+      f()
+    expected: |
+      a
+
+  - name: Slashes in strings
+    code: |
+      println("http://example.com // not a comment")
+    expected: |
+      http://example.com // not a comment
+
+  - name: Division
+    code: |
+      println(9 / 3, 8/2 // the second slash starts a comment
+      )
+    expected: |
+      3 4
+
+  - name: Comment at the end of the file
+    code: "println(1)\n// no newline at the end"
+    expected: |
+      1
+
+  - name: Comments in a package
+    code: |
+      import "/comments"
+
+      println(comments.path("a", "b"))
+      println(comments.url("example.com"))
+    expected: |
+      a/b
+      https://example.com

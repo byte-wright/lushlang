@@ -1,0 +1,12 @@
+// a package can have comments too
+global sep = "/" // after a global
+
+// before a function
+func path(a string, b string) string {
+  return a + sep + b // after a return
+}
+
+// the body of an external function is bash, a // in it stays
+func url(host string) string ```
+  L_ret0="https://$host"
+```

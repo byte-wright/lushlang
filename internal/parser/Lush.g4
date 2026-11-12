@@ -154,6 +154,8 @@ primitiveType
 
 WHITESPACE: [ \r\n\t]+ -> skip;
 
+LINE_COMMENT: '//' ~[\r\n]* -> skip;
+
 IMPORT: 'import';
 TRUE: 'true';
 FALSE: 'false';

@@ -15,6 +15,7 @@ translated into bash or other languages.
 
 Its in no way optimized and quite rudimentary.
 
+  - `//` line comments
   - math and comparison operators
   - int, string, bools and type inference
   - strings are UTF-8: `len`, indexes and slices count characters (Unicode code points),
