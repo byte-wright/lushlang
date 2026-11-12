@@ -1,0 +1,92 @@
+order: 2
+name: Compound assignments
+tests:
+  - name: Operators
+    code: |
+      x = 10
+      x += 5
+      println(x)
+      x -= 3
+      println(x)
+      x *= 2
+      println(x)
+      x /= 5
+      println(x)
+      x %= 3
+      println(x)
+    expected: |
+      15
+      12
+      24
+      4
+      1
+
+  - name: The value is computed first
+    code: |
+      x = 2
+      x *= 1 + 2
+      println(x)
+      y = 20
+      y -= 5 - 3
+      println(y)
+    expected: |
+      6
+      18
+
+  - name: Strings
+    code: |
+      s = "a"
+      s += "b" + "c"
+      println(s)
+    expected: |
+      abc
+
+  - name: Loop step
+    code: |
+      for i = 0; i < 7; i += 2 {
+        if i == 2 {
+          continue
+        }
+        println(i)
+      }
+    expected: |
+      0
+      4
+      6
+
+  - name: Parameters and globals
+    code: |
+      global count = 0
+
+      func add(n int) int {
+        global count += 1
+        n *= 2
+        return n
+      }
+
+      println(add(3), add(4), count)
+    expected: |
+      6 8 2
+
+  - name: Errors
+    code: |
+      y += 1
+      s = "a"
+      s -= 1
+      s += 1
+      a, b = 1, 2
+      a, b += 1, 2
+      a += 1, 2
+    errors:
+      - "compound/Errors.lsh Ln:1 Col:1 variable 'y' is not defined"
+      - "compound/Errors.lsh Ln:3 Col:1 operator '-' can't be used with string and int"
+      - "compound/Errors.lsh Ln:4 Col:1 operator '+' can't be used with string and int"
+      - "compound/Errors.lsh Ln:6 Col:6 += needs one variable and one value"
+      - "compound/Errors.lsh Ln:7 Col:3 += needs one variable and one value"
+
+  - name: A global needs global
+    code: |
+      global g = 1
+      g += 1
+    errors:
+      - "compound/A global needs global.lsh Ln:2 Col:1 g is a global variable, write it with global g = ... or use another name"

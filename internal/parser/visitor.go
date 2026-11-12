@@ -127,6 +127,14 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 		return ctx.ReturnStatement().Accept(v)
 	}
 
+	if ctx.BREAK() != nil {
+		return &ast.Break{Location: v.loc(ctx)}
+	}
+
+	if ctx.CONTINUE() != nil {
+		return &ast.Continue{Location: v.loc(ctx)}
+	}
+
 	panic("invalid statement in parser")
 }
 
@@ -201,13 +209,48 @@ func (v *Visitor) VisitIf(ctx *IfContext) any {
 }
 
 func (v *Visitor) VisitFor(ctx *ForContext) any {
-	return &ast.For{
-		Initial:   ctx.AllAssignment()[0].Accept(v).(*ast.Assignment),
-		Condition: ctx.Expression().Accept(v).(ast.Expression),
-		Each:      ctx.AllAssignment()[1].Accept(v).(*ast.Assignment),
-		Body:      ctx.Block().Accept(v).(*ast.Block),
-		Location:  v.loc(ctx),
+	if ctx.GetOver() != nil {
+		return v.forIn(ctx)
 	}
+
+	st := &ast.For{
+		Body:     ctx.Block().Accept(v).(*ast.Block),
+		Location: v.loc(ctx),
+	}
+
+	if ctx.GetInit() != nil {
+		st.Initial = ctx.GetInit().Accept(v).(*ast.Assignment)
+		st.Each = ctx.GetStep().Accept(v).(*ast.Assignment)
+	}
+
+	if ctx.GetCond() != nil {
+		st.Condition = ctx.GetCond().Accept(v).(ast.Expression)
+	}
+
+	return st
+}
+
+func (v *Visitor) forIn(ctx *ForContext) *ast.ForIn {
+	st := &ast.ForIn{
+		Value:    v.loopVar(ctx.GetValue()),
+		Over:     ctx.GetOver().Accept(v).(ast.Expression),
+		Body:     ctx.Block().Accept(v).(*ast.Block),
+		Location: v.loc(ctx),
+	}
+
+	if ctx.GetIndex() != nil {
+		st.Index = v.loopVar(ctx.GetIndex())
+	}
+
+	if ctx.GetFrom() != nil {
+		st.From = ctx.GetFrom().Accept(v).(ast.Expression)
+	}
+
+	return st
+}
+
+func (v *Visitor) loopVar(tk antlr.Token) *ast.AssignmentTarget {
+	return &ast.AssignmentTarget{Location: v.locTk(tk), Name: tk.GetText()}
 }
 
 func (v *Visitor) VisitReturnStatement(ctx *ReturnStatementContext) any {
@@ -241,13 +284,48 @@ func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
 		})
 	}
 
-	return &ast.Assignment{
-		Location: v.loc(ctx),
-		Targets:  targets,
-		Expressions: common.Map(ctx.AllExpression(), func(x IExpressionContext) ast.Expression {
-			return x.Accept(v).(ast.Expression)
-		}),
+	expressions := common.Map(ctx.AllExpression(), func(x IExpressionContext) ast.Expression {
+		return x.Accept(v).(ast.Expression)
+	})
+
+	op := ctx.GetOp()
+	if op.GetTokenType() != LushParserASSIGN {
+		if len(targets) != 1 || len(expressions) != 1 {
+			v.errors = append(v.errors, &ast.ASTError{Location: v.locTk(op), Message: fmt.Sprintf("%v needs one variable and one value", op.GetText())})
+			// only the first pair is checked, so there are no follow-up errors
+			targets, expressions = targets[:1], expressions[:1]
+		}
+
+		expressions = []ast.Expression{v.compound(ctx, targets[0], expressions[0])}
 	}
+
+	return &ast.Assignment{
+		Location:    v.loc(ctx),
+		Targets:     targets,
+		Expressions: expressions,
+	}
+}
+
+// compound turns x += y into x = x + (y)
+func (v *Visitor) compound(ctx *AssignmentContext, target *ast.AssignmentTarget, value ast.Expression) ast.Expression {
+	a := &ast.Var{Name: target.Name, Location: target.Location}
+	b := &ast.Group{Expression: value}
+	loc := v.loc(ctx)
+
+	switch ctx.GetOp().GetTokenType() {
+	case LushParserPLUS_ASSIGN:
+		return &ast.Add{A: a, B: b, Location: loc}
+	case LushParserMINUS_ASSIGN:
+		return &ast.Sub{A: a, B: b, Location: loc}
+	case LushParserMUL_ASSIGN:
+		return &ast.Mul{A: a, B: b, Location: loc}
+	case LushParserDIV_ASSIGN:
+		return &ast.Div{A: a, B: b, Location: loc}
+	case LushParserMOD_ASSIGN:
+		return &ast.Mod{A: a, B: b, Location: loc}
+	}
+
+	panic("invalid assignment operator in parser")
 }
 
 func (v *Visitor) VisitGlobalAssignment(ctx *GlobalAssignmentContext) any {

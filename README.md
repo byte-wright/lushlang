@@ -16,7 +16,7 @@ translated into bash or other languages.
 Its in no way optimized and quite rudimentary.
 
   - `//` line comments
-  - math and comparison operators
+  - math and comparison operators, `+=`, `-=`, `*=`, `/=` and `%=`
   - int, string, bools and type inference
   - strings are UTF-8: `len`, indexes and slices count characters (Unicode code points),
     whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
@@ -24,7 +24,8 @@ Its in no way optimized and quite rudimentary.
     a script that uses these operations exits with code 2 before it starts
   - arrays (very slow)
   - functions with params and (multiple) return params
-  - if, else if, else and for
+  - if, else if, else
+  - loops with `break` and `continue`, see [Loops](#loops)
   - `return` outside of functions ends the script
   - environment variables as `$NAME`, the script's arguments as `args()`
   - names start with a lowercase letter or `_`, so they can't clash with bash's
@@ -32,6 +33,25 @@ Its in no way optimized and quite rudimentary.
   - modules
   - global variables per package
   - the scripts need bash 3.2 or newer, so they also run with macOS's `/bin/bash`
+
+Loops
+-----
+
+      for { }                      // endless
+      for i < 3 { }                // as long as the condition is true
+      for i = 0; i < 3; i = i + 1 { }
+      for x in ["a", "b"] { }      // x is the element
+      for x, i in ["a", "b"] { }   // i is the index
+      for x in 7 { }               // 0 to 6
+      for x in 3 until 7 { }       // 3 to 6
+
+  - `break` leaves the innermost loop, `continue` goes on with its next iteration. In the
+    `for init; cond; step` form, continue runs the step first, like in Go
+  - `for x in` reads the array, or the numbers, once before the first iteration. Changing
+    them in the body doesn't change what the loop goes over, and neither does changing `x`
+    or `i`
+  - `x` and `i` only exist in the loop. A variable, parameter or outer loop variable with
+    the same name is a compile error, so a loop can't change one by accident
 
 Globals
 -------

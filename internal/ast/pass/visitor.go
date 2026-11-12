@@ -10,6 +10,8 @@ type Visitor interface {
 	BeforeStatement(ast.Statement)
 	Statement(ast.Statement)
 	BeforeFuncDef(*ast.FuncDef)
+	// BeforeLoopBody comes after the expressions of the loop
+	BeforeLoopBody(*ast.ForIn)
 	BeforeBlock(*ast.Block)
 	AfterBlock(*ast.Block)
 }
@@ -63,9 +65,22 @@ func (c context) evalStatement(statement ast.Statement) {
 			c.evalExpression(exp)
 		}
 	case *ast.For:
-		c.evalStatement(st.Initial)
-		c.evalExpression(st.Condition)
-		c.evalStatement(st.Each)
+		if st.Initial != nil {
+			c.evalStatement(st.Initial)
+		}
+		if st.Condition != nil {
+			c.evalExpression(st.Condition)
+		}
+		if st.Each != nil {
+			c.evalStatement(st.Each)
+		}
+		c.evalBlock(st.Body)
+	case *ast.ForIn:
+		if st.From != nil {
+			c.evalExpression(st.From)
+		}
+		c.evalExpression(st.Over)
+		c.visitor.BeforeLoopBody(st)
 		c.evalBlock(st.Body)
 	case *ast.If:
 		c.evalExpression(st.Condition)
@@ -81,6 +96,8 @@ func (c context) evalStatement(statement ast.Statement) {
 		for _, exp := range st.Expressions {
 			c.evalExpression(exp)
 		}
+
+	case *ast.Break, *ast.Continue:
 
 	default:
 		common.IncompleteSwitch(st)

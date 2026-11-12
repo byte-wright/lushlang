@@ -15,6 +15,9 @@ type Compiler struct {
 	// namespaces keep the function names of the packages apart. Builtins have no package,
 	// so they get the empty namespace.
 	namespaces map[*ast.Package]string
+	// steps holds the step of each loop around the current statement, nil for loops
+	// without one
+	steps []*ast.Assignment
 }
 
 func Compile(program *ast.Program) (*Program, error) {
@@ -145,8 +148,22 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 		case *ast.For:
 			c.evalForStatement(b, st)
 
+		case *ast.ForIn:
+			c.evalForInStatement(b, st)
+
 		case *ast.ReturnStatement:
 			c.evalReturnStatement(b, st)
+
+		case *ast.Break:
+			b.add(&Break{})
+
+		case *ast.Continue:
+			// like in Go, continue runs the step before the next check
+			step := c.steps[len(c.steps)-1]
+			if step != nil {
+				c.evalAssignment(b, step)
+			}
+			b.add(&Continue{})
 
 		default:
 			panic(fmt.Sprintf("no valid statement in basm transpiler %T", st))
@@ -556,22 +573,75 @@ func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
 }
 
 func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
-	c.evalAssignment(block, forst.Initial)
-
-	condVar := block.setTmp(c.evalExpression(block, forst.Condition)[0])
-
-	while := &While{
-		Condition: condVar,
-		Block:     block.subBlock(),
+	if forst.Initial != nil {
+		c.evalAssignment(block, forst.Initial)
 	}
 
+	while := &While{Block: block.subBlock()}
+
+	if forst.Condition != nil {
+		while.Check = block.subBlock()
+		while.Condition = while.Check.setTmp(c.evalExpression(while.Check, forst.Condition)[0])
+	}
+
+	c.steps = append(c.steps, forst.Each)
 	c.evalBlock(while.Block, forst.Body)
+	c.steps = c.steps[:len(c.steps)-1]
 
-	c.evalAssignment(while.Block, forst.Each)
-
-	while.Block.set(condVar, c.evalExpression(while.Block, forst.Condition)[0])
+	if forst.Each != nil {
+		c.evalAssignment(while.Block, forst.Each)
+	}
 
 	block.add(while)
+}
+
+// evalForInStatement sets the loop variables and moves the counter on at the start of the
+// body, so a continue needs no step and changing them doesn't change the loop
+func (c *Compiler) evalForInStatement(block *Block, st *ast.ForIn) {
+	body := block.subBlock()
+	var loop Command
+
+	if st.From == nil && st.Over.Types()[0].IsArray() {
+		array := block.asVar(c.evalExpression(block, st.Over)[0])
+		element := block.nextTmp(array.T.(*common.ArrayType).ElementType)
+		block.registerVar(element)
+
+		c.setLoopVar(body, st.Value, element)
+		if st.Index != nil {
+			counter := block.setTmp(&NumberValue{Value: 0})
+			c.setLoopVar(body, st.Index, counter)
+			body.set(counter, &Add{Left: counter, Right: &NumberValue{Value: 1}})
+		}
+
+		loop = &ForEach{Element: element, Array: array, Block: body}
+	} else {
+		var from Atom = &NumberValue{Value: 0}
+		if st.From != nil {
+			from = c.evalExpression(block, st.From)[0]
+		}
+		counter := block.setTmp(from)
+		end := block.setTmp(c.evalExpression(block, st.Over)[0])
+
+		check := block.subBlock()
+		cond := check.setTmp(&LessThan{Left: counter, Right: end})
+
+		c.setLoopVar(body, st.Value, counter)
+		body.set(counter, &Add{Left: counter, Right: &NumberValue{Value: 1}})
+
+		loop = &While{Check: check, Condition: cond, Block: body}
+	}
+
+	c.steps = append(c.steps, nil)
+	c.evalBlock(body, st.Body)
+	c.steps = c.steps[:len(c.steps)-1]
+
+	block.add(loop)
+}
+
+func (c *Compiler) setLoopVar(body *Block, target *ast.AssignmentTarget, value *VarValue) {
+	if target.Name != "_" {
+		body.set(&VarValue{Name: varName(target.Name), T: value.T}, value)
+	}
 }
 
 func (c *Compiler) evalReturnStatement(block *Block, ret *ast.ReturnStatement) {

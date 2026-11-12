@@ -120,11 +120,36 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("fi")
 
 		case *bcode.While:
-			b.print("while [ " + b.atom(cmd.Condition) + " == true ]; do")
+			if cmd.Condition == nil {
+				b.print("while true; do")
+			} else {
+				// the check is in the condition list, so continue runs it too
+				b.print("while")
+				b.block(cmd.Check)
+				b.indent++
+				b.print("[ " + b.atom(cmd.Condition) + " == true ]")
+				b.indent--
+				b.print("do")
+			}
 
 			b.block(cmd.Block)
 
 			b.print("done")
+
+		case *bcode.ForEach:
+			// the words of a for are expanded once, that reads the elements before the loop
+			b.print("local " + cmd.Element.Name)
+			b.print("for " + cmd.Element.Name + " in \"${" + cmd.Array.Name + "[@]}\"; do")
+
+			b.block(cmd.Block)
+
+			b.print("done")
+
+		case *bcode.Break:
+			b.print("break")
+
+		case *bcode.Continue:
+			b.print("continue")
 
 		case *bcode.Return:
 			for i, val := range cmd.Values {

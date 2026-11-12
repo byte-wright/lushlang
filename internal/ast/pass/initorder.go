@@ -196,6 +196,14 @@ func (p *initOrderPass) BeforeFuncDef(fd *ast.FuncDef) {
 
 func (p *initOrderPass) BeforeStatement(ast.Statement) {}
 
+func (p *initOrderPass) BeforeLoopBody(st *ast.ForIn) {
+	for _, target := range []*ast.AssignmentTarget{st.Value, st.Index} {
+		if target != nil && p.vars[p.file.Package][target.Name] != nil {
+			p.errorf(target.Location, "loop variable %v has the name of a global variable", target.Name)
+		}
+	}
+}
+
 func (p *initOrderPass) BeforeBlock(*ast.Block) {}
 
 func (p *initOrderPass) AfterBlock(*ast.Block) {}

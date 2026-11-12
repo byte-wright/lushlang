@@ -55,9 +55,20 @@ ast.Assignment type:
   @{.Expressions}
 
 ast.For type:
-  for @{.Initial}; @{.Condition}; @{.Each} {
+  for {if .Initial}@{.Initial}; {end}{if .Condition}@{.Condition}{end}{if .Each}; @{.Each}{end}{if .Condition} {end}{
     @{.Body}
   }
+
+ast.ForIn type:
+  for ${.Value.Name}{if .Index}, ${.Index.Name}{end} in {if .From}@{.From} until {end}@{.Over} {
+    @{.Body}
+  }
+
+ast.Break type:
+  break
+
+ast.Continue type:
+  continue
 
 ast.If type:
   if @{.Condition} {

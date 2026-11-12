@@ -1,0 +1,271 @@
+order: 2
+name: For in
+tests:
+  - name: Elements of an array
+    code: |
+      for x in ["a", "b", "c"] {
+        println(x)
+      }
+      for x, i in ["a", "b"] {
+        println(i, x)
+      }
+    expected: |
+      a
+      b
+      c
+      0 a
+      1 b
+
+  - name: Numbers
+    code: |
+      for x in 3 {
+        println(x)
+      }
+      for x in 3 until 6 {
+        println(x)
+      }
+      n = 2
+      for x in n - 1 until n * 2 {
+        println(x)
+      }
+    expected: |
+      0
+      1
+      2
+      3
+      4
+      5
+      1
+      2
+      3
+
+  - name: Nothing to loop over
+    code: |
+      for x in 0 {
+        println(x)
+      }
+      for x in 5 until 3 {
+        println(x)
+      }
+      for x in []int {
+        println(x)
+      }
+      println("done")
+    expected: |
+      done
+
+  - name: Blank variables
+    code: |
+      for _ in 2 {
+        println("hi")
+      }
+      for _, i in ["a", "b"] {
+        println(i)
+      }
+    expected: |
+      hi
+      hi
+      0
+      1
+
+  - name: Arrays from calls and args
+    args: [x, y]
+    code: |
+      func words() []string {
+        return ["one", "two"]
+      }
+
+      for w in words() {
+        println(w)
+      }
+      for a, i in args() {
+        println(i, a)
+      }
+    expected: |
+      one
+      two
+      0 x
+      1 y
+
+  - name: Break and continue
+    code: |
+      for x in 10 {
+        if x % 2 == 0 {
+          continue
+        }
+        if x > 6 {
+          break
+        }
+        println(x)
+      }
+      for x, i in ["a", "b", "c"] {
+        if i == 1 {
+          continue
+        }
+        println(i, x)
+      }
+      for x in 2 {
+        for y in ["a", "b", "c"] {
+          if y == "b" {
+            break
+          }
+          println(x, y)
+        }
+      }
+    expected: |
+      1
+      3
+      5
+      0 a
+      2 c
+      0 a
+      1 a
+
+  - name: The end is read once
+    code: |
+      n = 3
+      for x in n {
+        n = n + 10
+        println(x)
+      }
+      println(n)
+    expected: |
+      0
+      1
+      2
+      33
+
+  - name: The array is read once
+    code: |
+      a = [1, 2]
+      for x in a {
+        a = append(a, x * 10)
+        println(x)
+      }
+      b = ["x", "y"]
+      for x in b {
+        b = ["z"]
+        println(x)
+      }
+      println(len(a), b[0])
+    expected: |
+      1
+      2
+      x
+      y
+      4 z
+
+  - name: Changing the variables doesn't change the loop
+    code: |
+      for x in 3 {
+        println(x)
+        x = x + 10
+      }
+      for x, i in ["a", "b"] {
+        println(i, x)
+        i = 5
+      }
+    expected: |
+      0
+      1
+      2
+      0 a
+      1 b
+
+  - name: The same name in another loop
+    code: |
+      for x in 2 {
+        println(x)
+      }
+      for x in ["a"] {
+        println(x)
+      }
+      x = true
+      println(x)
+    expected: |
+      0
+      1
+      a
+      true
+
+  - name: Name is already defined
+    code: |
+      x = 7
+      for x in 3 {
+        println(x)
+      }
+      for i in 2 {
+        for i in ["a"] {
+          println(i + "b")
+        }
+      }
+      for y, y in ["a"] {
+      }
+
+      func f(n int) {
+        for n in 3 {
+        }
+      }
+    errors:
+      - "forin/Name is already defined.lsh Ln:2 Col:5 loop variable x is already defined"
+      - "forin/Name is already defined.lsh Ln:6 Col:7 loop variable i is already defined"
+      - "forin/Name is already defined.lsh Ln:10 Col:8 loop variable y is already defined"
+      - "forin/Name is already defined.lsh Ln:14 Col:7 loop variable n is already defined"
+
+  - name: Loops in a recursive function
+    code: |
+      func count(n int) int {
+        c = 0
+        for x in n {
+          c = c + 1 + count(x)
+        }
+        return c
+      }
+
+      println(count(4))
+    expected: |
+      15
+
+  - name: Wrong types
+    code: |
+      for x in "abc" {
+      }
+      for x, i in 3 {
+      }
+      for x, i in 1 until 3 {
+      }
+      for x in "a" until true {
+      }
+    errors:
+      - "forin/Wrong types.lsh Ln:1 Col:1 for in needs an array or an int, not string"
+      - "forin/Wrong types.lsh Ln:3 Col:8 only a loop over an array has an index"
+      - "forin/Wrong types.lsh Ln:5 Col:8 only a loop over an array has an index"
+      - "forin/Wrong types.lsh Ln:7 Col:1 loop start must be of type int, not string"
+      - "forin/Wrong types.lsh Ln:7 Col:1 loop end must be of type int, not bool"
+
+  - name: Variables are only in the body
+    code: |
+      for x, i in ["a"] {
+      }
+      println(x, i)
+    errors:
+      - "forin/Variables are only in the body.lsh Ln:3 Col:9 variable 'x' is not defined"
+      - "forin/Variables are only in the body.lsh Ln:3 Col:12 variable 'i' is not defined"
+
+  - name: Name of a global
+    code: |
+      global g = 1
+      for g in 3 {
+      }
+    errors:
+      - "forin/Name of a global.lsh Ln:2 Col:5 loop variable g has the name of a global variable"
+
+  - name: Doesn't end a function
+    code: |
+      func f() int {
+        for x in 3 {
+          return x
+        }
+      }
+    errors:
+      - "forin/Doesn't end a function.lsh Ln:5 Col:1 missing return at the end of function f"

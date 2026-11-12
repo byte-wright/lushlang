@@ -705,7 +705,7 @@ tests:
 
       global settings.host = "x"
     errors:
-      - "globals/write to the global of another package.lsh Ln:3 Col:16 mismatched input '.' expecting {',', '='}"
+      - "globals/write to the global of another package.lsh Ln:3 Col:16 mismatched input '.' expecting {',', '=', '+=', '-=', '*=', '/=', '%='}"
 
   - name: plain write to the global of another package
     code: |

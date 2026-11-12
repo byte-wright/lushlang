@@ -27,6 +27,8 @@ type setTypesPass struct {
 	// statementCall is the call of the current function statement, the only call whose
 	// value isn't used
 	statementCall *ast.Func
+	// loops is the number of loops around the current statement
+	loops int
 }
 
 func SetTypes(ast *ast.Program) []*ast.ASTError {
@@ -120,6 +122,11 @@ func (t *setTypesPass) AfterBlock(block *ast.Block) {
 func (t *setTypesPass) BeforeStatement(statement ast.Statement) {
 	t.statementCall = nil
 
+	switch statement.(type) {
+	case *ast.For, *ast.ForIn:
+		t.loops++
+	}
+
 	st, isCall := statement.(*ast.FuncStatement)
 	if !isCall {
 		return
@@ -142,7 +149,23 @@ func (t *setTypesPass) Statement(statement ast.Statement) {
 		t.expectType(st.Location, "if condition", st.Condition, boolType)
 
 	case *ast.For:
-		t.expectType(st.Location, "for condition", st.Condition, boolType)
+		t.loops--
+		if st.Condition != nil {
+			t.expectType(st.Location, "for condition", st.Condition, boolType)
+		}
+
+	case *ast.ForIn:
+		t.loops--
+
+	case *ast.Break:
+		if t.loops == 0 {
+			t.errorf(st.Location, "break is not in a loop")
+		}
+
+	case *ast.Continue:
+		if t.loops == 0 {
+			t.errorf(st.Location, "continue is not in a loop")
+		}
 
 	case *ast.ReturnStatement:
 		t.returnStatement(st)
@@ -165,24 +188,83 @@ func (t *setTypesPass) assignment(st *ast.Assignment) {
 	}
 
 	for i, target := range st.Targets {
-		if target.Name == "_" {
-			continue
-		}
-
 		block := t.block
 		if target.GlobalOf != nil {
 			block = target.GlobalOf.Globals
 		}
 
-		v := block.GetVar(target.Name)
-		if v != nil && !known([]common.Type{v.Type, types[i]}) {
-			continue
-		}
+		t.assignTarget(block, target, types[i])
+	}
+}
 
-		err := block.SetVar(target.Name, types[i])
-		if err != nil {
-			t.errors = append(t.errors, &ast.ASTError{Location: target.Location, Message: err.Error()})
-		}
+func (t *setTypesPass) assignTarget(block *ast.Block, target *ast.AssignmentTarget, tp common.Type) {
+	if target.Name == "_" {
+		return
+	}
+
+	v := block.GetVar(target.Name)
+	if v != nil && !known([]common.Type{v.Type, tp}) {
+		return
+	}
+
+	err := block.SetVar(target.Name, tp)
+	if err != nil {
+		t.errors = append(t.errors, &ast.ASTError{Location: target.Location, Message: err.Error()})
+	}
+}
+
+func (t *setTypesPass) BeforeLoopBody(st *ast.ForIn) {
+	t.loopVar(st.Body, st.Value, t.loopValue(st))
+
+	if st.Index != nil {
+		t.loopVar(st.Body, st.Index, intType)
+	}
+}
+
+// loopVar declares a loop variable in the body. Assigning a variable outside of the loop,
+// or the one of an outer loop, would be easy to miss.
+func (t *setTypesPass) loopVar(body *ast.Block, target *ast.AssignmentTarget, tp common.Type) {
+	if target.Name == "_" {
+		return
+	}
+
+	if body.GetVar(target.Name) != nil {
+		t.errorf(target.Location, "loop variable %v is already defined", target.Name)
+	}
+
+	// also after the error, so the body is checked with the loop's type
+	body.Variables = append(body.Variables, &ast.Variable{Name: target.Name, Type: tp})
+}
+
+func (t *setTypesPass) loopValue(st *ast.ForIn) common.Type {
+	if st.From != nil {
+		t.expectType(st.Location, "loop start", st.From, intType)
+		t.expectType(st.Location, "loop end", st.Over, intType)
+		t.noIndex(st)
+		return intType
+	}
+
+	over := st.Over.Types()
+	if !known(over) {
+		return unknownTypes[0]
+	}
+
+	if len(over) == 1 && over[0].IsArray() {
+		return over[0].(*common.ArrayType).ElementType
+	}
+
+	if len(over) == 1 && over[0].Is(intType) {
+		t.noIndex(st)
+		return intType
+	}
+
+	t.errorf(st.Location, "for in needs an array or an int, not %v", printTypes(over))
+	return unknownTypes[0]
+}
+
+func (t *setTypesPass) noIndex(st *ast.ForIn) {
+	if st.Index != nil {
+		t.errorf(st.Index.Location, "only a loop over an array has an index")
 	}
 }
 
@@ -365,9 +447,27 @@ func terminates(b *ast.Block) bool {
 		return st.Else != nil && terminates(st.If) && terminates(st.Else)
 
 	case *ast.For:
-		// there's no break, so only a return can leave a loop whose condition is true
 		cond, isBool := st.Condition.(*ast.Bool)
-		return isBool && cond.Value
+		endless := st.Condition == nil || isBool && cond.Value
+		return endless && !breaks(st.Body)
+	}
+
+	return false
+}
+
+// breaks reports whether a break leaves the loop of this body, a break in a nested loop
+// only leaves that one
+func breaks(b *ast.Block) bool {
+	for _, statement := range b.Statements {
+		switch st := statement.(type) {
+		case *ast.Break:
+			return true
+
+		case *ast.If:
+			if breaks(st.If) || st.Else != nil && breaks(st.Else) {
+				return true
+			}
+		}
 	}
 
 	return false

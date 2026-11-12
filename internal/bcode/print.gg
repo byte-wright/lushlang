@@ -61,9 +61,22 @@ bcode.If type:
   }{end}
 
 bcode.While type:
-  while @{.Condition} {
+  while {if .Condition}{
+    @{.Check}
+  } @{.Condition} {end}{
     @{.Block}
   }
+
+bcode.ForEach type:
+  for @{.Element} in @{.Array} {
+    @{.Block}
+  }
+
+bcode.Break type:
+  break
+
+bcode.Continue type:
+  continue
 
 bcode.Code type:
   {indent -2 -}

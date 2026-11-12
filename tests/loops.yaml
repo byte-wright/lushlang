@@ -1,5 +1,5 @@
 order: 2
-name: Boolean operations
+name: Loops
 tests:
   - name: For loop
     description: Normal loop
@@ -14,3 +14,204 @@ tests:
       3
       4
 
+  - name: Endless loop with break
+    code: |
+      i = 0
+      for {
+        if i == 3 {
+          break
+        }
+        println(i)
+        i = i + 1
+      }
+      println("done")
+    expected: |
+      0
+      1
+      2
+      done
+
+  - name: Loop with a condition
+    code: |
+      i = 0
+      for i < 3 {
+        println(i)
+        i = i + 1
+      }
+      for false {
+        println("never")
+      }
+    expected: |
+      0
+      1
+      2
+
+  - name: Condition with a call is checked before every iteration
+    code: |
+      func below(i int, n int) bool {
+        return i < n
+      }
+
+      i = 0
+      for below(i, 3) {
+        println(i)
+        i = i + 1
+      }
+    expected: |
+      0
+      1
+      2
+
+  - name: Continue runs the step
+    code: |
+      for i = 0; i < 5; i = i + 1 {
+        if i % 2 == 0 {
+          continue
+        }
+        println(i)
+      }
+    expected: |
+      1
+      3
+
+  - name: Continue checks the condition again
+    code: |
+      func below(i int, n int) bool {
+        return i < n
+      }
+
+      i = 0
+      for below(i, 4) {
+        i = i + 1
+        if i == 2 {
+          continue
+        }
+        println(i)
+      }
+    expected: |
+      1
+      3
+      4
+
+  - name: Continue in an endless loop
+    code: |
+      i = 0
+      for {
+        i = i + 1
+        if i == 2 {
+          continue
+        } else if i > 3 {
+          break
+        }
+        println(i)
+      }
+    expected: |
+      1
+      3
+
+  - name: Break and continue only leave the inner loop
+    code: |
+      for i = 1; i <= 3; i = i + 1 {
+        for j = 1; j <= 3; j = j + 1 {
+          if j == 2 {
+            continue
+          }
+          if j > i {
+            break
+          }
+          println(i, j)
+        }
+      }
+    expected: |
+      1 1
+      2 1
+      3 1
+      3 3
+
+  - name: Break in a function
+    code: |
+      func count(n int) int {
+        c = 0
+        for {
+          if c == n {
+            break
+          }
+          c = c + 1
+        }
+        return c
+      }
+
+      println(count(4))
+    expected: |
+      4
+
+  - name: Endless loop ends a function
+    code: |
+      func first(a []int, min int) int {
+        i = 0
+        for {
+          if a[i] >= min {
+            return a[i]
+          }
+          i = i + 1
+        }
+      }
+
+      func nested() int {
+        for {
+          for {
+            break
+          }
+          return 1
+        }
+      }
+
+      println(first([1, 5, 9], 4), nested())
+    expected: |
+      5 1
+
+  - name: Break and continue outside of a loop
+    code: |
+      break
+      if true {
+        continue
+      }
+
+      func f() {
+        break
+      }
+
+      for i = 0; i < 3; i = i + 1 {
+        f()
+      }
+    errors:
+      - "loops/Break and continue outside of a loop.lsh Ln:1 Col:1 break is not in a loop"
+      - "loops/Break and continue outside of a loop.lsh Ln:3 Col:3 continue is not in a loop"
+      - "loops/Break and continue outside of a loop.lsh Ln:7 Col:3 break is not in a loop"
+
+  - name: A loop with a break doesn't end a function
+    code: |
+      func f() int {
+        for {
+          if true {
+            break
+          }
+        }
+      }
+
+      func g() int {
+        for true {
+          break
+        }
+      }
+    errors:
+      - "loops/A loop with a break doesn't end a function.lsh Ln:7 Col:1 missing return at the end of function f"
+      - "loops/A loop with a break doesn't end a function.lsh Ln:13 Col:1 missing return at the end of function g"
+
+  - name: Condition must be a bool
+    code: |
+      for 1 {
+        println(1)
+      }
+    errors:
+      - "loops/Condition must be a bool.lsh Ln:1 Col:1 for condition must be of type bool, not int"

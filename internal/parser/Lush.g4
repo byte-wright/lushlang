@@ -25,6 +25,8 @@ statement
     | if
     | for
     | returnStatement
+    | BREAK
+    | CONTINUE
     ;
 
 funcDef
@@ -51,8 +53,13 @@ if
     ;
 
 for
-    : FOR assignment SEMICOLON expression SEMICOLON
-        assignment block
+    : FOR block
+    | FOR cond = expression block
+    | FOR init = assignment SEMICOLON cond = expression SEMICOLON
+        step = assignment block
+    | FOR value = ID (COMMA index = ID)? IN (
+        from = expression UNTIL
+    )? over = expression block
     ;
 
 // like in Go, a return at the end of a line has no values, so code after it isn't
@@ -68,9 +75,14 @@ returnStatement
 block: LCUR (statement)* RCUR;
 
 assignment
-    : ID (COMMA ID)* ASSIGN expression (
-        COMMA expression
-    )*
+    : ID (COMMA ID)* op = (
+        ASSIGN
+        | PLUS_ASSIGN
+        | MINUS_ASSIGN
+        | MUL_ASSIGN
+        | DIV_ASSIGN
+        | MOD_ASSIGN
+    ) expression (COMMA expression)*
     ;
 
 globalAssignment: GLOBAL assignment;
@@ -167,6 +179,10 @@ INT_TYPE: 'int';
 BOOL_TYPE: 'bool';
 FUNC: 'func';
 RETURN: 'return';
+BREAK: 'break';
+CONTINUE: 'continue';
+IN: 'in';
+UNTIL: 'until';
 GLOBAL: 'global';
 
 LAND: '&&';
@@ -204,6 +220,11 @@ ENVVAR: '$' [a-zA-Z_0-9]+;
 // instead of one per letter
 ID: [a-zA-Z_] [a-zA-Z_0-9]*;
 ASSIGN: '=';
+PLUS_ASSIGN: '+=';
+MINUS_ASSIGN: '-=';
+MUL_ASSIGN: '*=';
+DIV_ASSIGN: '/=';
+MOD_ASSIGN: '%=';
 
 STRING
     : '"' (~["\\] | ESCAPED_VALUE)* '"'

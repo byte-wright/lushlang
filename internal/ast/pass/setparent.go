@@ -33,6 +33,10 @@ func (t *setParentPass) evalBlock(block *ast.Block) {
 			st.Body.Parent = block
 			t.evalBlock(st.Body)
 
+		case *ast.ForIn:
+			st.Body.Parent = block
+			t.evalBlock(st.Body)
+
 		case *ast.If:
 			st.If.Parent = block
 			t.evalBlock(st.If)
