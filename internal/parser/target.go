@@ -9,8 +9,8 @@ type mainTarget struct {
 	prog *ast.Program
 }
 
-func (m *mainTarget) addImport(path string, loc *common.Location) error {
-	return m.prog.File.Import(m.prog.AddImport(path, loc))
+func (m *mainTarget) addImport(path, name string, loc *common.Location) error {
+	return m.prog.File.Import(name, m.prog.AddImport(path, loc))
 }
 
 func (m *mainTarget) addMainStatement(s ast.Statement) {
@@ -35,8 +35,8 @@ type pkgTarget struct {
 	file *ast.File
 }
 
-func (l *pkgTarget) addImport(path string, loc *common.Location) error {
-	return l.file.Import(l.prog.AddImport(path, loc))
+func (l *pkgTarget) addImport(path, name string, loc *common.Location) error {
+	return l.file.Import(name, l.prog.AddImport(path, loc))
 }
 
 func (l *pkgTarget) addMainStatement(s ast.Statement) {

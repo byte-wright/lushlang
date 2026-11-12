@@ -16,7 +16,7 @@ package
     )* EOF
     ;
 
-importStatement: IMPORT STRING;
+importStatement: IMPORT STRING (AS alias = ID)?;
 
 statement
     : assignment
@@ -169,6 +169,7 @@ WHITESPACE: [ \r\n\t]+ -> skip;
 LINE_COMMENT: '//' ~[\r\n]* -> skip;
 
 IMPORT: 'import';
+AS: 'as';
 TRUE: 'true';
 FALSE: 'false';
 IF: 'if';

@@ -95,9 +95,70 @@ tests:
 
       println(my-pkg.foo())
     errors:
-      - import/invalid package name.lsh Ln:1 Col:1 package "/my-pkg" can't be used, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _
-      - import/invalid package name.lsh Ln:2 Col:1 package "/MyPkg" can't be used, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _
-      - import/invalid package name.lsh Ln:3 Col:1 package "/if" can't be used, the folder name if is a keyword
+      - import/invalid package name.lsh Ln:1 Col:1 package "/my-pkg" needs a name with as, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _
+      - import/invalid package name.lsh Ln:2 Col:1 package "/MyPkg" needs a name with as, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _
+      - import/invalid package name.lsh Ln:3 Col:1 package "/if" needs a name with as, the folder name if is a keyword
+
+  - name: import with a name
+    code: |
+      import "strings" as str
+      import "/strings" as mystrings
+
+      println(str.hasPrefix("world", "w"), mystrings.shout("hi"))
+    expected: |
+      true hi!
+
+  - name: only the new name
+    code: |
+      import "strings" as str
+
+      println(strings.hasPrefix("a", "a"))
+    errors:
+      - import/only the new name.lsh Ln:3 Col:17 namespace strings not found
+
+  - name: a name for a folder that can't be one
+    code: |
+      import "/my-pkg" as mypkg
+      import "/if" as iff
+
+      println(mypkg.foo(), iff.foo())
+    expected: |
+      1 1
+
+  - name: one package with two names
+    code: |
+      import "/math" as a
+      import "/math" as b
+
+      println(a.add(1, 2), b.sub(5, 3))
+    expected: |
+      3 2
+
+  - name: the name is per file
+    description: aliased imports /math as m, the package is still loaded once
+    code: |
+      import "/aliased"
+      import "/math"
+
+      println(aliased.triple(2), math.add(1, 1))
+    expected: |
+      6 2
+
+  - name: name already used
+    code: |
+      import "/math" as strings
+      import "strings"
+      import "/greet" as m
+      import "/math" as m
+    errors:
+      - import/name already used.lsh Ln:2 Col:1 package strings is already imported from "/math"
+      - import/name already used.lsh Ln:4 Col:1 package m is already imported from "/greet"
+
+  - name: uppercase name after as
+    code: |
+      import "/math" as Math
+    errors:
+      - import/uppercase name after as.lsh Ln:1 Col:19 name Math must start with a lowercase letter
 
   - name: package function shadows a builtin only in its package
     code: |

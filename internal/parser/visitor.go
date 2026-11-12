@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
@@ -15,10 +16,12 @@ type Visitor struct {
 	Target parseTarget
 	Name   string
 	errors []*ast.ASTError
+	// checking a program with a broken import only finds follow-up errors, these stop it
+	importErrors []*ast.ASTError
 }
 
 type parseTarget interface {
-	addImport(path string, loc *common.Location) error
+	addImport(path, name string, loc *common.Location) error
 	addMainStatement(ast.Statement)
 	addFuncDef(*ast.FuncDef)
 	addExternalFuncDef(*ast.ExternalFuncDef)
@@ -91,13 +94,24 @@ func (v *Visitor) VisitPackage(ctx *PackageContext) any {
 
 func (v *Visitor) imports(imps []IImportStatementContext) {
 	for _, imp := range imps {
-		path := imp.STRING().GetText()
-		path = strings.Trim(path, "\" ")
-
+		pkgPath := strings.Trim(imp.STRING().GetText(), "\" ")
 		loc := v.loc(imp)
-		err := v.Target.addImport(path, loc)
+
+		name := path.Base(pkgPath)
+		if imp.GetAlias() != nil {
+			name = imp.GetAlias().GetText()
+		} else {
+			// code can't refer to it, the error is here instead of misleading ones at a use
+			invalid := invalidPackageName(name)
+			if invalid != "" {
+				v.importErrors = append(v.importErrors, &ast.ASTError{Location: loc, Message: fmt.Sprintf("package %q needs a name with as, the folder name %v %v", pkgPath, name, invalid)})
+				continue
+			}
+		}
+
+		err := v.Target.addImport(pkgPath, name, loc)
 		if err != nil {
-			v.errors = append(v.errors, &ast.ASTError{Location: loc, Message: err.Error()})
+			v.importErrors = append(v.importErrors, &ast.ASTError{Location: loc, Message: err.Error()})
 		}
 	}
 }

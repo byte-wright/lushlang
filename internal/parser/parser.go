@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
@@ -42,12 +43,6 @@ func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTErro
 	for i := 0; i < len(prog.Packages()); i++ {
 		pkg := prog.Packages()[i]
 
-		invalid := invalidPackageName(pkg.Name)
-		if invalid != "" {
-			pkgErrs = append(pkgErrs, &ast.ASTError{Location: pkg.Location, Message: fmt.Sprintf("package %q can't be used, the folder name %v %v", pkg.Path, pkg.Name, invalid)})
-			continue
-		}
-
 		files, err := resolver.resolve(pkg.Path)
 		// an invalid path is one that leaves the root, like /../x
 		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrInvalid) {
@@ -64,8 +59,8 @@ func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTErro
 	}
 
 	// without all packages, checking the types would only find follow-up errors
-	if len(pkgErrs) > 0 {
-		return nil, append(v.errors, pkgErrs...), nil
+	if len(v.importErrors) > 0 || len(pkgErrs) > 0 {
+		return nil, slices.Concat(v.importErrors, v.errors, pkgErrs), nil
 	}
 
 	errs := append(v.errors, astpass.SetParent(prog)...)
@@ -103,5 +98,5 @@ func ParsePkgFile(p *ast.Program, pkg *ast.Package, code, name string) []*ast.AS
 
 	tree.Accept(v)
 
-	return v.errors
+	return slices.Concat(v.importErrors, v.errors)
 }

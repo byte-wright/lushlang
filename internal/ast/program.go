@@ -81,13 +81,14 @@ func (p *Program) Packages() []*Package {
 	return p.packages
 }
 
-func (f *File) Import(pkg *Package) error {
-	other := f.Imports[pkg.Name]
+// Import makes pkg visible as name in the file, that's its folder name or the one after as.
+func (f *File) Import(name string, pkg *Package) error {
+	other := f.Imports[name]
 	if other != nil && other != pkg {
-		return fmt.Errorf("package %v is already imported from %q", pkg.Name, other.Path)
+		return fmt.Errorf("package %v is already imported from %q", name, other.Path)
 	}
 
-	f.Imports[pkg.Name] = pkg
+	f.Imports[name] = pkg
 
 	return nil
 }
