@@ -154,7 +154,7 @@ tests:
       - "typeerrors/call arguments.lsh Ln:7 Col:1 add takes 2 arguments, not 0"
   - name: package call arguments
     code: |
-      import "/math"
+      import "./math"
       import "strings"
       x = math.double(1, 2)
       y = strings.hasPrefix(1, "a")
@@ -279,7 +279,7 @@ tests:
       - "typeerrors/return without values in a function with return types.lsh Ln:2 Col:3 function f returns 1 value, not 0"
   - name: call without a value used as value
     code: |
-      import "/greet"
+      import "./greet"
 
       func f(a int) {
         println(a)
@@ -371,7 +371,7 @@ tests:
   - name: duplicate functions in a package
     description: the functions of all files of a package and its external functions share one namespace
     code: |
-      import "/duplicate"
+      import "./duplicate"
     errors:
       - "std/duplicate/b.lsh Ln:1 Col:6 function twice is already defined at std/duplicate/a.lsh Ln:1 Col:6"
       - "std/duplicate/b.lsh Ln:5 Col:22 parameter a is already defined"

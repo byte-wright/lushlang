@@ -21,7 +21,8 @@ type Visitor struct {
 }
 
 type parseTarget interface {
-	addImport(path, name string, loc *common.Location) error
+	// addImport is false when the file imports another package as name
+	addImport(path, name string, loc *common.Location) bool
 	addMainStatement(ast.Statement)
 	addFuncDef(*ast.FuncDef)
 	addExternalFuncDef(*ast.ExternalFuncDef)
@@ -93,9 +94,16 @@ func (v *Visitor) VisitPackage(ctx *PackageContext) any {
 }
 
 func (v *Visitor) imports(imps []IImportStatementContext) {
+	paths := map[string]string{}
+
 	for _, imp := range imps {
 		pkgPath := strings.Trim(imp.STRING().GetText(), "\" ")
 		loc := v.loc(imp)
+
+		if strings.HasPrefix(pkgPath, "/") {
+			v.importError(loc, "package %q can't start with /, a local package starts with ./ or ../", pkgPath)
+			continue
+		}
 
 		name := path.Base(pkgPath)
 		if imp.GetAlias() != nil {
@@ -104,16 +112,24 @@ func (v *Visitor) imports(imps []IImportStatementContext) {
 			// code can't refer to it, the error is here instead of misleading ones at a use
 			invalid := invalidPackageName(name)
 			if invalid != "" {
-				v.importErrors = append(v.importErrors, &ast.ASTError{Location: loc, Message: fmt.Sprintf("package %q needs a name with as, the folder name %v %v", pkgPath, name, invalid)})
+				v.importError(loc, "package %q needs a name with as, the folder name %v %v", pkgPath, name, invalid)
 				continue
 			}
 		}
 
-		err := v.Target.addImport(pkgPath, name, loc)
-		if err != nil {
-			v.importErrors = append(v.importErrors, &ast.ASTError{Location: loc, Message: err.Error()})
+		if !v.Target.addImport(pkgPath, name, loc) {
+			v.importError(loc, "package %v is already imported from %q", name, paths[name])
+			continue
+		}
+
+		if paths[name] == "" {
+			paths[name] = pkgPath
 		}
 	}
+}
+
+func (v *Visitor) importError(loc *common.Location, format string, a ...any) {
+	v.importErrors = append(v.importErrors, &ast.ASTError{Location: loc, Message: fmt.Sprintf(format, a...)})
 }
 
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {

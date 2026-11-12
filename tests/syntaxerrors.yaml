@@ -66,6 +66,6 @@ tests:
   - name: uppercase names in a package
     description: parameters of external functions keep their names in bash, so IFS would change how bash splits words
     code: |
-      import "/uppercase"
+      import "./uppercase"
     errors:
       - "std/uppercase/uppercase.lsh Ln:1 Col:11 name IFS must start with a lowercase letter"

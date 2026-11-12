@@ -1,3 +1,3 @@
-import "/importloopa"
+import "../importloopa"
 
 global b = importloopa.ten()

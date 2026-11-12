@@ -4,7 +4,7 @@ tests:
   - name: imported methods
     description:
     code: |
-      import "/math"
+      import "./math"
 
       println(math.add(5, 3))
       println(math.sub(5, 3))
@@ -15,8 +15,8 @@ tests:
 
   - name: method as statement
     code: |
-      import "/greet"
-      import "/math"
+      import "./greet"
+      import "./math"
 
       greet.hello("world")
       math.add(1, 2)
@@ -26,7 +26,7 @@ tests:
   - name: own package function
     description: an unqualified call in a package goes to its own package, not to main
     code: |
-      import "/math"
+      import "./math"
 
       println(math.double(4))
       println(add(1, 2))
@@ -41,7 +41,7 @@ tests:
   - name: same package name in different files
     code: |
       import "strings"
-      import "/greet"
+      import "./greet"
 
       greet.shout("world")
       println(strings.hasPrefix("world", "w"))
@@ -52,15 +52,15 @@ tests:
   - name: same package name in one file
     code: |
       import "strings"
-      import "/strings"
+      import "./strings"
     errors:
       - import/same package name in one file.lsh Ln:2 Col:1 package strings is already imported from "strings"
 
   - name: package scope
     description: a package sees neither the imports nor the functions of the main file
     code: |
-      import "/math"
-      import "/isolated"
+      import "./math"
+      import "./isolated"
 
       println(isolated.run())
 
@@ -75,34 +75,59 @@ tests:
     description: missing packages are reported at the import that added them, also in packages
     code: |
       import "nope"
-      import "/gone"
-      import "/../std"
-      import "/broken"
+      import "./gone"
+      import "../gone" as gone2
+      import "./broken"
 
       println(nope.foo())
     errors:
       - import/missing package.lsh Ln:1 Col:1 package "nope" not found
-      - import/missing package.lsh Ln:2 Col:1 package "/gone" not found
-      - import/missing package.lsh Ln:3 Col:1 package "/../std" not found
-      - std/broken/broken.lsh Ln:1 Col:1 package "/missing" not found
+      - import/missing package.lsh Ln:2 Col:1 package "./gone" not found
+      - import/missing package.lsh Ln:3 Col:1 package "../gone" not found
+      - std/broken/broken.lsh Ln:1 Col:1 package "../missing" not found
+
+  - name: leading slash
+    code: |
+      import "/math"
+    errors:
+      - import/leading slash.lsh Ln:1 Col:1 package "/math" can't start with /, a local package starts with ./ or ../
+
+  - name: relative to the importing file
+    description: inner imports ../../math, the package is the same as ./math here
+    code: |
+      import "./nested/inner"
+      import "./math"
+      import "./nested/../math" as same
+
+      println(inner.quad(2), math.add(1, 2), same.sub(5, 3))
+    expected: |
+      8 3 2
+
+  - name: outside of the main file's folder
+    code: |
+      import "../outside"
+
+      println(outside.where())
+    expected: |
+      outside
 
   - name: invalid package name
     description: code can't refer to these packages, the error is at the import instead of misleading ones at a use
     code: |
-      import "/my-pkg"
-      import "/MyPkg"
-      import "/if"
+      import "./my-pkg"
+      import "./MyPkg"
+      import "./if"
 
       println(my-pkg.foo())
     errors:
-      - import/invalid package name.lsh Ln:1 Col:1 package "/my-pkg" needs a name with as, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _
-      - import/invalid package name.lsh Ln:2 Col:1 package "/MyPkg" needs a name with as, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _
-      - import/invalid package name.lsh Ln:3 Col:1 package "/if" needs a name with as, the folder name if is a keyword
+      - import/invalid package name.lsh Ln:1 Col:1 package "./my-pkg" needs a name with as, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _
+      - import/invalid package name.lsh Ln:2 Col:1 package "./MyPkg" needs a name with as, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _
+      - import/invalid package name.lsh Ln:3 Col:1 package "./if" needs a name with as, the folder name if is a keyword
 
   - name: import with a name
     code: |
       import "strings" as str
-      import "/strings" as mystrings
+      import "./strings" as mystrings
 
       println(str.hasPrefix("world", "w"), mystrings.shout("hi"))
     expected: |
@@ -118,8 +143,8 @@ tests:
 
   - name: a name for a folder that can't be one
     code: |
-      import "/my-pkg" as mypkg
-      import "/if" as iff
+      import "./my-pkg" as mypkg
+      import "./if" as iff
 
       println(mypkg.foo(), iff.foo())
     expected: |
@@ -127,18 +152,18 @@ tests:
 
   - name: one package with two names
     code: |
-      import "/math" as a
-      import "/math" as b
+      import "./math" as a
+      import "./math" as b
 
       println(a.add(1, 2), b.sub(5, 3))
     expected: |
       3 2
 
   - name: the name is per file
-    description: aliased imports /math as m, the package is still loaded once
+    description: aliased imports ../math as m, the package is still loaded once
     code: |
-      import "/aliased"
-      import "/math"
+      import "./aliased"
+      import "./math"
 
       println(aliased.triple(2), math.add(1, 1))
     expected: |
@@ -146,23 +171,23 @@ tests:
 
   - name: name already used
     code: |
-      import "/math" as strings
+      import "./math" as strings
       import "strings"
-      import "/greet" as m
-      import "/math" as m
+      import "./greet" as m
+      import "./math" as m
     errors:
-      - import/name already used.lsh Ln:2 Col:1 package strings is already imported from "/math"
-      - import/name already used.lsh Ln:4 Col:1 package m is already imported from "/greet"
+      - import/name already used.lsh Ln:2 Col:1 package strings is already imported from "./math"
+      - import/name already used.lsh Ln:4 Col:1 package m is already imported from "./greet"
 
   - name: uppercase name after as
     code: |
-      import "/math" as Math
+      import "./math" as Math
     errors:
-      - import/uppercase name after as.lsh Ln:1 Col:19 name Math must start with a lowercase letter
+      - import/uppercase name after as.lsh Ln:1 Col:20 name Math must start with a lowercase letter
 
   - name: package function shadows a builtin only in its package
     code: |
-      import "/shadow"
+      import "./shadow"
 
       println(len("abc"), shadow.len("abc"), shadow.size("abc"))
     expected: |

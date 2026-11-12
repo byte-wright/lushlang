@@ -1,4 +1,4 @@
-import "/initloopb"
+import "../initloopb"
 
 global a = initloopb.viaA()
 

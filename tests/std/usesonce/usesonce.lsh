@@ -1,4 +1,4 @@
-import "/once"
+import "../once"
 
 func read() int {
   return once.value

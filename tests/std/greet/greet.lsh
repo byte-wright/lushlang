@@ -1,4 +1,4 @@
-import "/strings"
+import "../strings"
 
 func hello(name string) {
   println("hello", name)

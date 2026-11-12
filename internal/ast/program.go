@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/byte-wright/lush/internal/common"
@@ -17,12 +16,22 @@ type Program struct {
 	InitOrder []*GlobalDef
 
 	packages      []*Package
-	addedPackages map[string]*Package
+	addedPackages map[Source]*Package
+}
+
+// Source is the folder of a package's files. It is a path in std, or on disk relative to the
+// working directory.
+type Source struct {
+	Std bool
+	Dir string
 }
 
 type Package struct {
+	// Path is how the import that added the package wrote it
 	Path string
-	Name string
+	// Name is the folder name, files can import the package with another one
+	Name   string
+	Source Source
 	// GlobalDefs is empty for main, its globals are defined by global assignments in Root
 	GlobalDefs       []*GlobalDef
 	Globals          *Block
@@ -39,14 +48,15 @@ type File struct {
 	Imports map[string]*Package
 }
 
-func NewProgram() *Program {
-	main := &Package{Name: "main", Globals: &Block{}}
+// NewProgram creates a program whose main file is in the folder dir.
+func NewProgram(dir string) *Program {
+	main := &Package{Name: "main", Source: Source{Dir: dir}, Globals: &Block{}}
 
 	return &Program{
 		Root:          &Block{},
 		Main:          main,
 		File:          NewFile(main),
-		addedPackages: map[string]*Package{},
+		addedPackages: map[Source]*Package{},
 	}
 }
 
@@ -57,21 +67,23 @@ func NewFile(pkg *Package) *File {
 	}
 }
 
-// AddImport returns the package of the path, it's only loaded once per program.
-func (p *Program) AddImport(path string, loc *common.Location) *Package {
-	pkg := p.addedPackages[path]
+// AddImport returns the package in src, it's only loaded once per program, however the
+// imports write its path.
+func (p *Program) AddImport(src Source, path string, loc *common.Location) *Package {
+	pkg := p.addedPackages[src]
 	if pkg != nil {
 		return pkg
 	}
 
 	pkg = &Package{
 		Path:     path,
-		Name:     filepath.Base(path),
+		Name:     filepath.Base(src.Dir),
+		Source:   src,
 		Globals:  &Block{},
 		Location: loc,
 	}
 	p.packages = append(p.packages, pkg)
-	p.addedPackages[path] = pkg
+	p.addedPackages[src] = pkg
 
 	return pkg
 }
@@ -81,14 +93,14 @@ func (p *Program) Packages() []*Package {
 	return p.packages
 }
 
-// Import makes pkg visible as name in the file, that's its folder name or the one after as.
-func (f *File) Import(name string, pkg *Package) error {
+// Import makes pkg visible as name in the file, it's false when name is another package.
+func (f *File) Import(name string, pkg *Package) bool {
 	other := f.Imports[name]
 	if other != nil && other != pkg {
-		return fmt.Errorf("package %v is already imported from %q", name, other.Path)
+		return false
 	}
 
 	f.Imports[name] = pkg
 
-	return nil
+	return true
 }

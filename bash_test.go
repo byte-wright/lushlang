@@ -10,14 +10,14 @@ import (
 )
 
 func TestToBashDebugOutsideRepo(t *testing.T) {
-	root := t.TempDir()
+	dir := t.TempDir()
 
-	err := os.Mkdir(filepath.Join(root, "greet"), 0o700)
+	err := os.Mkdir(filepath.Join(dir, "greet"), 0o700)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = os.WriteFile(filepath.Join(root, "greet", "greet.lsh"), []byte(`
+	err = os.WriteFile(filepath.Join(dir, "greet", "greet.lsh"), []byte(`
 func hello(name string) string {
   return "hello " + name
 }
@@ -31,7 +31,7 @@ func hello(name string) string {
 		t.Fatal(err)
 	}
 
-	// neither root nor std may depend on the working directory
+	// neither the main file's folder nor std may depend on the working directory
 	err = os.Chdir(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -40,10 +40,10 @@ func hello(name string) string {
 
 	_, _, sh, err := ToBashDebug(`
 import "strings"
-import "/greet"
+import "./greet"
 
 println(greet.hello("world"), strings.hasPrefix("world", "w"))
-`, "main.lsh", root)
+`, "main.lsh", dir)
 	if err != nil {
 		t.Fatal(err)
 	}

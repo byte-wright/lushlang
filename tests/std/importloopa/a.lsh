@@ -1,4 +1,4 @@
-import "/importloopb"
+import "../importloopb"
 
 global a = importloopb.b + 1
 

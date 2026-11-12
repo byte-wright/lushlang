@@ -1,4 +1,4 @@
-import "/missing"
+import "../missing"
 
 func run() {
   println("run")

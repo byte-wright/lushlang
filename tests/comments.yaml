@@ -50,7 +50,7 @@ tests:
 
   - name: Comments in a package
     code: |
-      import "/comments"
+      import "./comments"
 
       println(comments.path("a", "b"))
       println(comments.url("example.com"))

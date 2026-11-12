@@ -11,9 +11,10 @@ import (
 	astpass "github.com/byte-wright/lush/internal/ast/pass"
 )
 
-// Parse parses the main file and the packages it imports. Imports starting with / are
-// read from the mainRoot folder, all others from std.
-func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTError, error) {
+// Parse parses the main file and the packages it imports. dir is the folder of the main file,
+// imports starting with ./ or ../ are read from the importing file's folder, all others from
+// std.
+func Parse(code, name, dir string, std fs.FS) (*ast.Program, []*ast.ASTError, error) {
 	lexer := NewLushLexer(antlr.NewInputStream(code))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	parser := NewLushParser(stream)
@@ -28,23 +29,20 @@ func Parse(code, name, mainRoot string, std fs.FS) (*ast.Program, []*ast.ASTErro
 		return nil, listener.errors, nil
 	}
 
-	prog := ast.NewProgram()
+	prog := ast.NewProgram(dir)
 
 	v := newVisitor(name, &mainTarget{prog: prog})
 
 	tree.Accept(v)
 
-	resolver := &resolver{
-		main: mainRoot,
-		std:  std,
-	}
+	resolver := &resolver{std: std}
 
 	pkgErrs := []*ast.ASTError{}
 	for i := 0; i < len(prog.Packages()); i++ {
 		pkg := prog.Packages()[i]
 
-		files, err := resolver.resolve(pkg.Path)
-		// an invalid path is one that leaves the root, like /../x
+		files, err := resolver.resolve(pkg)
+		// an invalid path is one that leaves std, like ../x from a std package
 		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrInvalid) {
 			pkgErrs = append(pkgErrs, &ast.ASTError{Location: pkg.Location, Message: fmt.Sprintf("package %q not found", pkg.Path)})
 			continue

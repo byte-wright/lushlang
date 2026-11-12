@@ -7,11 +7,12 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/byte-wright/lush/internal/ast"
 )
 
 type resolver struct {
-	main string
-	std  fs.FS
+	std fs.FS
 }
 
 type sourceFile struct {
@@ -19,17 +20,35 @@ type sourceFile struct {
 	code string
 }
 
-func (r *resolver) resolve(packagePath string) ([]sourceFile, error) {
+func isLocal(importPath string) bool {
+	return strings.HasPrefix(importPath, "./") || strings.HasPrefix(importPath, "../")
+}
+
+// locate finds the folder of the package that a file of from imports as importPath. A local
+// import starts at the folder of from, from a std package it stays in std.
+func locate(from *ast.Package, importPath string) ast.Source {
+	if !isLocal(importPath) {
+		return ast.Source{Std: true, Dir: path.Clean(importPath)}
+	}
+
+	if from.Source.Std {
+		return ast.Source{Std: true, Dir: path.Join(from.Source.Dir, importPath)}
+	}
+
+	return ast.Source{Dir: filepath.Join(from.Source.Dir, filepath.FromSlash(importPath))}
+}
+
+func (r *resolver) resolve(pkg *ast.Package) ([]sourceFile, error) {
 	var files []sourceFile
 	var err error
-	if strings.HasPrefix(packagePath, "/") {
-		files, err = readPackage(os.DirFS(r.main), r.main, packagePath[1:])
+	if pkg.Source.Std {
+		files, err = readPackage(r.std, "std", pkg.Source.Dir)
 	} else {
-		files, err = readPackage(r.std, "std", packagePath)
+		files, err = readPackage(os.DirFS(pkg.Source.Dir), pkg.Source.Dir, ".")
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("package %q: %w", packagePath, err)
+		return nil, fmt.Errorf("package %q: %w", pkg.Path, err)
 	}
 
 	return files, nil

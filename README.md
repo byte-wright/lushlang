@@ -30,8 +30,9 @@ Its in no way optimized and quite rudimentary.
   - environment variables as `$NAME`, the script's arguments as `args()`
   - names start with a lowercase letter or `_`, so they can't clash with bash's
     variables like `PATH` and `IFS`
-  - packages: `import "strings"` from std, `import "/deploy"` from the root folder, and
-    `import "/util/strings" as ustrings` to use another name than the folder's
+  - packages: `import "strings"` from std, `import "./deploy"` and `import "../lib/log"` from
+    the folder of the importing file, and `import "./util/strings" as ustrings` to use another
+    name than the folder's
   - global variables per package
   - the scripts need bash 3.2 or newer, so they also run with macOS's `/bin/bash`
 

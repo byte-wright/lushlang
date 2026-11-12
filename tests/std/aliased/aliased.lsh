@@ -1,4 +1,4 @@
-import "/math" as m
+import "../math" as m
 
 func triple(a int) int {
   return m.add(a, m.double(a))
