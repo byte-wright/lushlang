@@ -284,7 +284,7 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 	case *ast.Not:
 		t.unary(exp.Location, "!", exp.Expression, boolType)
 	case *ast.Add:
-		t.binary(exp.Location, "+", exp.A, exp.B, intType, stringType)
+		t.add(exp)
 	case *ast.Sub:
 		t.binary(exp.Location, "-", exp.A, exp.B, intType)
 	case *ast.Mul:
@@ -557,6 +557,17 @@ func (t *setTypesPass) binary(loc *common.Location, op string, a, b ast.Expressi
 	t.errorf(loc, "operator '%v' can't be used with %v and %v", op, printTypes(at), printTypes(bt))
 }
 
+// add lets a string on the left take an int or bool on the right as its text. Only the
+// left side decides, so 1 + 2 + "x" is an error instead of "3x".
+func (t *setTypesPass) add(exp *ast.Add) {
+	at, bt := exp.A.Types(), exp.B.Types()
+	if known(at) && known(bt) && len(at) == 1 && len(bt) == 1 && at[0].Is(stringType) && isOneOf(bt[0], []common.Type{intType, boolType}) {
+		return
+	}
+
+	t.binary(exp.Location, "+", exp.A, exp.B, intType, stringType)
+}
+
 func (t *setTypesPass) expectType(loc *common.Location, what string, x ast.Expression, want common.Type) {
 	xt := x.Types()
 	if !known(xt) || len(xt) == 1 && xt[0].Is(want) {
@@ -696,6 +707,18 @@ func builtin(name string, args []common.Type) ([]common.Type, bool, error) {
 
 		if !args[0].IsArray() && !args[0].Is(stringType) {
 			return tps, true, fmt.Errorf("argument 1 of len must be an array or string, not %v", args[0].Print())
+		}
+
+		return tps, true, nil
+
+	case "parseInt":
+		tps := []common.Type{intType, boolType}
+		if len(args) != 1 {
+			return tps, true, fmt.Errorf("parseInt takes 1 argument, not %v", len(args))
+		}
+
+		if !args[0].Is(stringType) {
+			return tps, true, fmt.Errorf("argument 1 of parseInt must be of type string, not %v", args[0].Print())
 		}
 
 		return tps, true, nil

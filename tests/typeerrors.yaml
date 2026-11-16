@@ -77,6 +77,9 @@ tests:
       f = 1 && true
       g = [1] == [1]
       h = 1 < 2 || "x" > "y"
+      i = 1 + 2 + "x"
+      j = "a" + [1]
+      k = true + "a"
     errors:
       - "typeerrors/operators.lsh Ln:1 Col:5 operator '+' can't be used with int and string"
       - "typeerrors/operators.lsh Ln:2 Col:5 operator '-' can't be used with string and string"
@@ -86,6 +89,9 @@ tests:
       - "typeerrors/operators.lsh Ln:6 Col:5 operator '&&' can't be used with int and bool"
       - "typeerrors/operators.lsh Ln:7 Col:5 operator '==' can't be used with []int and []int"
       - "typeerrors/operators.lsh Ln:8 Col:14 operator '>' can't be used with string and string"
+      - "typeerrors/operators.lsh Ln:9 Col:5 operator '+' can't be used with int and string"
+      - "typeerrors/operators.lsh Ln:10 Col:5 operator '+' can't be used with string and []int"
+      - "typeerrors/operators.lsh Ln:11 Col:5 operator '+' can't be used with bool and string"
   - name: conditions
     code: |
       if 1 {
@@ -183,6 +189,9 @@ tests:
       println("a", [1, 2])
       o, er, code = execVar()
       o, er, code = execVar("ls", ["-l"])
+      p, ok = parseInt()
+      p, ok = parseInt(5)
+      p, ok = parseInt("1", "2")
     errors:
       - "typeerrors/builtin arguments.lsh Ln:1 Col:5 len takes 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh Ln:2 Col:5 argument 1 of len must be an array or string, not int"
@@ -192,6 +201,9 @@ tests:
       - "typeerrors/builtin arguments.lsh Ln:6 Col:1 argument 2 of println can't be of type []int"
       - "typeerrors/builtin arguments.lsh Ln:7 Col:15 execVar takes at least 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh Ln:8 Col:15 argument 2 of execVar can't be of type []string"
+      - "typeerrors/builtin arguments.lsh Ln:9 Col:9 parseInt takes 1 argument, not 0"
+      - "typeerrors/builtin arguments.lsh Ln:10 Col:9 argument 1 of parseInt must be of type string, not int"
+      - "typeerrors/builtin arguments.lsh Ln:11 Col:9 parseInt takes 1 argument, not 2"
   - name: return values
     code: |
       func one() int {

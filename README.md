@@ -18,6 +18,12 @@ Its in no way optimized and quite rudimentary.
   - `//` line comments
   - math and comparison operators, `+=`, `-=`, `*=`, `/=` and `%=`
   - int, string, bools and type inference
+  - a string plus an int or bool takes its text: `"n=" + n`. Only a string on the left
+    does that, `1 + 2 + "x"` is an error, `"n=" + 1 + 2` is `n=12` and
+    `"n=" + (1 + 2)` is `n=3`
+  - `n, ok = parseInt(s)` reads an int: an optional `+` or `-` and decimal digits, a
+    leading 0 doesn't make it octal. Anything else, also a number outside of the 64-bit
+    range, gives `0, false`
   - strings are UTF-8: `len`, indexes and slices count characters (Unicode code points),
     whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
     This needs a UTF-8 locale on the system, which nearly every system has. Without one,

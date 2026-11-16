@@ -1,0 +1,123 @@
+order: 2
+name: Conversion
+tests:
+  - name: string plus int and bool
+    description: a string on the left takes the text of an int or bool on the right
+    code: |
+      func twice(x int) int {
+        return x * 2
+      }
+
+      n = 42
+      ok = n > 40
+      a = [1, 2]
+      println("n=" + n, "neg=" + -n, "ok=" + ok, "lit=" + 7 + true)
+      println("sum=" + (n + 1), "sum=" + n + 1)
+      println("f=" + twice(4), "a=" + a[1], "len=" + len(a), "" + n + "!")
+      s = "items: "
+      s += n
+      s += ", " + false
+      println(s)
+    expected: |
+      n=42 neg=-42 ok=true lit=7true
+      sum=43 sum=421
+      f=8 a=2 len=2 42!
+      items: 42, false
+
+  - name: string plus global int
+    code: |
+      global count = 3
+
+      func label() string {
+        return "count=" + count
+      }
+
+      println(label())
+    expected: |
+      count=3
+
+  - name: parseInt valid
+    description: an optional sign and decimal digits, leading zeros don't make it octal
+    code: |
+      for s in ["0", "-0", "+0", "42", "-42", "+42", "007", "-007", "08", "0009223372036854775807", "9223372036854775807", "-9223372036854775808"] {
+        n, ok = parseInt(s)
+        println(s, n, ok)
+      }
+    expected: |
+      0 0 true
+      -0 0 true
+      +0 0 true
+      42 42 true
+      -42 -42 true
+      +42 42 true
+      007 7 true
+      -007 -7 true
+      08 8 true
+      0009223372036854775807 9223372036854775807 true
+      9223372036854775807 9223372036854775807 true
+      -9223372036854775808 -9223372036854775808 true
+
+  - name: parseInt invalid
+    description: anything else, also an int out of range, gives 0 and false and runs nothing
+    code: |
+      for s in ["", "-", "+", "-+5", " 5", "5 ", "5\n", "1_000", "0x10", "1e3", "٣", "9223372036854775808", "-9223372036854775809", "99999999999999999999", "$(echo hi >&2)", "a[$(echo pwned >&2)]", "*"] {
+        n, ok = parseInt(s)
+        println("[" + s + "]", n, ok)
+      }
+    expected: |
+      [] 0 false
+      [-] 0 false
+      [+] 0 false
+      [-+5] 0 false
+      [ 5] 0 false
+      [5 ] 0 false
+      [5
+      ] 0 false
+      [1_000] 0 false
+      [0x10] 0 false
+      [1e3] 0 false
+      [٣] 0 false
+      [9223372036854775808] 0 false
+      [-9223372036854775809] 0 false
+      [99999999999999999999] 0 false
+      [$(echo hi >&2)] 0 false
+      [a[$(echo pwned >&2)]] 0 false
+      [*] 0 false
+
+  - name: parseInt result is a plain int
+    description: the result works in arithmetic and comparisons like a literal
+    code: |
+      a, _ = parseInt("08")
+      b, _ = parseInt("-007")
+      println(a * 2, b + 1, a == 8, b < 0, "b=" + b)
+    expected: |
+      16 -6 true true b=-7
+
+  - name: parseInt of arguments
+    args: ["12", "x", "30"]
+    code: |
+      sum = 0
+      for a in args() {
+        n, ok = parseInt(a)
+        if !ok {
+          println("not a number: " + a)
+          continue
+        }
+        sum += n
+      }
+      println("sum=" + sum)
+    expected: |
+      not a number: x
+      sum=42
+
+  - name: parseInt in the C locale
+    env: [LC_ALL=C]
+    code: |
+      for s in ["123", "٣", "1€"] {
+        n, ok = parseInt(s)
+        println(s, n, ok)
+      }
+    expected: |
+      123 123 true
+      ٣ 0 false
+      1€ 0 false

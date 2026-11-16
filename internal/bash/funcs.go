@@ -74,6 +74,43 @@ L_ret0="${1:$2:$(( $3 - $2 ))}"`,
 		uses: []string{"findUtf8", "checkSlice"},
 	})
 
+	// The text never reaches $(( )): bash would evaluate it as an expression, a[$(cmd)]
+	// runs cmd, a leading 0 means octal and too many digits wrap around. 19 digits are
+	// compared to the int range in two parts that each fit an int. The digits are listed,
+	// a range like 0-9 depends on the locale.
+	register(&bFunc{
+		name: "parseInt",
+		code: `local L_s="$1" L_sign=""
+L_ret0=0
+L_ret1=false
+case "$L_s" in
+	-*) L_sign=-; L_s="${L_s#-}" ;;
+	+*) L_s="${L_s#+}" ;;
+esac
+case "$L_s" in
+	""|*[!0123456789]*) return ;;
+esac
+L_s="${L_s#"${L_s%%[!0]*}"}"
+if [ -z "$L_s" ]; then
+	L_ret1=true
+	return
+fi
+if [ "${#L_s}" -gt 19 ]; then
+	return
+fi
+if [ "${#L_s}" -eq 19 ]; then
+	local L_max=854775807
+	if [ "$L_sign" = - ]; then
+		L_max=854775808
+	fi
+	if (( ${L_s:0:10} > 9223372036 || ${L_s:0:10} == 9223372036 && 10#${L_s:10} > L_max )); then
+		return
+	fi
+fi
+L_ret0="$L_sign$L_s"
+L_ret1=true`,
+	})
+
 	register(&bFunc{
 		name: "println",
 		code: `local i=1

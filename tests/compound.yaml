@@ -73,14 +73,14 @@ tests:
       y += 1
       s = "a"
       s -= 1
-      s += 1
+      s += [1]
       a, b = 1, 2
       a, b += 1, 2
       a += 1, 2
     errors:
       - "compound/Errors.lsh Ln:1 Col:1 variable 'y' is not defined"
       - "compound/Errors.lsh Ln:3 Col:1 operator '-' can't be used with string and int"
-      - "compound/Errors.lsh Ln:4 Col:1 operator '+' can't be used with string and int"
+      - "compound/Errors.lsh Ln:4 Col:1 operator '+' can't be used with string and []int"
       - "compound/Errors.lsh Ln:6 Col:6 += needs one variable and one value"
       - "compound/Errors.lsh Ln:7 Col:3 += needs one variable and one value"
 
