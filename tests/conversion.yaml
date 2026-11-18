@@ -40,55 +40,58 @@ tests:
     description: an optional sign and decimal digits, leading zeros don't make it octal
     code: |
       for s in ["0", "-0", "+0", "42", "-42", "+42", "007", "-007", "08", "0009223372036854775807", "9223372036854775807", "-9223372036854775808"] {
-        n, ok = parseInt(s)
-        println(s, n, ok)
+        n = try parseInt(s)
+        println(s, n)
       }
     expected: |
-      0 0 true
-      -0 0 true
-      +0 0 true
-      42 42 true
-      -42 -42 true
-      +42 42 true
-      007 7 true
-      -007 -7 true
-      08 8 true
-      0009223372036854775807 9223372036854775807 true
-      9223372036854775807 9223372036854775807 true
-      -9223372036854775808 -9223372036854775808 true
+      0 0
+      -0 0
+      +0 0
+      42 42
+      -42 -42
+      +42 42
+      007 7
+      -007 -7
+      08 8
+      0009223372036854775807 9223372036854775807
+      9223372036854775807 9223372036854775807
+      -9223372036854775808 -9223372036854775808
 
   - name: parseInt invalid
-    description: anything else, also an int out of range, gives 0 and false and runs nothing
+    description: anything else, also an int out of range, is an error and runs nothing
     code: |
       for s in ["", "-", "+", "-+5", " 5", "5 ", "5\n", "1_000", "0x10", "1e3", "٣", "9223372036854775808", "-9223372036854775809", "99999999999999999999", "$(echo hi >&2)", "a[$(echo pwned >&2)]", "*"] {
-        n, ok = parseInt(s)
-        println("[" + s + "]", n, ok)
+        n = parseInt(s) catch err {
+          println("[" + err + "]")
+          continue
+        }
+        println("not reached", n)
       }
     expected: |
-      [] 0 false
-      [-] 0 false
-      [+] 0 false
-      [-+5] 0 false
-      [ 5] 0 false
-      [5 ] 0 false
-      [5
-      ] 0 false
-      [1_000] 0 false
-      [0x10] 0 false
-      [1e3] 0 false
-      [٣] 0 false
-      [9223372036854775808] 0 false
-      [-9223372036854775809] 0 false
-      [99999999999999999999] 0 false
-      [$(echo hi >&2)] 0 false
-      [a[$(echo pwned >&2)]] 0 false
-      [*] 0 false
+      ["" is not an int]
+      ["-" is not an int]
+      ["+" is not an int]
+      ["-+5" is not an int]
+      [" 5" is not an int]
+      ["5 " is not an int]
+      ["5
+      " is not an int]
+      ["1_000" is not an int]
+      ["0x10" is not an int]
+      ["1e3" is not an int]
+      ["٣" is not an int]
+      ["9223372036854775808" is out of the int range]
+      ["-9223372036854775809" is out of the int range]
+      ["99999999999999999999" is out of the int range]
+      ["$(echo hi >&2)" is not an int]
+      ["a[$(echo pwned >&2)]" is not an int]
+      ["*" is not an int]
 
   - name: parseInt result is a plain int
     description: the result works in arithmetic and comparisons like a literal
     code: |
-      a, _ = parseInt("08")
-      b, _ = parseInt("-007")
+      a = try parseInt("08")
+      b = try parseInt("-007")
       println(a * 2, b + 1, a == 8, b < 0, "b=" + b)
     expected: |
       16 -6 true true b=-7
@@ -98,26 +101,49 @@ tests:
     code: |
       sum = 0
       for a in args() {
-        n, ok = parseInt(a)
-        if !ok {
-          println("not a number: " + a)
+        n = parseInt(a) catch err {
+          println("skipped:", err)
           continue
         }
         sum += n
       }
       println("sum=" + sum)
     expected: |
-      not a number: x
+      skipped: "x" is not an int
       sum=42
+
+  - name: parseInt with try at the top level
+    description: the message goes to stderr and the script ends with exit code 1
+    code: |
+      println(try parseInt("7") + 1)
+      n = try parseInt("seven")
+      println("not reached", n)
+    expected: |
+      8
+    stderr: |
+      "seven" is not an int
+    exit: 1
+
+  - name: parseInt keeps the old value on a failure
+    code: |
+      port = 8080
+      port = parseInt("x") catch _ {
+      }
+      println(port)
+    expected: |
+      8080
 
   - name: parseInt in the C locale
     env: [LC_ALL=C]
     code: |
       for s in ["123", "٣", "1€"] {
-        n, ok = parseInt(s)
-        println(s, n, ok)
+        n = parseInt(s) catch err {
+          println(err)
+          continue
+        }
+        println(s, n)
       }
     expected: |
-      123 123 true
-      ٣ 0 false
-      1€ 0 false
+      123 123
+      "٣" is not an int
+      "1€" is not an int

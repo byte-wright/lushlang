@@ -189,9 +189,9 @@ tests:
       println("a", [1, 2])
       o, er, code = execVar()
       o, er, code = execVar("ls", ["-l"])
-      p, ok = parseInt()
-      p, ok = parseInt(5)
-      p, ok = parseInt("1", "2")
+      p = try parseInt()
+      p = try parseInt(5)
+      p = try parseInt("1", "2")
     errors:
       - "typeerrors/builtin arguments.lsh Ln:1 Col:5 len takes 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh Ln:2 Col:5 argument 1 of len must be an array or string, not int"

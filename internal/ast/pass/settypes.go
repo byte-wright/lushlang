@@ -656,12 +656,13 @@ func (t *setTypesPass) returnTypes(namespace, name string, f *ast.Func) []common
 	// like in Go, the functions of a package shadow the builtins inside of it
 	isOwn := findFunc(t.file.Package, f.Name) != nil
 	if namespace == "" && !isOwn {
-		tps, isBuiltin, err := builtin(f.Name, args)
-		if isBuiltin {
+		def, err := builtin(f.Name, args)
+		if def != nil {
 			if err != nil && known(args) {
 				t.errorf(f.Location, "%v", err)
 			}
-			return tps
+			f.CanFail = def.canFail
+			return def.returns
 		}
 	}
 
@@ -859,73 +860,74 @@ func findFunc(pkg *ast.Package, name string) *signature {
 	return nil
 }
 
-// builtin returns the return types of a builtin function and an error if the arguments
-// don't fit.
-func builtin(name string, args []common.Type) ([]common.Type, bool, error) {
+// builtin returns the signature of a builtin function, nil if there is none with that name,
+// and an error if the arguments don't fit. The signature has no params, the arguments are
+// checked here.
+func builtin(name string, args []common.Type) (*signature, error) {
 	switch name {
 	case "println":
-		return []common.Type{}, true, noArrays(name, args)
+		return &signature{returns: []common.Type{}}, noArrays(name, args)
 
 	case "len":
-		tps := []common.Type{intType}
+		sig := &signature{returns: []common.Type{intType}}
 		if len(args) != 1 {
-			return tps, true, fmt.Errorf("len takes 1 argument, not %v", len(args))
+			return sig, fmt.Errorf("len takes 1 argument, not %v", len(args))
 		}
 
 		if !args[0].IsArray() && !args[0].Is(stringType) {
-			return tps, true, fmt.Errorf("argument 1 of len must be an array or string, not %v", args[0].Print())
+			return sig, fmt.Errorf("argument 1 of len must be an array or string, not %v", args[0].Print())
 		}
 
-		return tps, true, nil
+		return sig, nil
 
 	case "parseInt":
-		tps := []common.Type{intType, boolType}
+		sig := &signature{returns: []common.Type{intType}, canFail: true}
 		if len(args) != 1 {
-			return tps, true, fmt.Errorf("parseInt takes 1 argument, not %v", len(args))
+			return sig, fmt.Errorf("parseInt takes 1 argument, not %v", len(args))
 		}
 
 		if !args[0].Is(stringType) {
-			return tps, true, fmt.Errorf("argument 1 of parseInt must be of type string, not %v", args[0].Print())
+			return sig, fmt.Errorf("argument 1 of parseInt must be of type string, not %v", args[0].Print())
 		}
 
-		return tps, true, nil
+		return sig, nil
 
 	case "args":
-		tps := []common.Type{stringArrayType}
+		sig := &signature{returns: []common.Type{stringArrayType}}
 		if len(args) != 0 {
-			return tps, true, fmt.Errorf("args takes %v, not %v", count(0, "argument"), len(args))
+			return sig, fmt.Errorf("args takes %v, not %v", count(0, "argument"), len(args))
 		}
 
-		return tps, true, nil
+		return sig, nil
 
 	case "execVar":
-		tps := []common.Type{stringArrayType, stringArrayType, intType}
+		sig := &signature{returns: []common.Type{stringArrayType, stringArrayType, intType}}
 		if len(args) == 0 {
-			return tps, true, fmt.Errorf("execVar takes at least 1 argument, not 0")
+			return sig, fmt.Errorf("execVar takes at least 1 argument, not 0")
 		}
 
-		return tps, true, noArrays(name, args)
+		return sig, noArrays(name, args)
 
 	case "append":
 		if len(args) == 0 {
-			return unknownTypes, true, fmt.Errorf("append takes at least 1 argument, not 0")
+			return &signature{returns: unknownTypes}, fmt.Errorf("append takes at least 1 argument, not 0")
 		}
 
 		array, isArray := args[0].(*common.ArrayType)
 		if !isArray {
-			return unknownTypes, true, fmt.Errorf("argument 1 of append must be an array, not %v", args[0].Print())
+			return &signature{returns: unknownTypes}, fmt.Errorf("argument 1 of append must be an array, not %v", args[0].Print())
 		}
 
 		for i, arg := range args[1:] {
 			if !arg.Is(array.ElementType) {
-				return args[:1], true, fmt.Errorf("argument %v of append must be of type %v, not %v", i+2, array.ElementType.Print(), arg.Print())
+				return &signature{returns: args[:1]}, fmt.Errorf("argument %v of append must be of type %v, not %v", i+2, array.ElementType.Print(), arg.Print())
 			}
 		}
 
-		return args[:1], true, nil
+		return &signature{returns: args[:1]}, nil
 	}
 
-	return nil, false, nil
+	return nil, nil
 }
 
 // noArrays is for builtins whose arguments go to a command, an array would show up as

@@ -21,9 +21,9 @@ Its in no way optimized and quite rudimentary.
   - a string plus an int or bool takes its text: `"n=" + n`. Only a string on the left
     does that, `1 + 2 + "x"` is an error, `"n=" + 1 + 2` is `n=12` and
     `"n=" + (1 + 2)` is `n=3`
-  - `n, ok = parseInt(s)` reads an int: an optional `+` or `-` and decimal digits, a
+  - `n = try parseInt(s)` reads an int: an optional `+` or `-` and decimal digits, a
     leading 0 doesn't make it octal. Anything else, also a number outside of the 64-bit
-    range, gives `0, false`
+    range, is an [error](#errors)
   - strings are UTF-8: `len`, indexes and slices count characters (Unicode code points),
     whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
     This needs a UTF-8 locale on the system, which nearly every system has. Without one,
@@ -98,8 +98,8 @@ rejects a call that does neither, and a `try` or `catch` on a function that can'
     statement needs a block that ends with `return`, `fail`, `break` or `continue`
   - `err` only exists in the block, like a loop variable, and `_` ignores it
   - a global of a package can't call a function that can fail
-  - errors only come from `fail`. `execVar` still returns the exit code of the command, and
-    an index out of range still ends the script with exit code 2
+  - errors come from `fail` and `parseInt`. `execVar` still returns the exit code of the
+    command, and an index out of range still ends the script with exit code 2
 
 Globals
 -------

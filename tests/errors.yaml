@@ -123,8 +123,7 @@ tests:
     description: on a failure the variables keep their values
     code: |
       func parse(s string) int, bool, error {
-        n, ok = parseInt(s)
-        if !ok {
+        n = parseInt(s) catch _ {
           fail("not a number: " + s)
         }
         return n, n > 0
@@ -147,8 +146,7 @@ tests:
   - name: catch block that ends the script
     code: |
       func parse(s string) int, error {
-        n, ok = parseInt(s)
-        if !ok {
+        n = parseInt(s) catch _ {
           fail("not a number: " + s)
         }
         return n
@@ -250,8 +248,7 @@ tests:
   - name: global assigned with catch
     code: |
       func parse(s string) int, error {
-        n, ok = parseInt(s)
-        if !ok {
+        n = parseInt(s) catch _ {
           fail("not a number")
         }
         return n
@@ -417,6 +414,15 @@ tests:
       - errors/call without try.lsh Ln:9 Col:11 f can fail, call it with try or catch the error
       - errors/call without try.lsh Ln:10 Col:3 f can fail, call it with try or catch the error
       - errors/call without try.lsh Ln:11 Col:12 fallible.positive can fail, call it with try or catch the error
+
+  - name: parseInt without try
+    code: |
+      n = parseInt("1")
+      m, ok = parseInt("2")
+    errors:
+      - errors/parseInt without try.lsh Ln:1 Col:5 parseInt can fail, call it with try or catch the error
+      - errors/parseInt without try.lsh Ln:2 Col:9 parseInt can fail, call it with try or catch the error
+      - errors/parseInt without try.lsh Ln:2 Col:1 Wrong number of expressions
 
   - name: try on a call that can't fail
     code: |

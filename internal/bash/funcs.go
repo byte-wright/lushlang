@@ -81,22 +81,24 @@ L_ret0="${1:$2:$(( $3 - $2 ))}"`,
 	register(&bFunc{
 		name: "parseInt",
 		code: `local L_s="$1" L_sign=""
-L_ret0=0
-L_ret1=false
 case "$L_s" in
 	-*) L_sign=-; L_s="${L_s#-}" ;;
 	+*) L_s="${L_s#+}" ;;
 esac
 case "$L_s" in
-	""|*[!0123456789]*) return ;;
+	""|*[!0123456789]*)
+		L_err="\"$1\" is not an int"
+		return 1
+		;;
 esac
 L_s="${L_s#"${L_s%%[!0]*}"}"
 if [ -z "$L_s" ]; then
-	L_ret1=true
-	return
+	L_ret0=0
+	return 0
 fi
 if [ "${#L_s}" -gt 19 ]; then
-	return
+	L_err="\"$1\" is out of the int range"
+	return 1
 fi
 if [ "${#L_s}" -eq 19 ]; then
 	local L_max=854775807
@@ -104,11 +106,12 @@ if [ "${#L_s}" -eq 19 ]; then
 		L_max=854775808
 	fi
 	if (( ${L_s:0:10} > 9223372036 || ${L_s:0:10} == 9223372036 && 10#${L_s:10} > L_max )); then
-		return
+		L_err="\"$1\" is out of the int range"
+		return 1
 	fi
 fi
 L_ret0="$L_sign$L_s"
-L_ret1=true`,
+return 0`,
 	})
 
 	register(&bFunc{
