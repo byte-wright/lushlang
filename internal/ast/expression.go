@@ -118,8 +118,11 @@ type Func struct {
 	Name       string
 	Parameters []Expression
 	Location   *common.Location
+	// Try passes the error of a failing call on
+	Try bool
 	// calculated
 	ReturnTypes []common.Type
+	CanFail     bool
 	// Package defines the function, it's nil for builtins
 	Package *Package
 }

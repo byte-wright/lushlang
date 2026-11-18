@@ -2,7 +2,7 @@ main visitor:
 
 bcode.Program type:
   {for i, fd, first in .Funcs-}
-    func ${fd.FullName}() {
+    func ${fd.FullName}(){if fd.CanFail} error{end} {
     @{fd.Body}
   }
   {end-}
@@ -39,7 +39,20 @@ bcode.ArgsValue type:
 
 bcode.Func type:
   {if .Return}@{.Return} = {end-}
-  ${.FullName}(@{.Parameters})
+  {if .Try}try {end}${.FullName}(@{.Parameters})
+
+bcode.Catch type:
+  @{.Call} catch {
+    @{.Block}
+  } then {
+    @{.Then}
+  }
+
+bcode.Fail type:
+  fail @{.Message}
+
+bcode.ErrorValue type:
+  error
 
 []bcode.VarValue type:
   {for i, a, first in .}{if !first}, {end}@{a}{end}

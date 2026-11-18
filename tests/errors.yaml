@@ -1,0 +1,636 @@
+name: Errors
+tests:
+  - name: fail and try
+    code: |
+      func half(n int) int, error {
+        if n % 2 != 0 {
+          fail("odd number: " + n)
+        }
+        return n / 2
+      }
+
+      func quarter(n int) int, error {
+        h = try half(n)
+        return try half(h)
+      }
+
+      println(try quarter(8))
+      println(try quarter(6))
+      println("not reached")
+    expected: |
+      2
+    stderr: |
+      odd number: 3
+    exit: 1
+
+  - name: fail at the top level
+    code: |
+      println("before")
+      if len(args()) == 0 {
+        fail("no arguments")
+      }
+      println("not reached")
+    expected: |
+      before
+    stderr: |
+      no arguments
+    exit: 1
+
+  - name: return at the top level
+    code: |
+      func check() error {
+      }
+
+      try check()
+      println("before")
+      return
+      println("not reached")
+    expected: |
+      before
+
+  - name: without values
+    code: |
+      func check(n int) error {
+        if n > 2 {
+          fail("too big")
+        }
+        println("ok", n)
+      }
+
+      try check(1)
+      try check(3)
+    expected: |
+      ok 1
+    stderr: |
+      too big
+    exit: 1
+
+  - name: several values
+    code: |
+      func divmod(a int, b int) int, int, error {
+        if b == 0 {
+          fail("division by zero")
+        }
+        return a / b, a % b
+      }
+
+      q, r = try divmod(7, 2)
+      println(q, r)
+      println(try divmod(9, 4))
+      try divmod(1, 0)
+    expected: |
+      3 1
+      2 1
+    stderr: |
+      division by zero
+    exit: 1
+
+  - name: message
+    description: the message is printed as it is, with a newline
+    code: |
+      fail("it's \"quoted\" $HOME %s \\n\tend")
+    stderr: "it's \"quoted\" $HOME %s \\n\tend\n"
+    exit: 1
+
+  - name: empty message
+    code: |
+      fail("")
+    stderr: "\n"
+    exit: 1
+
+  - name: catch
+    code: |
+      func check(n int) error {
+        if n > 2 {
+          fail("too big: " + n)
+        }
+      }
+
+      check(1) catch err {
+        println("not reached")
+      }
+      check(3) catch err {
+        println("caught", err)
+      }
+      check(4) catch _ {
+      }
+      println("after")
+    expected: |
+      caught too big: 3
+      after
+
+  - name: catch an assignment
+    description: on a failure the variables keep their values
+    code: |
+      func parse(s string) int, bool, error {
+        n, ok = parseInt(s)
+        if !ok {
+          fail("not a number: " + s)
+        }
+        return n, n > 0
+      }
+
+      port, positive = 8080, true
+      port, positive = parse("x") catch err {
+        println(err)
+      }
+      println(port, positive)
+      port, positive = parse("-3") catch err {
+        println("not reached")
+      }
+      println(port, positive)
+    expected: |
+      not a number: x
+      8080 true
+      -3 false
+
+  - name: catch block that ends the script
+    code: |
+      func parse(s string) int, error {
+        n, ok = parseInt(s)
+        if !ok {
+          fail("not a number: " + s)
+        }
+        return n
+      }
+
+      n = parse("5") catch err {
+        return
+      }
+      println(n)
+      m = parse("x") catch err {
+        println("no number")
+        return
+      }
+      println("not reached", m)
+    expected: |
+      5
+      no number
+
+  - name: catch and fail
+    code: |
+      func read(name string) string, error {
+        fail("not found")
+      }
+
+      func config() string, error {
+        c = read("config") catch err {
+          fail("config: " + err)
+        }
+        return c
+      }
+
+      c = try config()
+    stderr: |
+      config: not found
+    exit: 1
+
+  - name: catch in a loop
+    code: |
+      func even(n int) int, error {
+        if n % 2 == 1 {
+          fail("odd")
+        }
+        return n
+      }
+
+      for i in 6 {
+        even(i) catch err {
+          if i == 5 {
+            break
+          }
+          continue
+        }
+        println(i)
+      }
+
+      for i = 0; i < 4; i += 1 {
+        x = even(i) catch err {
+          continue
+        }
+        println("x", x)
+      }
+    expected: |
+      0
+      2
+      4
+      x 0
+      x 2
+
+  - name: nested catch
+    code: |
+      func f(s string) error {
+        fail(s)
+      }
+
+      f("outer") catch err {
+        f("inner") catch err2 {
+          println(err, err2)
+        }
+      }
+    expected: |
+      outer inner
+
+  - name: try in a catch block
+    code: |
+      func f(s string) error {
+        fail(s)
+      }
+
+      f("a") catch err {
+        println(err)
+        try f("b")
+      }
+    expected: |
+      a
+    stderr: |
+      b
+    exit: 1
+
+  - name: global assigned with catch
+    code: |
+      func parse(s string) int, error {
+        n, ok = parseInt(s)
+        if !ok {
+          fail("not a number")
+        }
+        return n
+      }
+
+      global port = 80
+
+      func set(s string) {
+        global port = parse(s) catch err {
+          println(err)
+        }
+      }
+
+      set("x")
+      println(port)
+      set("443")
+      println(port)
+    expected: |
+      not a number
+      80
+      443
+
+  - name: try in expressions
+    description: try works wherever a call does, also in branches that && and ternaries skip
+    code: |
+      func even(n int) bool, error {
+        if n < 0 {
+          fail("negative: " + n)
+        }
+        return n % 2 == 0
+      }
+
+      func count(n int) int, error {
+        if n > 3 {
+          fail("too many")
+        }
+        return n
+      }
+
+      println(false && try even(-1), true || try even(-1))
+      println(true ? 1 : (try even(-1) ? 2 : 3))
+      i = 0
+      for try even(i) {
+        i += 2
+        if i > 4 {
+          break
+        }
+      }
+      println(i)
+      for x in try count(3) {
+        println(x)
+      }
+      if try even(4) {
+        println("even")
+      }
+      println("sum", try count(1) + try count(2))
+      println(try even(-2))
+    expected: |
+      false true
+      1
+      6
+      0
+      1
+      2
+      even
+      sum 3
+    stderr: |
+      negative: -2
+    exit: 1
+
+  - name: try in a loop condition
+    code: |
+      func more(i int) bool, error {
+        if i == 2 {
+          fail("stopped at 2")
+        }
+        return true
+      }
+
+      i = 0
+      for try more(i) {
+        println(i)
+        i += 1
+      }
+    expected: |
+      0
+      1
+    stderr: |
+      stopped at 2
+    exit: 1
+
+  - name: package
+    code: |
+      import "./fallible"
+
+      println(try fallible.positive(3))
+      fallible.positive(-1) catch err {
+        println(err)
+      }
+      try fallible.external(true)
+      fallible.external(false) catch err {
+        println(err)
+      }
+      x = try fallible.positive(0)
+    expected: |
+      3
+      not positive: -1
+      external failed
+    stderr: |
+      not positive: 0
+    exit: 1
+
+  - name: return 0 when it doesn't fail
+    description: the status of the last bash command isn't an error
+    code: |
+      func f() bool, error {
+        return 1 > 2
+      }
+
+      func g() error {
+        b = 1 > 2
+      }
+
+      println(try f())
+      try g()
+      println("ok")
+    expected: |
+      false
+      ok
+
+  - name: index out of range in a function that can fail
+    description: it still ends the script with 2, it's no error to catch
+    code: |
+      func first(a []int) int, error {
+        return a[0]
+      }
+
+      x = first([]int) catch err {
+        println("not reached")
+        return
+      }
+    stderr: |
+      errors/index out of range in a function that can fail.lsh Ln:2 Col:10 index out of range [0] with length 0
+    exit: 2
+
+  - name: call without try
+    code: |
+      import "./fallible"
+
+      func f() int, error {
+        return 1
+      }
+
+      func g() error {
+        x = f()
+        println(f())
+        f()
+        fallible.positive(1)
+        return
+      }
+    errors:
+      - errors/call without try.lsh Ln:8 Col:7 f can fail, call it with try or catch the error
+      - errors/call without try.lsh Ln:9 Col:11 f can fail, call it with try or catch the error
+      - errors/call without try.lsh Ln:10 Col:3 f can fail, call it with try or catch the error
+      - errors/call without try.lsh Ln:11 Col:12 fallible.positive can fail, call it with try or catch the error
+
+  - name: try on a call that can't fail
+    code: |
+      func f() int {
+        return 1
+      }
+
+      x = try f()
+      try println(x)
+    errors:
+      - errors/try on a call that can't fail.lsh Ln:5 Col:9 f can't fail, it needs no try
+      - errors/try on a call that can't fail.lsh Ln:6 Col:5 println can't fail, it needs no try
+
+  - name: try and fail in a function that can't fail
+    code: |
+      func f() int, error {
+        return 1
+      }
+
+      func g() int {
+        x = try f()
+        if x > 0 {
+          fail("x")
+        }
+        return x
+      }
+    errors:
+      - "errors/try and fail in a function that can't fail.lsh Ln:6 Col:11 try in function g, which can't fail: add error to its results or catch the error"
+      - "errors/try and fail in a function that can't fail.lsh Ln:8 Col:5 fail in function g, which can't fail: add error to its results"
+
+  - name: fail with a number
+    code: |
+      fail(1)
+    errors:
+      - errors/fail with a number.lsh Ln:1 Col:1 fail message must be of type string, not int
+
+  - name: error before other results
+    code: |
+      func f() error, int {
+        return 1
+      }
+    errors:
+      - errors/error before other results.lsh Ln:1 Col:10 error must be the last result
+
+  - name: missing return
+    description: fail ends a function like return
+    code: |
+      func f(n int) int, error {
+        if n > 0 {
+          return n
+        }
+        fail("not positive")
+      }
+
+      func g() int, error {
+        f(1) catch err {
+          return 0
+        }
+      }
+
+      func h() int, error {
+        for {
+          f(1) catch err {
+            break
+          }
+        }
+      }
+    errors:
+      - errors/missing return.lsh Ln:12 Col:1 missing return at the end of function g
+      - errors/missing return.lsh Ln:20 Col:1 missing return at the end of function h
+
+  - name: catch without a call that can fail
+    code: |
+      func f() int {
+        return 1
+      }
+
+      func g() int, error {
+        return 1
+      }
+
+      f() catch err {
+      }
+      x = f() catch err {
+      }
+      y = g() + 1 catch err {
+      }
+      a, b = g(), g() catch err {
+      }
+      println("x") catch err {
+      }
+    errors:
+      - errors/catch without a call that can fail.lsh Ln:9 Col:5 f can't fail, there is no error to catch
+      - errors/catch without a call that can fail.lsh Ln:11 Col:9 f can't fail, there is no error to catch
+      - errors/catch without a call that can fail.lsh Ln:13 Col:5 g can fail, call it with try or catch the error
+      - "errors/catch without a call that can fail.lsh Ln:13 Col:13 catch needs a single call as the value, like x = f() catch err { ... }"
+      - errors/catch without a call that can fail.lsh Ln:15 Col:8 g can fail, call it with try or catch the error
+      - errors/catch without a call that can fail.lsh Ln:15 Col:13 g can fail, call it with try or catch the error
+      - "errors/catch without a call that can fail.lsh Ln:15 Col:17 catch needs a single call as the value, like x = f() catch err { ... }"
+      - errors/catch without a call that can fail.lsh Ln:17 Col:14 println can't fail, there is no error to catch
+
+  - name: try and catch
+    code: |
+      func f() int, error {
+        return 1
+      }
+
+      x = try f() catch err {
+        return
+      }
+    errors:
+      - errors/try and catch.lsh Ln:5 Col:9 the error of f can't go on with try and be caught, remove one
+
+  - name: variable without a value after a failure
+    code: |
+      import "./fallible"
+
+      func f() int, int, error {
+        return 1, 2
+      }
+
+      a = 0
+      a, b = f() catch err {
+        println(b)
+      }
+      c = fallible.positive(1) catch err {
+        if a > 0 {
+          return
+        }
+      }
+      d, _ = f() catch err {
+        if a > 0 {
+          return
+        } else {
+          fail("x")
+        }
+      }
+      global e = fallible.positive(1) catch err {
+      }
+    errors:
+      - errors/variable without a value after a failure.lsh Ln:9 Col:11 variable 'b' is not defined
+      - errors/variable without a value after a failure.lsh Ln:8 Col:4 b isn't assigned when f fails, assign it before or end the catch block with return or fail
+      - errors/variable without a value after a failure.lsh Ln:11 Col:1 c isn't assigned when fallible.positive fails, assign it before or end the catch block with return or fail
+      - errors/variable without a value after a failure.lsh Ln:23 Col:8 e isn't assigned when fallible.positive fails, assign it before or end the catch block with return or fail
+
+  - name: catch variable
+    code: |
+      func f() error {
+        return
+      }
+
+      err = "x"
+      f() catch err {
+      }
+      f() catch e {
+        f() catch e {
+        }
+      }
+      f() catch e {
+      }
+      println(e)
+    errors:
+      - errors/catch variable.lsh Ln:6 Col:11 catch variable err is already defined
+      - errors/catch variable.lsh Ln:9 Col:13 catch variable e is already defined
+      - errors/catch variable.lsh Ln:14 Col:9 variable 'e' is not defined
+
+  - name: catch variable named like a global
+    code: |
+      func f() error {
+        return
+      }
+
+      global g = 1
+      f() catch g {
+      }
+    errors:
+      - errors/catch variable named like a global.lsh Ln:6 Col:11 catch variable g has the name of a global variable
+
+  - name: global of a package
+    description: a package can't end the script
+    code: |
+      import "./failglobal"
+    errors:
+      - std/failglobal/failglobal.lsh Ln:1 Col:12 parse can fail, a global of a package can't call it
+      - std/failglobal/failglobal.lsh Ln:2 Col:16 parse can fail, a global of a package can't call it
+
+  - name: error as a type
+    code: |
+      func f(e error) {
+      }
+    errors:
+      - "errors/error as a type.lsh Ln:1 Col:10 mismatched input 'error' expecting {'string', 'int', 'bool', '['}"
+
+  - name: readme example
+    code: |
+      func half(n int) int, error {
+        if n % 2 != 0 {
+          fail("odd number: " + n)
+        }
+        return n / 2
+      }
+
+      func quarter(n int) int, error {
+        h = try half(n)         // when half fails, quarter fails with its error
+        return try half(h)
+      }
+
+      println(try quarter(8), try half(4) + 1)
+
+      q = half(7) catch err {   // err is the message
+        println("no half:", err)
+        return
+      }
+      println("not reached", q)
+    expected: |
+      2 3
+      no half: odd number: 7

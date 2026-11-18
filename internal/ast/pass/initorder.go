@@ -204,6 +204,14 @@ func (p *initOrderPass) BeforeLoopBody(st *ast.ForIn) {
 	}
 }
 
+func (p *initOrderPass) BeforeCatch(catch *ast.Catch) {
+	if p.vars[p.file.Package][catch.Error.Name] != nil {
+		p.errorf(catch.Error.Location, "catch variable %v has the name of a global variable", catch.Error.Name)
+	}
+}
+
+func (p *initOrderPass) AfterCatch(*ast.Catch) {}
+
 func (p *initOrderPass) BeforeBlock(*ast.Block) {}
 
 func (p *initOrderPass) AfterBlock(*ast.Block) {}

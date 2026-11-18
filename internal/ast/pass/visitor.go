@@ -12,6 +12,10 @@ type Visitor interface {
 	BeforeFuncDef(*ast.FuncDef)
 	// BeforeLoopBody comes after the expressions of the loop
 	BeforeLoopBody(*ast.ForIn)
+	// BeforeCatch comes after the expressions of the statement, AfterCatch before its
+	// Statement
+	BeforeCatch(*ast.Catch)
+	AfterCatch(*ast.Catch)
 	BeforeBlock(*ast.Block)
 	AfterBlock(*ast.Block)
 }
@@ -64,6 +68,7 @@ func (c context) evalStatement(statement ast.Statement) {
 		for _, exp := range st.Expressions {
 			c.evalExpression(exp)
 		}
+		c.evalCatch(st.Catch)
 	case *ast.For:
 		if st.Initial != nil {
 			c.evalStatement(st.Initial)
@@ -91,11 +96,15 @@ func (c context) evalStatement(statement ast.Statement) {
 
 	case *ast.FuncStatement:
 		c.evalExpression(st.Call)
+		c.evalCatch(st.Catch)
 
 	case *ast.ReturnStatement:
 		for _, exp := range st.Expressions {
 			c.evalExpression(exp)
 		}
+
+	case *ast.Fail:
+		c.evalExpression(st.Message)
 
 	case *ast.Break, *ast.Continue:
 
@@ -104,6 +113,16 @@ func (c context) evalStatement(statement ast.Statement) {
 	}
 
 	c.visitor.Statement(statement)
+}
+
+func (c context) evalCatch(catch *ast.Catch) {
+	if catch == nil {
+		return
+	}
+
+	c.visitor.BeforeCatch(catch)
+	c.evalBlock(catch.Block)
+	c.visitor.AfterCatch(catch)
 }
 
 func (c context) evalExpression(expression ast.Expression) {

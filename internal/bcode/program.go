@@ -20,6 +20,7 @@ type FuncDef struct {
 	Name      string
 	Params    []*Param
 	Body      *Block
+	CanFail   bool
 }
 
 func (fd *FuncDef) FullName() string {

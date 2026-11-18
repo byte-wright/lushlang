@@ -20,16 +20,24 @@ ast.Program type:
   {end-}
 
 ast.FuncStatement type:
-  @{.Call}
+  @{.Call}{if .Catch} @{.Catch}{end}
+
+ast.Catch type:
+  catch ${.Error.Name} {
+    @{.Block}
+  }
+
+ast.Fail type:
+  fail(@{.Message})
 
 ast.Func type:
-  ${.Name}(@{.Parameters})
+  {if .Try}try {end}${.Name}(@{.Parameters})
 
 ast.Method type:
-  ${.Namespace}.@{.Func}
+  {if .Func.Try}try {end}${.Namespace}.${.Func.Name}(@{.Func.Parameters})
 
 ast.FuncDef type:
-  func ${.Name}(@{.Params}){if .Returns} @{.Returns}{end} {
+  func ${.Name}(@{.Params}){if .Returns} @{.Returns}{if .CanFail}, error{end}{else}{if .CanFail} error{end}{end} {
     @{.Body}
   }
 
@@ -52,7 +60,7 @@ ast.Block type:
 ast.Assignment type:
   {if .Global}global {end}{for i, n, first in .Targets}{if !first}, {end}${n.Name}{end}
   ${-" = "-}
-  @{.Expressions}
+  @{.Expressions}{if .Catch} @{.Catch}{end}
 
 ast.For type:
   for {if .Initial}@{.Initial}; {end}{if .Condition}@{.Condition}{end}{if .Each}; @{.Each}{end}{if .Condition} {end}{

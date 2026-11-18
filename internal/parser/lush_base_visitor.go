@@ -36,6 +36,14 @@ func (v *BaseLushVisitor) VisitParam(ctx *ParamContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitResults(ctx *ResultsContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitResult(ctx *ResultContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitIf(ctx *IfContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -45,6 +53,14 @@ func (v *BaseLushVisitor) VisitFor(ctx *ForContext) interface{} {
 }
 
 func (v *BaseLushVisitor) VisitReturnStatement(ctx *ReturnStatementContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitFailStatement(ctx *FailStatementContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitCatchClause(ctx *CatchClauseContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

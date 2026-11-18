@@ -134,15 +134,21 @@ func (v *Visitor) importError(loc *common.Location, format string, a ...any) {
 
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 	if ctx.Assignment() != nil {
-		return ctx.Assignment().Accept(v)
+		assignment := ctx.Assignment().Accept(v).(*ast.Assignment)
+		assignment.Catch = v.catch(ctx.CatchClause())
+		return assignment
 	}
 
 	if ctx.GlobalAssignment() != nil {
-		return ctx.GlobalAssignment().Accept(v)
+		assignment := ctx.GlobalAssignment().Accept(v).(*ast.Assignment)
+		assignment.Catch = v.catch(ctx.CatchClause())
+		return assignment
 	}
 
 	if ctx.FuncStatement() != nil {
-		return ctx.FuncStatement().Accept(v)
+		st := ctx.FuncStatement().Accept(v).(*ast.FuncStatement)
+		st.Catch = v.catch(ctx.CatchClause())
+		return st
 	}
 
 	if ctx.If_() != nil {
@@ -155,6 +161,10 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 
 	if ctx.ReturnStatement() != nil {
 		return ctx.ReturnStatement().Accept(v)
+	}
+
+	if ctx.FailStatement() != nil {
+		return ctx.FailStatement().Accept(v)
 	}
 
 	if ctx.BREAK() != nil {
@@ -175,16 +185,14 @@ func (v *Visitor) VisitFuncDef(ctx *FuncDefContext) any {
 		params = append(params, p.Accept(v).(*ast.Param))
 	}
 
-	returns := []common.Type{}
-	for _, tp := range ctx.AllType_() {
-		returns = append(returns, tp.Accept(v).(common.Type))
-	}
+	returns, canFail := v.results(ctx.Results())
 
 	return &ast.FuncDef{
 		Name:     ctx.ID().GetText(),
 		Location: v.locTk(ctx.ID().GetSymbol()),
 		Params:   params,
 		Returns:  returns,
+		CanFail:  canFail,
 		Body:     ctx.Block().Accept(v).(*ast.Block),
 	}
 }
@@ -196,10 +204,7 @@ func (v *Visitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) any {
 		params = append(params, p.Accept(v).(*ast.Param))
 	}
 
-	returns := []common.Type{}
-	for _, tp := range ctx.AllType_() {
-		returns = append(returns, tp.Accept(v).(common.Type))
-	}
+	returns, canFail := v.results(ctx.Results())
 
 	code := ctx.EXTERNAL_CODE().GetText()
 	code = code[3 : len(code)-3]
@@ -209,8 +214,31 @@ func (v *Visitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) any {
 		Location: v.locTk(ctx.ID().GetSymbol()),
 		Params:   params,
 		Returns:  returns,
+		CanFail:  canFail,
 		Code:     code,
 	}
+}
+
+// results returns the types of the values, and whether the last result is an error
+func (v *Visitor) results(ctx IResultsContext) ([]common.Type, bool) {
+	returns := []common.Type{}
+	if ctx == nil {
+		return returns, false
+	}
+
+	results := ctx.AllResult()
+	for i, r := range results {
+		if r.ERROR_TYPE() == nil {
+			returns = append(returns, r.Type_().Accept(v).(common.Type))
+			continue
+		}
+
+		if i < len(results)-1 {
+			v.errors = append(v.errors, &ast.ASTError{Location: v.loc(r), Message: "error must be the last result"})
+		}
+	}
+
+	return returns, results[len(results)-1].ERROR_TYPE() != nil
 }
 
 func (v *Visitor) VisitParam(ctx *ParamContext) any {
@@ -262,14 +290,14 @@ func (v *Visitor) VisitFor(ctx *ForContext) any {
 
 func (v *Visitor) forIn(ctx *ForContext) *ast.ForIn {
 	st := &ast.ForIn{
-		Value:    v.loopVar(ctx.GetValue()),
+		Value:    v.target(ctx.GetValue()),
 		Over:     ctx.GetOver().Accept(v).(ast.Expression),
 		Body:     ctx.Block().Accept(v).(*ast.Block),
 		Location: v.loc(ctx),
 	}
 
 	if ctx.GetIndex() != nil {
-		st.Index = v.loopVar(ctx.GetIndex())
+		st.Index = v.target(ctx.GetIndex())
 	}
 
 	if ctx.GetFrom() != nil {
@@ -279,8 +307,27 @@ func (v *Visitor) forIn(ctx *ForContext) *ast.ForIn {
 	return st
 }
 
-func (v *Visitor) loopVar(tk antlr.Token) *ast.AssignmentTarget {
+func (v *Visitor) target(tk antlr.Token) *ast.AssignmentTarget {
 	return &ast.AssignmentTarget{Location: v.locTk(tk), Name: tk.GetText()}
+}
+
+func (v *Visitor) catch(ctx ICatchClauseContext) *ast.Catch {
+	if ctx == nil {
+		return nil
+	}
+
+	return &ast.Catch{
+		Error:    v.target(ctx.GetName()),
+		Block:    ctx.Block().Accept(v).(*ast.Block),
+		Location: v.locTk(ctx.CATCH().GetSymbol()),
+	}
+}
+
+func (v *Visitor) VisitFailStatement(ctx *FailStatementContext) any {
+	return &ast.Fail{
+		Message:  ctx.Expression().Accept(v).(ast.Expression),
+		Location: v.loc(ctx),
+	}
 }
 
 func (v *Visitor) VisitReturnStatement(ctx *ReturnStatementContext) any {
@@ -366,11 +413,12 @@ func (v *Visitor) VisitGlobalAssignment(ctx *GlobalAssignmentContext) any {
 }
 
 func (v *Visitor) VisitFuncStatement(ctx *FuncStatementContext) any {
-	return &ast.FuncStatement{Call: v.call(ctx.GetNamespace(), ctx.Func_())}
+	return &ast.FuncStatement{Call: v.call(ctx.GetNamespace(), ctx.Func_(), ctx.TRY())}
 }
 
-func (v *Visitor) call(namespace antlr.Token, ctx IFuncContext) ast.Expression {
+func (v *Visitor) call(namespace antlr.Token, ctx IFuncContext, try antlr.TerminalNode) ast.Expression {
 	f := ctx.Accept(v).(*ast.Func)
+	f.Try = try != nil
 
 	if namespace != nil {
 		return &ast.Method{Namespace: namespace.GetText(), Func: f}
@@ -537,7 +585,7 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 	}
 
 	if ctx.Func_() != nil {
-		return v.call(ctx.GetNamespace(), ctx.Func_())
+		return v.call(ctx.GetNamespace(), ctx.Func_(), ctx.TRY())
 	}
 
 	if ctx.GetGroup() != nil {

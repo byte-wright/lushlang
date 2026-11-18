@@ -44,6 +44,19 @@ func (t *setParentPass) evalBlock(block *ast.Block) {
 				st.Else.Parent = block
 				t.evalBlock(st.Else)
 			}
+
+		case *ast.Assignment:
+			t.evalCatch(block, st.Catch)
+
+		case *ast.FuncStatement:
+			t.evalCatch(block, st.Catch)
 		}
+	}
+}
+
+func (t *setParentPass) evalCatch(block *ast.Block, catch *ast.Catch) {
+	if catch != nil {
+		catch.Block.Parent = block
+		t.evalBlock(catch.Block)
 	}
 }

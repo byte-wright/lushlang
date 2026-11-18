@@ -1,0 +1,6 @@
+global a = parse()
+global b = try parse()
+
+func parse() int, error {
+  return 1
+}

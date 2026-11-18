@@ -1,0 +1,15 @@
+func positive(n int) int, error {
+  if n <= 0 {
+    fail("not positive: " + n)
+  }
+  return n
+}
+
+// the last command of the bash code fails, the call still succeeds
+func external(ok bool) error ```
+  if [ "$ok" != true ]; then
+    L_err="external failed"
+    return 1
+  fi
+  [ -n "" ]
+```

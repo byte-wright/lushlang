@@ -29,6 +29,12 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#param.
 	VisitParam(ctx *ParamContext) interface{}
 
+	// Visit a parse tree produced by LushParser#results.
+	VisitResults(ctx *ResultsContext) interface{}
+
+	// Visit a parse tree produced by LushParser#result.
+	VisitResult(ctx *ResultContext) interface{}
+
 	// Visit a parse tree produced by LushParser#if.
 	VisitIf(ctx *IfContext) interface{}
 
@@ -37,6 +43,12 @@ type LushVisitor interface {
 
 	// Visit a parse tree produced by LushParser#returnStatement.
 	VisitReturnStatement(ctx *ReturnStatementContext) interface{}
+
+	// Visit a parse tree produced by LushParser#failStatement.
+	VisitFailStatement(ctx *FailStatementContext) interface{}
+
+	// Visit a parse tree produced by LushParser#catchClause.
+	VisitCatchClause(ctx *CatchClauseContext) interface{}
 
 	// Visit a parse tree produced by LushParser#block.
 	VisitBlock(ctx *BlockContext) interface{}

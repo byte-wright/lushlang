@@ -7,6 +7,8 @@ type Assignment struct {
 	Targets     []*AssignmentTarget
 	Expressions []Expression
 	Global      bool
+	// Catch is nil without one
+	Catch *Catch
 }
 
 type AssignmentTarget struct {

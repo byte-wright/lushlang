@@ -92,6 +92,7 @@ func (c *Compiler) addFuncs(namespace string, funcDefs []*ast.FuncDef) {
 			Name:      fd.Name,
 			Body:      block,
 			Params:    params,
+			CanFail:   fd.CanFail,
 		}
 
 		c.prog.Funcs = append(c.prog.Funcs, funcDef)
@@ -124,6 +125,7 @@ func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFu
 			Name:      fd.Name,
 			Body:      block,
 			Params:    params,
+			CanFail:   fd.CanFail,
 		}
 
 		c.prog.Funcs = append(c.prog.Funcs, funcDef)
@@ -153,6 +155,9 @@ func (c *Compiler) evalBlock(b *Block, block *ast.Block) {
 
 		case *ast.ReturnStatement:
 			c.evalReturnStatement(b, st)
+
+		case *ast.Fail:
+			b.add(&Fail{Message: c.evalExpression(b, st.Message)[0]})
 
 		case *ast.Break:
 			b.add(&Break{})
@@ -398,6 +403,14 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 }
 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
+	if ass.Catch != nil {
+		c.evalCatch(b, ass.Expressions[0], ass.Catch, func(then *Block, results []Value) {
+			c.assignTargets(b, then, ass.Targets, results)
+		})
+
+		return
+	}
+
 	// every assignment and call copies an array, so nothing else can see this one grow
 	if call := selfAppend(ass); call != nil {
 		array := c.evalExpression(b, call.Parameters[0])[0].(*VarValue)
@@ -422,7 +435,12 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 		}
 	}
 
-	for i, target := range ass.Targets {
+	c.assignTargets(b, b, ass.Targets, results)
+}
+
+// assignTargets adds the assignments to b, the new variables are visible in scope
+func (c *Compiler) assignTargets(scope, b *Block, targets []*ast.AssignmentTarget, results []Value) {
+	for i, target := range targets {
 		if target.Name == "_" {
 			continue
 		}
@@ -430,9 +448,13 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 		v := &VarValue{Name: c.targetName(target), T: results[i].Type()}
 		if target.GlobalOf != nil {
 			b.add(&Assignment{Var: v, Value: results[i], Global: true})
-		} else {
-			b.set(v, results[i])
+			continue
 		}
+
+		if scope.getVisibleVar(v.Name) == nil {
+			scope.registerVar(v)
+		}
+		b.add(&Assignment{Var: v, Value: results[i]})
 	}
 }
 
@@ -532,10 +554,50 @@ func (c *Compiler) evalIndex(block *Block, s *ast.Index) Atom {
 }
 
 func (c *Compiler) evalFuncStatement(block *Block, f *ast.FuncStatement) {
+	if f.Catch != nil {
+		c.evalCatch(block, f.Call, f.Catch, nil)
+		return
+	}
+
 	c.evalExpression(block, f.Call)
 }
 
+// evalCatch calls the function of call, assign gets its results. When the call fails, the
+// block of catch runs instead.
+func (c *Compiler) evalCatch(block *Block, call ast.Expression, catch *ast.Catch, assign func(then *Block, results []Value)) {
+	x, isFunc := call.(*ast.Func)
+	if !isFunc {
+		x = call.(*ast.Method).Func
+	}
+
+	st := &Catch{
+		Call:  c.newCall(block, x),
+		Block: block.subBlock(),
+		Then:  block.subBlock(),
+	}
+
+	if catch.Error.Name != "_" {
+		st.Block.set(&VarValue{Name: varName(catch.Error.Name), T: &common.BasicType{Type: common.String}}, &ErrorValue{})
+	}
+
+	c.evalBlock(st.Block, catch.Block)
+
+	if assign != nil {
+		assign(st.Then, common.Map(st.Call.Return, func(v *VarValue) Value { return v }))
+	}
+
+	block.add(st)
+}
+
 func (c *Compiler) evalCall(block *Block, x *ast.Func) []Value {
+	f := c.newCall(block, x)
+	block.add(f)
+
+	return common.Map(f.Return, func(i *VarValue) Value { return i })
+}
+
+// newCall evaluates the arguments, the call isn't added to the block
+func (c *Compiler) newCall(block *Block, x *ast.Func) *Func {
 	ret := common.Map(x.ReturnTypes, func(t common.Type) *VarValue {
 		return block.nextTmp(t)
 	})
@@ -544,14 +606,13 @@ func (c *Compiler) evalCall(block *Block, x *ast.Func) []Value {
 		Namespace: c.namespaces[x.Package],
 		Name:      x.Name,
 		Return:    ret,
+		Try:       x.Try,
 	}
 	for _, p := range x.Parameters {
 		f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
 	}
 
-	block.add(f)
-
-	return common.Map(f.Return, func(i *VarValue) Value { return i })
+	return f
 }
 
 func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {

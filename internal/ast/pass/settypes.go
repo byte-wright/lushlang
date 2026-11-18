@@ -27,6 +27,10 @@ type setTypesPass struct {
 	// statementCall is the call of the current function statement, the only call whose
 	// value isn't used
 	statementCall *ast.Func
+	// catchCall is the call whose error the current statement catches
+	catchCall *ast.Func
+	// pkgGlobal is set while checking the definition of a package's global
+	pkgGlobal bool
 	// loops is the number of loops around the current statement
 	loops int
 }
@@ -54,10 +58,12 @@ func SetTypes(ast *ast.Program) []*ast.ASTError {
 func (t *setTypesPass) globalDefs() {
 	c := &context{ast: t.ast, visitor: t}
 
+	t.pkgGlobal = true
 	for _, def := range t.ast.InitOrder {
 		t.file, t.block = def.File, def.File.Package.Globals
 		c.evalStatement(def.Assignment)
 	}
+	t.pkgGlobal = false
 }
 
 // declarations reports functions and parameters that are defined twice. Calls would be
@@ -95,7 +101,7 @@ func (t *setTypesPass) BeforeFuncDef(fd *ast.FuncDef) {
 	t.file = fd.File
 	t.funcDef = fd
 
-	if len(fd.Returns) > 0 && !terminates(fd.Body) {
+	if len(fd.Returns) > 0 && !terminates(fd.Body, false) {
 		t.errorf(fd.Body.End, "missing return at the end of function %v", fd.Name)
 	}
 
@@ -121,6 +127,7 @@ func (t *setTypesPass) AfterBlock(block *ast.Block) {
 
 func (t *setTypesPass) BeforeStatement(statement ast.Statement) {
 	t.statementCall = nil
+	t.catchCall = catchCall(statement)
 
 	switch statement.(type) {
 	case *ast.For, *ast.ForIn:
@@ -143,7 +150,18 @@ func (t *setTypesPass) BeforeStatement(statement ast.Statement) {
 func (t *setTypesPass) Statement(statement ast.Statement) {
 	switch st := statement.(type) {
 	case *ast.Assignment:
+		if st.Catch != nil {
+			t.catchAssignment(st)
+		}
 		t.assignment(st)
+
+	case *ast.FuncStatement:
+		if st.Catch != nil {
+			t.catch(st, st.Catch)
+		}
+
+	case *ast.Fail:
+		t.fail(st)
 
 	case *ast.If:
 		t.expectType(st.Location, "if condition", st.Condition, boolType)
@@ -169,6 +187,110 @@ func (t *setTypesPass) Statement(statement ast.Statement) {
 
 	case *ast.ReturnStatement:
 		t.returnStatement(st)
+	}
+}
+
+// catchCall returns the call whose error the statement catches. It's nil without a catch,
+// and when the statement has no single call to catch.
+func catchCall(statement ast.Statement) *ast.Func {
+	var call ast.Expression
+
+	switch st := statement.(type) {
+	case *ast.Assignment:
+		if st.Catch == nil || len(st.Expressions) != 1 {
+			return nil
+		}
+		call = st.Expressions[0]
+
+	case *ast.FuncStatement:
+		if st.Catch == nil {
+			return nil
+		}
+		call = st.Call
+	}
+
+	switch f := call.(type) {
+	case *ast.Func:
+		return f
+	case *ast.Method:
+		return f.Func
+	}
+
+	return nil
+}
+
+func (t *setTypesPass) BeforeCatch(catch *ast.Catch) {
+	t.loopVar(catch.Block, catch.Error, stringType, "catch")
+}
+
+func (t *setTypesPass) AfterCatch(catch *ast.Catch) {
+	t.block = catch.Block.Parent
+}
+
+// catch reports a catch without a call that can fail. It returns the call, nil when
+// there is nothing to check.
+func (t *setTypesPass) catch(statement ast.Statement, catch *ast.Catch) *ast.Func {
+	call := catchCall(statement)
+	if call == nil {
+		t.errorf(catch.Location, "catch needs a single call as the value, like x = f() catch err { ... }")
+		return nil
+	}
+
+	if !known(call.ReturnTypes) || call.Try {
+		return nil
+	}
+
+	if !call.CanFail {
+		t.errorf(catch.Location, "%v can't fail, there is no error to catch", callName(statement))
+		return nil
+	}
+
+	return call
+}
+
+// catchAssignment reports variables that would have no value after a failed call: on a
+// failure, the assignment doesn't happen.
+func (t *setTypesPass) catchAssignment(st *ast.Assignment) {
+	call := t.catch(st, st.Catch)
+	if call == nil || terminates(st.Catch.Block, true) {
+		return
+	}
+
+	for _, target := range st.Targets {
+		block := t.block
+		if target.GlobalOf != nil {
+			block = target.GlobalOf.Globals
+		}
+
+		if target.Name != "_" && block.GetVar(target.Name) == nil {
+			t.errorf(target.Location, "%v isn't assigned when %v fails, assign it before or end the catch block with return or fail", target.Name, callName(st))
+		}
+	}
+}
+
+// callName is the name of the call that catchCall returns, as it's written
+func callName(statement ast.Statement) string {
+	var call ast.Expression
+
+	switch st := statement.(type) {
+	case *ast.Assignment:
+		call = st.Expressions[0]
+	case *ast.FuncStatement:
+		call = st.Call
+	}
+
+	if m, isMethod := call.(*ast.Method); isMethod {
+		return m.Namespace + "." + m.Func.Name
+	}
+
+	return call.(*ast.Func).Name
+}
+
+func (t *setTypesPass) fail(st *ast.Fail) {
+	t.expectType(st.Location, "fail message", st.Message, stringType)
+
+	if t.funcDef != nil && !t.funcDef.CanFail {
+		t.errorf(st.Location, "fail in function %v, which can't fail: add error to its results", t.funcDef.Name)
 	}
 }
 
@@ -214,22 +336,22 @@ func (t *setTypesPass) assignTarget(block *ast.Block, target *ast.AssignmentTarg
 }
 
 func (t *setTypesPass) BeforeLoopBody(st *ast.ForIn) {
-	t.loopVar(st.Body, st.Value, t.loopValue(st))
+	t.loopVar(st.Body, st.Value, t.loopValue(st), "loop")
 
 	if st.Index != nil {
-		t.loopVar(st.Body, st.Index, intType)
+		t.loopVar(st.Body, st.Index, intType, "loop")
 	}
 }
 
-// loopVar declares a loop variable in the body. Assigning a variable outside of the loop,
-// or the one of an outer loop, would be easy to miss.
-func (t *setTypesPass) loopVar(body *ast.Block, target *ast.AssignmentTarget, tp common.Type) {
+// loopVar declares a loop or catch variable in the body. Assigning a variable outside of
+// it, or the one of an outer loop, would be easy to miss.
+func (t *setTypesPass) loopVar(body *ast.Block, target *ast.AssignmentTarget, tp common.Type, kind string) {
 	if target.Name == "_" {
 		return
 	}
 
 	if body.GetVar(target.Name) != nil {
-		t.errorf(target.Location, "loop variable %v is already defined", target.Name)
+		t.errorf(target.Location, "%v variable %v is already defined", kind, target.Name)
 	}
 
 	// also after the error, so the body is checked with the loop's type
@@ -433,18 +555,21 @@ func (t *setTypesPass) returnStatement(st *ast.ReturnStatement) {
 }
 
 // terminates reports whether the block can't reach its end. Like in Go, only its last
-// statement counts.
-func terminates(b *ast.Block) bool {
+// statement counts. With jumps, a break or continue ends it too.
+func terminates(b *ast.Block, jumps bool) bool {
 	if len(b.Statements) == 0 {
 		return false
 	}
 
 	switch st := b.Statements[len(b.Statements)-1].(type) {
-	case *ast.ReturnStatement:
+	case *ast.ReturnStatement, *ast.Fail:
 		return true
 
+	case *ast.Break, *ast.Continue:
+		return jumps
+
 	case *ast.If:
-		return st.Else != nil && terminates(st.If) && terminates(st.Else)
+		return st.Else != nil && terminates(st.If, jumps) && terminates(st.Else, jumps)
 
 	case *ast.For:
 		cond, isBool := st.Condition.(*ast.Bool)
@@ -467,6 +592,16 @@ func breaks(b *ast.Block) bool {
 			if breaks(st.If) || st.Else != nil && breaks(st.Else) {
 				return true
 			}
+
+		case *ast.Assignment:
+			if st.Catch != nil && breaks(st.Catch.Block) {
+				return true
+			}
+
+		case *ast.FuncStatement:
+			if st.Catch != nil && breaks(st.Catch.Block) {
+				return true
+			}
 		}
 	}
 
@@ -481,10 +616,35 @@ func (t *setTypesPass) call(namespace string, f *ast.Func) {
 
 	f.ReturnTypes = t.returnTypes(namespace, name, f)
 
+	if known(f.ReturnTypes) {
+		t.failingCall(name, f)
+	}
+
 	// spreading would silently drop a call without values from the values around it
 	if len(f.ReturnTypes) == 0 && f != t.statementCall {
 		t.errorf(f.Location, "%v doesn't return a value", name)
 		f.ReturnTypes = unknownTypes
+	}
+}
+
+// failingCall checks that a call of a function that can fail passes the error on with try
+// or catches it, and that try is only used where the error can go on.
+func (t *setTypesPass) failingCall(name string, f *ast.Func) {
+	switch {
+	case f.Try && f == t.catchCall:
+		t.errorf(f.Location, "the error of %v can't go on with try and be caught, remove one", name)
+
+	case f.CanFail && t.pkgGlobal:
+		t.errorf(f.Location, "%v can fail, a global of a package can't call it", name)
+
+	case f.Try && !f.CanFail:
+		t.errorf(f.Location, "%v can't fail, it needs no try", name)
+
+	case f.Try && t.funcDef != nil && !t.funcDef.CanFail:
+		t.errorf(f.Location, "try in function %v, which can't fail: add error to its results or catch the error", t.funcDef.Name)
+
+	case f.CanFail && !f.Try && f != t.catchCall:
+		t.errorf(f.Location, "%v can fail, call it with try or catch the error", name)
 	}
 }
 
@@ -494,7 +654,7 @@ func (t *setTypesPass) returnTypes(namespace, name string, f *ast.Func) []common
 	args := valueTypes(f.Parameters)
 
 	// like in Go, the functions of a package shadow the builtins inside of it
-	_, _, isOwn := findFunc(t.file.Package, f.Name)
+	isOwn := findFunc(t.file.Package, f.Name) != nil
 	if namespace == "" && !isOwn {
 		tps, isBuiltin, err := builtin(f.Name, args)
 		if isBuiltin {
@@ -505,20 +665,21 @@ func (t *setTypesPass) returnTypes(namespace, name string, f *ast.Func) []common
 		}
 	}
 
-	params, returns, pkg, err := t.getFunc(namespace, f.Name)
+	def, pkg, err := t.getFunc(namespace, f.Name)
 	if err != nil {
 		t.errorf(f.Location, "%v", err)
 		return unknownTypes
 	}
 
-	err = arguments(name, args, params)
+	err = arguments(name, args, def.params)
 	if err != nil && known(args) {
 		t.errorf(f.Location, "%v", err)
 	}
 
 	f.Package = pkg
+	f.CanFail = def.canFail
 
-	return returns
+	return def.returns
 }
 
 func arguments(name string, args []common.Type, params []*ast.Param) error {
@@ -652,44 +813,50 @@ func printTypes(tps []common.Type) string {
 	return "(" + strings.Join(common.Map(tps, func(t common.Type) string { return t.Print() }), ", ") + ")"
 }
 
-// getFunc returns the parameters and return types of a function and the package that
-// defines it.
-func (t *setTypesPass) getFunc(namespace, name string) ([]*ast.Param, []common.Type, *ast.Package, error) {
+// signature is what a call needs to know of a function, of a FuncDef or ExternalFuncDef
+type signature struct {
+	params  []*ast.Param
+	returns []common.Type
+	canFail bool
+}
+
+// getFunc returns the signature of a function and the package that defines it.
+func (t *setTypesPass) getFunc(namespace, name string) (*signature, *ast.Package, error) {
 	pkg := t.file.Package
 
 	if namespace != "" {
 		pkg = t.file.Imports[namespace]
 		if pkg == nil {
-			return nil, nil, nil, fmt.Errorf("namespace %v not found", namespace)
+			return nil, nil, fmt.Errorf("namespace %v not found", namespace)
 		}
 	}
 
-	params, returns, found := findFunc(pkg, name)
-	if found {
-		return params, returns, pkg, nil
+	def := findFunc(pkg, name)
+	if def != nil {
+		return def, pkg, nil
 	}
 
 	if namespace == "" {
-		return nil, nil, nil, fmt.Errorf("function %v not found", name)
+		return nil, nil, fmt.Errorf("function %v not found", name)
 	}
 
-	return nil, nil, nil, fmt.Errorf("function %v in namespace %v not found", name, namespace)
+	return nil, nil, fmt.Errorf("function %v in namespace %v not found", name, namespace)
 }
 
-func findFunc(pkg *ast.Package, name string) ([]*ast.Param, []common.Type, bool) {
+func findFunc(pkg *ast.Package, name string) *signature {
 	for _, fd := range pkg.FuncDefs {
 		if fd.Name == name {
-			return fd.Params, fd.Returns, true
+			return &signature{params: fd.Params, returns: fd.Returns, canFail: fd.CanFail}
 		}
 	}
 
 	for _, fd := range pkg.ExternalFuncDefs {
 		if fd.Name == name {
-			return fd.Params, fd.Returns, true
+			return &signature{params: fd.Params, returns: fd.Returns, canFail: fd.CanFail}
 		}
 	}
 
-	return nil, nil, false
+	return nil
 }
 
 // builtin returns the return types of a builtin function and an error if the arguments

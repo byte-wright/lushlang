@@ -16,6 +16,8 @@ type bash struct {
 	lines     []string
 	indent    int
 	usedFuncs map[string]bool
+	// canFail is set while translating a function that can fail, and main
+	canFail bool
 }
 
 func Translate(p *bcode.Program) string {
@@ -34,13 +36,16 @@ func (b *bash) translate() {
 
 	for _, gd := range b.p.Funcs {
 		b.print("function lsh_" + gd.FullName() + "() {")
-		b.block(gd.Body)
+		b.canFail = gd.CanFail
+		b.body(gd.Body)
 		b.print("}")
 	}
 
 	b.print("function main() {")
 
-	b.block(b.p.Main)
+	// main fails like a function, the last line ends the script with its error
+	b.canFail = true
+	b.body(b.p.Main)
 
 	b.print("}")
 
@@ -76,7 +81,30 @@ L_args=("$@")
 		b.print("lsh__findUtf8")
 	}
 
-	b.print(`main "$@"`)
+	b.print(`main "$@" || { printf '%s\n' "$L_err" >&2; exit 1; }`)
+}
+
+// body translates the block of a function. A function that can fail returns 1 when it
+// fails, so every other way out of it returns 0, and not the status of its last command.
+func (b *bash) body(block *bcode.Block) {
+	b.block(block)
+
+	if !b.canFail || len(block.Commands) > 0 && leaves(block.Commands[len(block.Commands)-1]) {
+		return
+	}
+
+	b.indent++
+	b.print("return 0")
+	b.indent--
+}
+
+func leaves(cmd bcode.Command) bool {
+	switch cmd.(type) {
+	case *bcode.Return, *bcode.Fail:
+		return true
+	}
+
+	return false
 }
 
 func (b *bash) block(block *bcode.Block) {
@@ -101,11 +129,36 @@ func (b *bash) block(block *bcode.Block) {
 			b.print(scope + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
 		case *bcode.Func:
-			b.print(b.funcName(cmd) + " " + b.mkFuncParams(cmd))
-			for i, rpn := range cmd.Return {
-				ret := &bcode.VarValue{Name: "L_ret" + strconv.Itoa(i), T: rpn.T}
-				b.print("local " + rpn.Name + "=" + b.atom(ret))
+			call := b.call(cmd)
+			if cmd.Try {
+				// L_err still holds the message of the failed call
+				call += " || return 1"
 			}
+
+			b.print(call)
+			b.results(cmd)
+
+		case *bcode.Catch:
+			// with nothing to run after a successful call, the else would be empty
+			if len(cmd.Call.Return) == 0 && len(cmd.Then.Commands) == 0 {
+				b.print("if ! " + b.call(cmd.Call) + "; then")
+			} else {
+				b.print("if " + b.call(cmd.Call) + "; then")
+				b.indent++
+				b.results(cmd.Call)
+				b.indent--
+				if len(cmd.Then.Commands) > 0 {
+					b.block(cmd.Then)
+				}
+				b.print("else")
+			}
+
+			b.block(cmd.Block)
+			b.print("fi")
+
+		case *bcode.Fail:
+			b.print("L_err=" + b.atom(cmd.Message))
+			b.print("return 1")
 
 		case *bcode.If:
 			b.print("if [ " + b.atom(cmd.Condition) + " == true ]; then")
@@ -155,7 +208,12 @@ func (b *bash) block(block *bcode.Block) {
 			for i, val := range cmd.Values {
 				b.print("L_ret" + strconv.Itoa(i) + "=" + b.atom(val))
 			}
-			b.print("return")
+
+			if b.canFail {
+				b.print("return 0")
+			} else {
+				b.print("return")
+			}
 
 		case *bcode.ExecVar:
 			cmds := []string{b.atom(cmd.Command)}
@@ -329,6 +387,9 @@ func (b *bash) atom(a bcode.Atom) string {
 	case *bcode.ArgsValue:
 		return `("${L_args[@]}")`
 
+	case *bcode.ErrorValue:
+		return `"$L_err"`
+
 	case *bcode.ArrayValue:
 		params := []string{}
 
@@ -395,6 +456,18 @@ func equalOp(v bcode.Value) string {
 		return "-eq"
 	}
 	return "="
+}
+
+func (b *bash) call(f *bcode.Func) string {
+	return b.funcName(f) + " " + b.mkFuncParams(f)
+}
+
+// results copies the results of a call out of L_ret, the next call overwrites them
+func (b *bash) results(f *bcode.Func) {
+	for i, rpn := range f.Return {
+		ret := &bcode.VarValue{Name: "L_ret" + strconv.Itoa(i), T: rpn.T}
+		b.print("local " + rpn.Name + "=" + b.atom(ret))
+	}
 }
 
 func (b *bash) mkFuncParams(f *bcode.Func) string {

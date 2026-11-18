@@ -19,12 +19,13 @@ package
 importStatement: IMPORT STRING (AS alias = ID)?;
 
 statement
-    : assignment
-    | globalAssignment
-    | funcStatement
+    : assignment catchClause?
+    | globalAssignment catchClause?
+    | funcStatement catchClause?
     | if
     | for
     | returnStatement
+    | failStatement
     | BREAK
     | CONTINUE
     ;
@@ -32,16 +33,21 @@ statement
 funcDef
     : FUNC ID LPAREN (
         param (COMMA param)*
-    )? RPAREN (type (COMMA type)*)? block
+    )? RPAREN results? block
     ;
 
 externalFuncDef
     : FUNC ID LPAREN (
         param (COMMA param)*
-    )? RPAREN (type (COMMA type)*)? EXTERNAL_CODE
+    )? RPAREN results? EXTERNAL_CODE
     ;
 
 param: ID type;
+
+// error is only valid as the last one, the visitor reports it instead of a syntax error
+results: result (COMMA result)*;
+
+result: type | ERROR_TYPE;
 
 if
     : IF expression then = block (
@@ -72,6 +78,10 @@ returnStatement
     )?
     ;
 
+failStatement: FAIL LPAREN expression RPAREN;
+
+catchClause: CATCH name = ID block;
+
 block: LCUR (statement)* RCUR;
 
 assignment
@@ -87,7 +97,7 @@ assignment
 
 globalAssignment: GLOBAL assignment;
 
-funcStatement: (namespace = ID DOT)? func;
+funcStatement: TRY? (namespace = ID DOT)? func;
 
 expression
     : atom
@@ -124,7 +134,7 @@ atom
     | bool
     | envVar
     | var
-    | (namespace = ID DOT)? func
+    | TRY? (namespace = ID DOT)? func
     | LPAREN group = expression RPAREN
     | array
     ;
@@ -185,6 +195,10 @@ CONTINUE: 'continue';
 IN: 'in';
 UNTIL: 'until';
 GLOBAL: 'global';
+TRY: 'try';
+CATCH: 'catch';
+FAIL: 'fail';
+ERROR_TYPE: 'error';
 
 LAND: '&&';
 LOR: '||';

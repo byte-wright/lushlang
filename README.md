@@ -30,9 +30,10 @@ Its in no way optimized and quite rudimentary.
     a script that uses these operations exits with code 2 before it starts
   - arrays (very slow)
   - functions with params and (multiple) return params
+  - errors with `fail`, `try` and `catch`, see [Errors](#errors)
   - if, else if, else
   - loops with `break` and `continue`, see [Loops](#loops)
-  - `return` outside of functions ends the script
+  - `return` outside of functions ends the script with exit code 0
   - environment variables as `$NAME`, the script's arguments as `args()`
   - names start with a lowercase letter or `_`, so they can't clash with bash's
     variables like `PATH` and `IFS`
@@ -60,6 +61,45 @@ Loops
     or `i`
   - `x` and `i` only exist in the loop. A variable, parameter or outer loop variable with
     the same name is a compile error, so a loop can't change one by accident
+
+Errors
+------
+
+A function that can fail has `error` as its last result. `fail(message)` returns the error
+to the caller, the message is a string:
+
+      func half(n int) int, error {
+        if n % 2 != 0 {
+          fail("odd number: " + n)
+        }
+        return n / 2
+      }
+
+A call of such a function passes the error on with `try`, or catches it. The compiler
+rejects a call that does neither, and a `try` or `catch` on a function that can't fail.
+
+      func quarter(n int) int, error {
+        h = try half(n)         // when half fails, quarter fails with its error
+        return try half(h)
+      }
+
+      q = half(7) catch err {   // err is the message
+        println("no half:", err)
+        return
+      }
+
+  - `try` and `fail` only work in a function that can fail, so a package can't end the
+    script behind its caller's back. At the top level they print the message to stderr and
+    end the script with exit code 1
+  - `try` goes in front of any call, also in an expression: `println(try half(4) + 1)`
+  - `catch` handles the error of the statement's call, in `f() catch err { ... }` and
+    `x, y = f() catch err { ... }`. When `f` fails, the block runs instead of the
+    assignment and `x` and `y` keep their values. So a variable that's new in the
+    statement needs a block that ends with `return`, `fail`, `break` or `continue`
+  - `err` only exists in the block, like a loop variable, and `_` ignores it
+  - a global of a package can't call a function that can fail
+  - errors only come from `fail`. `execVar` still returns the exit code of the command, and
+    an index out of range still ends the script with exit code 2
 
 Globals
 -------
@@ -135,6 +175,7 @@ the compiled bash code:
       local V_s="$L_t1"
       local V_gt="$L_t2"
       lsh__println "$V_s" "$V_gt"
+      return 0
     }
 
     L_bool_0=true
@@ -152,4 +193,4 @@ the compiled bash code:
     printf "\n"
     }
 
-    main "$@"
+    main "$@" || { printf '%s\n' "$L_err" >&2; exit 1; }
