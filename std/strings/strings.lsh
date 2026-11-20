@@ -57,3 +57,86 @@ func join(strs []string, sep string) string ```
   done
   L_ret0="${v}"
 ```
+
+func contains(s string, sub string) bool ```
+  local LC_ALL=C
+  if [[ "$s" == *"$sub"* ]]; then
+    L_ret0=true
+  else
+    L_ret0=false
+  fi
+```
+
+// like Go: every separator splits, so "a,,b" has an empty part in the middle. An empty
+// separator splits into the characters.
+func split(s string, sep string) []string ```
+  if [ -z "$sep" ]; then
+    lsh__strChars "$s"
+    return
+  fi
+  local LC_ALL=C L_f L_i L_n=0
+  L_ret0=()
+  while :; do
+    L_f="${s%%"$sep"*}"
+    L_ret0[L_n]="$L_f"
+    L_n=$(( L_n + 1 ))
+    [ "${#L_f}" -lt "${#s}" ] || break
+    L_i=$(( ${#L_f} + ${#sep} ))
+    s="${s:L_i}"
+  done
+```
+
+// like Go: an empty old puts new before every character and at the end
+func replaceAll(s string, old string, new string) string ```
+  if [ -z "$old" ]; then
+    lsh__strChars "$s"
+    local L_r="$new" L_c
+    for L_c in "${L_ret0[@]}"; do
+      L_r="$L_r$L_c$new"
+    done
+    L_ret0="$L_r"
+    return
+  fi
+  local LC_ALL=C
+  # quoted, since bash 5.2 an unquoted & in new is the match
+  L_ret0=${s//"$old"/"$new"}
+```
+
+// removes spaces, tabs, newlines, \r, \v and \f at both ends
+func trimSpace(s string) string ```
+  local LC_ALL=C
+  s="${s#"${s%%[![:space:]]*}"}"
+  L_ret0="${s%"${s##*[![:space:]]}"}"
+```
+
+// only changes a to z, bash 3.2 has no case conversion
+func toUpper(s string) string ```
+  local LC_ALL=C L_c L_t L_i L_from=abcdefghijklmnopqrstuvwxyz L_to=ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  L_ret0=""
+  for (( L_i = 0; L_i < ${#s}; L_i++ )); do
+    L_c="${s:L_i:1}"
+    case "$L_c" in
+      [a-z])
+        L_t="${L_from%%"$L_c"*}"
+        L_c="${L_to:${#L_t}:1}"
+        ;;
+    esac
+    L_ret0="$L_ret0$L_c"
+  done
+```
+
+// only changes A to Z, bash 3.2 has no case conversion
+func toLower(s string) string ```
+  local LC_ALL=C L_c L_t L_i L_from=ABCDEFGHIJKLMNOPQRSTUVWXYZ L_to=abcdefghijklmnopqrstuvwxyz
+  L_ret0=""
+  for (( L_i = 0; L_i < ${#s}; L_i++ )); do
+    L_c="${s:L_i:1}"
+    case "$L_c" in
+      [A-Z])
+        L_t="${L_from%%"$L_c"*}"
+        L_c="${L_to:${#L_t}:1}"
+        ;;
+    esac
+    L_ret0="$L_ret0$L_c"
+  done
+```

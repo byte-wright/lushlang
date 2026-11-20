@@ -1,0 +1,137 @@
+order: 3
+name: Files
+tests:
+  - name: write and read
+    description: read gives the text as it is, lines gives the lines without their newline, like cmd
+    code: |
+      import "files"
+      import "strings"
+
+      dir = try cmd("mktemp", "-d", stdout: string)
+      p = dir + "/my file.txt"
+      try files.write(p, "a\\b %s *\n-n\n")
+      try files.append(p, "é€ last")
+      text = try files.read(p)
+      println(len(text), strings.replaceAll(text, "\n", "|"))
+      lines = try files.lines(p)
+      println(len(lines), strings.join(lines, "|"))
+
+      try files.write(p, "x\n\n")
+      lines = try files.lines(p)
+      println(len(lines), strings.join(lines, "|"), len(try files.read(p)))
+
+      try files.write(p, "")
+      println(len(try files.lines(p)), len(try files.read(p)))
+      try cmd("rm", "-r", dir)
+    expected: |
+      19 a\b %s *|-n|é€ last
+      3 a\b %s *|-n|é€ last
+      2 x| 3
+      0 0
+
+  - name: exists
+    code: |
+      import "files"
+
+      dir = try cmd("mktemp", "-d", stdout: string)
+      p = dir + "/f"
+      println(files.exists(p), files.isFile(p), files.isDir(p))
+      try files.write(p, "")
+      println(files.exists(p), files.isFile(p), files.isDir(p))
+      println(files.exists(dir), files.isFile(dir), files.isDir(dir))
+      println(files.exists(""), files.isFile(""), files.isDir(""))
+      try cmd("rm", "-r", dir)
+    expected: |
+      false false false
+      true true false
+      true false true
+      false false false
+
+  - name: errors
+    description: the message has the path and why the file can't be opened
+    code: |
+      import "files"
+      import "strings"
+
+      dir = try cmd("mktemp", "-d", stdout: string)
+      files.read(dir + "/missing") catch err {
+        println(strings.replaceAll(err, dir, "DIR"))
+      }
+      files.lines(dir) catch err {
+        println(strings.replaceAll(err, dir, "DIR"))
+      }
+      files.write(dir + "/missing/f", "x") catch err {
+        println(strings.replaceAll(err, dir, "DIR"))
+      }
+      files.write(dir, "x") catch err {
+        println(strings.replaceAll(err, dir, "DIR"))
+      }
+      files.append(dir, "x") catch err {
+        println(strings.replaceAll(err, dir, "DIR"))
+      }
+      try cmd("rm", "-r", dir)
+    expected: |
+      can't read DIR/missing: No such file or directory
+      can't read DIR: Is a directory
+      can't write DIR/missing/f: No such file or directory
+      can't write DIR: Is a directory
+      can't append to DIR: Is a directory
+
+  - name: error at the top level
+    code: |
+      import "files"
+
+      println(try files.read("missing.txt"))
+      println("after")
+    stderr: |
+      can't read missing.txt: No such file or directory
+    exit: 1
+
+  - name: read in the C locale
+    description: the error message is in English whatever the user's locale, and a last line counts without a newline
+    env: [LC_ALL=C]
+    code: |
+      import "files"
+
+      lines = try files.lines("cmd/files/foo.txt")
+      println(len(lines), lines[2])
+      files.read("missing.txt") catch err {
+        println(err)
+      }
+    expected: |
+      3 3: Foo content
+      can't read missing.txt: No such file or directory
+
+  - name: NUL bytes
+    description: bash strings can't hold them, read drops them
+    code: |
+      import "files"
+
+      dir = try cmd("mktemp", "-d", stdout: string)
+      try cmd("printf", "a\\0b", stdout: file(dir + "/f"))
+      println(try files.read(dir + "/f"))
+      try cmd("rm", "-r", dir)
+    expected: |
+      ab
+
+  - name: paths
+    description: base and dir work like the basename and dirname commands
+    code: |
+      import "paths"
+
+      for p in ["a/b", "a/b/", "/a", "/", "//", "", "a", "a//b", "//a//b//", ".", "a/.", "a b/c d"] {
+        println("<" + p + ">", paths.base(p), paths.dir(p))
+      }
+    expected: |
+      <a/b> b a
+      <a/b/> b a
+      </a> a /
+      </> / /
+      <//> / /
+      <> . .
+      <a> a .
+      <a//b> b a
+      <//a//b//> b //a
+      <.> . .
+      <a/.> . a
+      <a b/c d> c d a b

@@ -141,3 +141,103 @@ tests:
       println(len(s), s[2])
     expected: |
       4 b
+
+  - name: contains
+    code: |
+      import "strings"
+
+      println(strings.contains("seafood", "foo"), strings.contains("seafood", "bar"))
+      println(strings.contains("abc", ""), strings.contains("", ""), strings.contains("", "a"))
+      println(strings.contains("a*b", "*"), strings.contains("ab", "*"), strings.contains("ab", "?"))
+    expected: |
+      true false
+      true true false
+      true false false
+
+  - name: split
+    description: like Go, every separator splits, also at the ends, and an empty one splits into characters
+    code: |
+      import "strings"
+
+      func show(parts []string) {
+        println(len(parts), strings.join(parts, "|"))
+      }
+
+      show(strings.split("a,b,,c", ","))
+      show(strings.split("a,", ","))
+      show(strings.split(",", ","))
+      show(strings.split("", ","))
+      show(strings.split("abc", "abcd"))
+      show(strings.split("a<->b<-c", "<->"))
+      show(strings.split("aaaa", "aa"))
+      show(strings.split("a*b?c", "*"))
+      show(strings.split("line 1\nline 2\n", "\n"))
+      show(strings.split("héllo", ""))
+      show(strings.split("", ""))
+    expected: |
+      4 a|b||c
+      2 a|
+      2 |
+      1 
+      1 abc
+      2 a|b<-c
+      3 ||
+      2 a|b?c
+      3 line 1|line 2|
+      5 h|é|l|l|o
+      0 
+
+  - name: replaceAll
+    description: old and new are text, not patterns, & and \ in new are no back references
+    code: |
+      import "strings"
+
+      println(strings.replaceAll("oink oink oink", "k", "ky"), strings.replaceAll("oink", "x", "y"))
+      println(strings.replaceAll("aaa", "aa", "b"), strings.replaceAll("x*y*", "*", "[*]"))
+      println(strings.replaceAll("a&b", "&", "\\&"), strings.replaceAll("ab", "b", "&&"))
+      println(strings.replaceAll("say \"hi\" \\o/", "\\", "\\\\"), strings.replaceAll("say \"hi\"", "\"", "\\\""))
+      println(strings.replaceAll("é€é", "€", "e"), strings.replaceAll("abc", "b", ""))
+      println(strings.replaceAll("abc", "", "-"), strings.replaceAll("", "", "-"), strings.replaceAll("é", "", "|"))
+    expected: |
+      oinky oinky oinky oink
+      ba x[*]y[*]
+      a\&b a&&
+      say "hi" \\o/ say \"hi\"
+      éeé ac
+      -a-b-c- - |é|
+
+  - name: trimSpace
+    code: |
+      import "strings"
+
+      cr = try cmd("printf", "\\r\\v\\f", stdout: string)
+      println("<" + strings.trimSpace(" \t\n a  b " + cr + "\n ") + ">")
+      println("<" + strings.trimSpace(cr + "x" + cr) + ">", "<" + strings.trimSpace(" \n ") + ">", "<" + strings.trimSpace("") + ">")
+    expected: |
+      <a  b>
+      <x> <> <>
+
+  - name: case conversion
+    description: only the ASCII letters change
+    code: |
+      import "strings"
+
+      println(strings.toUpper("Hello, wörld-é 123"), strings.toLower("HELLO, WÖRLD-É ABC"))
+      println(strings.toUpper("") + "|", strings.toLower("[a-z] *"))
+    expected: |
+      HELLO, WöRLD-é 123 hello, wÖrld-É abc
+      | [a-z] *
+
+  - name: utf-8 functions in the C locale
+    env: [LC_ALL=C]
+    code: |
+      import "strings"
+
+      parts = strings.split("a€b€€c", "€")
+      println(len(parts), strings.join(parts, "|"), len(strings.split("héllo", "")))
+      println(strings.replaceAll("é€é", "€", "e"), strings.replaceAll("é", "", "|"), strings.contains("wörld", "ö"))
+      println(strings.toUpper("é-a"), strings.trimSpace(" é "))
+    expected: |
+      4 a|b||c 5
+      éeé |é| true
+      é-A é

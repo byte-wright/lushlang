@@ -132,6 +132,31 @@ L_ret0="$L_sign$L_s"
 return 0`,
 	})
 
+	// fileError sets L_err for a file of std/files that can't be opened, $1 is read,
+	// write or append. The reason is the end of bash's own message when it opens the
+	// file again, the C locale makes it the same everywhere.
+	register(&bFunc{
+		name: "fileError",
+		code: `local LC_ALL=C L_m
+case "$1" in
+	read)
+		L_m=$( { : < "$2"; } 2>&1 )
+		L_err="can't read $2"
+		;;
+	write)
+		L_m=$( { : >> "$2"; } 2>&1 )
+		L_err="can't write $2"
+		;;
+	*)
+		L_m=$( { : >> "$2"; } 2>&1 )
+		L_err="can't append to $2"
+		;;
+esac
+if [ -n "$L_m" ]; then
+	L_err="$L_err: ${L_m##*: }"
+fi`,
+	})
+
 	// The temp dir holds the collected output and the FIFOs of cmd. The fds of the pipes
 	// that lush reads start at 3.
 	register(&bFunc{

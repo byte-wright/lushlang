@@ -43,7 +43,7 @@ Its in no way optimized and quite rudimentary.
   - commands with `cmd`, see [Commands](#commands)
   - names start with a lowercase letter or `_`, so they can't clash with bash's
     variables like `PATH` and `IFS`
-  - packages: `import "strings"` from std, `import "./deploy"` and `import "../lib/log"` from
+  - packages: `import "strings"` from [std](#std), `import "./deploy"` and `import "../lib/log"` from
     the folder of the importing file, and `import "./util/strings" as ustrings` to use another
     name than the folder's
   - global variables per package
@@ -186,6 +186,40 @@ package, other packages can read it as `pkg.name`.
     global's package. A plain `x = ...` with the name of a global is a compile error, so
     adding a global can't silently change what a function does
   - locals and parameters can't have the name of a global of their package
+
+Std
+---
+
+`strings` works like the package of Go. The arguments are text, never patterns:
+
+      hasPrefix(s, prefix) bool           trimPrefix(s, prefix) string
+      hasSuffix(s, suffix) bool           trimSuffix(s, suffix) string
+      contains(s, sub) bool               indexOf(s, sub) int          // -1 when it's missing
+      cut(s, sep) string, string, bool    // before, after, found
+      split(s, sep) []string              join(parts, sep) string
+      replaceAll(s, old, new) string      trimSpace(s) string
+      toUpper(s) string                   toLower(s) string
+
+  - `split` splits at every separator, so `split("a,", ",")` is `["a", ""]`. An empty
+    separator splits into the characters
+  - `trimSpace` removes spaces, tabs, newlines, `\r`, `\v` and `\f`. `toUpper` and `toLower`
+    only change the ASCII letters, `é` stays as it is
+
+`files` reads and writes text files:
+
+      exists(path) bool                   isFile(path) bool            isDir(path) bool
+      read(path) string, error            // the whole text
+      lines(path) []string, error         // without the newlines, like the []string of cmd
+      write(path, text) error             // creates or replaces the file
+      append(path, text) error            // adds to the end, creates the file
+
+  - an error has the path and the reason: `can't read config.json: No such file or directory`
+  - `write` and `append` don't add a newline. A new file gets its permissions from the umask,
+    an existing one keeps its own
+  - bash strings can't hold NUL bytes, `read` and `lines` drop them
+
+`paths` has `base(path)` and `dir(path)`, they work like the `basename` and `dirname`
+commands: `base("a/b/")` is `b` and `dir("/a")` is `/`. Both give `.` for an empty path.
 
 Tests
 -----
