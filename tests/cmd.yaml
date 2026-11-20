@@ -22,14 +22,21 @@ tests:
       0
 
   - name: collect lines
+    description: trailing empty lines are lines too, a command substitution would remove them
     code: |
       lines = try cmd("printf", "a\n\nb", stdout: []string)
       println(len(lines), lines[0], lines[1] == "", lines[2])
       none = try cmd("true", stdout: []string)
       println(len(none))
+      lines = try cmd("printf", "a\n\nb\n\n\n", stdout: []string)
+      println(len(lines), lines[4] == "")
+      lines = try cmd("echo", stdout: []string)
+      println(len(lines), lines[0] == "")
     expected: |
       3 a true b
       0
+      5 true
+      1 true
 
   - name: stderr and exit code
     code: |
@@ -162,12 +169,12 @@ tests:
         println("function")
       }
       try cmd("echo", "command")
-      println(cmd("main", stderr: _, exit: int), cmd("lsh__println", stderr: _, exit: int))
-      println(cmd("cd", "/", stderr: _, exit: int))
+      println(cmd("main", stderr: _, exit: int), cmd("lsh__println", stderr: _, exit: int), cmd("lsh_main_echo", stderr: _, exit: int))
+      println(cmd("cd", "/", stderr: _, exit: int), cmd("exit", "3", stderr: _, exit: int))
     expected: |
       command
+      127 127 127
       127 127
-      127
 
   - name: dir
     code: |
@@ -195,7 +202,7 @@ tests:
     code: |
       println(try cmd("bash", "-c", "x=$(cat; echo .); echo ${#x}", stdin: "ab", stdout: string))
       println(try cmd("cat", stdin: "a\nb\n", stdout: string))
-      println(try cmd("head", "-1", stdin: file("./exec/files/foo.txt"), stdout: string))
+      println(try cmd("head", "-1", stdin: file("./cmd/files/foo.txt"), stdout: string))
     expected: |
       3
       a
@@ -452,7 +459,7 @@ tests:
   - name: pipes as arguments
     code: |
       println(try cmd("cat", cmd("echo", "1", stdout: pipe), cmd("echo", "2", stdout: pipe), stdout: string))
-      same = try cmd("cmp", "-s", cmd("sort", "./exec/files/foo.txt", stdout: pipe), cmd("sort", "./exec/files/foo.txt", stdout: pipe), exit: bool)
+      same = try cmd("cmp", "-s", cmd("sort", "./cmd/files/foo.txt", stdout: pipe), cmd("sort", "./cmd/files/foo.txt", stdout: pipe), exit: bool)
       println(same)
       println(try cmd("true", cmd("bash", "-c", "exec sleep 30", stdout: pipe), exit: int))
     expected: |

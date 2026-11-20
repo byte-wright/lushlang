@@ -34,8 +34,8 @@ tests:
       lsh__stdout = "mine"
       x = one() + 2
       b = x > 2
-      o, e, c = execVar("echo", "out")
-      println(var_1, lsh_i, lsh_bool_0, lsh__funcretparam_0, lsh__stdout, x, b, o[0])
+      o = try cmd("echo", "out", stdout: string)
+      println(var_1, lsh_i, lsh_bool_0, lsh__funcretparam_0, lsh__stdout, x, b, o)
     expected: |
       mine mine mine mine mine 3 true out
 
@@ -56,8 +56,8 @@ tests:
       }
 
       lush_test = "mine"
-      out, _, _ = execVar("printenv", "lush_test")
-      println(lush_test, $lush_test, env(), out[0])
+      out = try cmd("printenv", "lush_test", stdout: string)
+      println(lush_test, $lush_test, env(), out)
     expected: |
       mine env env env
 

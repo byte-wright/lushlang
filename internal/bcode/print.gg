@@ -154,9 +154,6 @@ bcode.Equal type:
 bcode.NotEqual type:
   @{.Left} != @{.Right}
 
-bcode.ExecVar type:
-  ${.Stdout.Name}, ${.Stderr.Name}, ${.Err.Name} = exec(@{.Command}, @{.Parameters})
-
 bcode.Cmd type:
   {for i, p, first in .Procs-}
     @{p}

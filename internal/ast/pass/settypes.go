@@ -940,14 +940,6 @@ func builtin(name string, args []common.Type) (*signature, error) {
 
 		return sig, nil
 
-	case "execVar":
-		sig := &signature{returns: []common.Type{stringArrayType, stringArrayType, intType}}
-		if len(args) == 0 {
-			return sig, fmt.Errorf("execVar takes at least 1 argument, not 0")
-		}
-
-		return sig, noArrays(name, args)
-
 	case "append":
 		if len(args) == 0 {
 			return &signature{returns: unknownTypes}, fmt.Errorf("append takes at least 1 argument, not 0")
@@ -970,8 +962,7 @@ func builtin(name string, args []common.Type) (*signature, error) {
 	return nil, nil
 }
 
-// noArrays is for builtins whose arguments go to a command, an array would show up as
-// its length followed by its elements in println and be a syntax error in execVar.
+// noArrays is for println, an array would show up as its length followed by its elements.
 func noArrays(name string, args []common.Type) error {
 	for i, arg := range args {
 		if arg.IsArray() {

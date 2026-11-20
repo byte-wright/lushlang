@@ -340,23 +340,6 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 				Parameter: block.asVar(val[0]),
 			})
 
-		case "execVar":
-			vals := c.evalExpressions(block, x.Parameters)
-
-			stdout := block.nextTmp(&common.ArrayType{ElementType: &common.BasicType{Type: common.String}})
-			stderr := block.nextTmp(&common.ArrayType{ElementType: &common.BasicType{Type: common.String}})
-			xerr := block.nextTmp(&common.BasicType{Type: common.Int})
-
-			block.add(&ExecVar{
-				Command:    vals[0],
-				Parameters: vals[1:],
-				Stdout:     stdout,
-				Stderr:     stderr,
-				Err:        xerr,
-			})
-
-			return []Value{stdout, stderr, xerr}
-
 		case "append":
 			vals := c.evalExpressions(block, x.Parameters)
 

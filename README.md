@@ -99,8 +99,8 @@ rejects a call that does neither, and a `try` or `catch` on a function that can'
     statement needs a block that ends with `return`, `fail`, `break` or `continue`
   - `err` only exists in the block, like a loop variable, and `_` ignores it
   - a global of a package can't call a function that can fail
-  - errors come from `fail`, `parseInt` and `cmd`. `execVar` still returns the exit code of
-    the command, and an index out of range still ends the script with exit code 2
+  - errors come from `fail`, `parseInt` and `cmd`. An index out of range still ends the script
+    with exit code 2
 
 Commands
 --------

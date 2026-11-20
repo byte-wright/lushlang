@@ -127,8 +127,7 @@ tests:
       s = "héllo€"
       println(len(s), s[1], s[5], s[1:4], s[3:])
       println(strings.indexOf("héllo wörld", "w"), strings.indexOf("€uro", "u"))
-      out, _, _ = execVar("printenv", "LC_ALL")
-      println($LC_ALL, out[0])
+      println($LC_ALL, try cmd("printenv", "LC_ALL", stdout: string))
     expected: |
       6 é € éll lo€
       6 1
@@ -138,8 +137,7 @@ tests:
     description: every byte that isn't part of a valid character counts as one
     env: [LC_ALL=C]
     code: |
-      out, _, _ = execVar("printf", "a\\377b\\303")
-      s = out[0]
+      s = try cmd("printf", "a\\377b\\303", stdout: string)
       println(len(s), s[2])
     expected: |
       4 b

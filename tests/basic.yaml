@@ -45,7 +45,7 @@ tests:
       }
 
       _ = "drop"
-      _, _, code = execVar("false")
+      _, code = cmd("false", stdout: string, exit: int)
       _ = 5
       println(code, second(["a"], "b"))
     expected: |

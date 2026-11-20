@@ -235,33 +235,6 @@ func (b *bash) block(block *bcode.Block) {
 				b.print("return")
 			}
 
-		case *bcode.ExecVar:
-			cmds := []string{b.atom(cmd.Command)}
-
-			for _, p := range cmd.Parameters {
-				cmds = append(cmds, b.atom(p))
-			}
-
-			cmdl := strings.Join(cmds, " ")
-
-			// stdout and stderr go through files: a command substitution would strip
-			// trailing empty lines, and a process substitution runs in a subshell and
-			// can't set our variables. The command gets a subshell, so builtins like cd
-			// and exit don't change the script. Its exit code must be read right after it.
-			// The lines are read in a loop, readarray needs bash 4.
-			// command skips shell functions, execVar("main") would run the script again.
-			b.print("local L_stdout L_stderr")
-			b.print("L_stdout=$(mktemp)")
-			b.print("L_stderr=$(mktemp)")
-			b.print("(command -- " + cmdl + ") > \"$L_stdout\" 2> \"$L_stderr\"")
-			b.print("local " + cmd.Err.Name + "=$?")
-			// without =() a call in a loop would keep the lines of the previous iteration
-			b.print("local -a " + cmd.Stdout.Name + "=() " + cmd.Stderr.Name + "=()")
-			b.print("local L_line")
-			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + appendInPlace(cmd.Stdout.Name, `"$L_line"`) + `; done < "$L_stdout"`)
-			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + appendInPlace(cmd.Stderr.Name, `"$L_line"`) + `; done < "$L_stderr"`)
-			b.print("rm -f \"$L_stdout\" \"$L_stderr\"")
-
 		case *bcode.Cmd:
 			b.cmd(cmd)
 
