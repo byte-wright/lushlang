@@ -27,8 +27,11 @@ type setTypesPass struct {
 	// statementCall is the call of the current function statement, the only call whose
 	// value isn't used
 	statementCall *ast.Func
-	// catchCall is the call whose error the current statement catches
-	catchCall *ast.Func
+	statementCmd  *ast.Cmd
+	// catchCall is the *ast.Func or *ast.Cmd whose error the current statement catches
+	catchCall ast.Expression
+	// pipeOver is the value of the current for in, the only place that can read a pipe
+	pipeOver *ast.Var
 	// pkgGlobal is set while checking the definition of a package's global
 	pkgGlobal bool
 	// loops is the number of loops around the current statement
@@ -126,12 +129,15 @@ func (t *setTypesPass) AfterBlock(block *ast.Block) {
 }
 
 func (t *setTypesPass) BeforeStatement(statement ast.Statement) {
-	t.statementCall = nil
+	t.statementCall, t.statementCmd, t.pipeOver = nil, nil, nil
 	t.catchCall = catchCall(statement)
 
-	switch statement.(type) {
-	case *ast.For, *ast.ForIn:
+	switch st := statement.(type) {
+	case *ast.For:
 		t.loops++
+	case *ast.ForIn:
+		t.loops++
+		t.pipeOver, _ = st.Over.(*ast.Var)
 	}
 
 	st, isCall := statement.(*ast.FuncStatement)
@@ -144,6 +150,8 @@ func (t *setTypesPass) BeforeStatement(statement ast.Statement) {
 		t.statementCall = call
 	case *ast.Method:
 		t.statementCall = call.Func
+	case *ast.Cmd:
+		t.statementCmd = call
 	}
 }
 
@@ -190,9 +198,9 @@ func (t *setTypesPass) Statement(statement ast.Statement) {
 	}
 }
 
-// catchCall returns the call whose error the statement catches. It's nil without a catch,
-// and when the statement has no single call to catch.
-func catchCall(statement ast.Statement) *ast.Func {
+// catchCall returns the *ast.Func or *ast.Cmd whose error the statement catches. It's nil
+// without a catch, and when the statement has no single call to catch.
+func catchCall(statement ast.Statement) ast.Expression {
 	var call ast.Expression
 
 	switch st := statement.(type) {
@@ -214,9 +222,21 @@ func catchCall(statement ast.Statement) *ast.Func {
 		return f
 	case *ast.Method:
 		return f.Func
+	case *ast.Cmd:
+		return f
 	}
 
 	return nil
+}
+
+// callInfo returns what the checks of errors need from a *ast.Func or *ast.Cmd
+func callInfo(call ast.Expression) (types []common.Type, try, canFail bool) {
+	if c, isCmd := call.(*ast.Cmd); isCmd {
+		return c.ReturnTypes, c.Try, c.CanFail
+	}
+
+	f := call.(*ast.Func)
+	return f.ReturnTypes, f.Try, f.CanFail
 }
 
 func (t *setTypesPass) BeforeCatch(catch *ast.Catch) {
@@ -229,18 +249,19 @@ func (t *setTypesPass) AfterCatch(catch *ast.Catch) {
 
 // catch reports a catch without a call that can fail. It returns the call, nil when
 // there is nothing to check.
-func (t *setTypesPass) catch(statement ast.Statement, catch *ast.Catch) *ast.Func {
+func (t *setTypesPass) catch(statement ast.Statement, catch *ast.Catch) ast.Expression {
 	call := catchCall(statement)
 	if call == nil {
 		t.errorf(catch.Location, "catch needs a single call as the value, like x = f() catch err { ... }")
 		return nil
 	}
 
-	if !known(call.ReturnTypes) || call.Try {
+	types, try, canFail := callInfo(call)
+	if !known(types) || try {
 		return nil
 	}
 
-	if !call.CanFail {
+	if !canFail {
 		t.errorf(catch.Location, "%v can't fail, there is no error to catch", callName(statement))
 		return nil
 	}
@@ -279,8 +300,11 @@ func callName(statement ast.Statement) string {
 		call = st.Call
 	}
 
-	if m, isMethod := call.(*ast.Method); isMethod {
-		return m.Namespace + "." + m.Func.Name
+	switch c := call.(type) {
+	case *ast.Method:
+		return c.Namespace + "." + c.Func.Name
+	case *ast.Cmd:
+		return "cmd"
 	}
 
 	return call.(*ast.Func).Name
@@ -359,6 +383,10 @@ func (t *setTypesPass) loopVar(body *ast.Block, target *ast.AssignmentTarget, tp
 }
 
 func (t *setTypesPass) loopValue(st *ast.ForIn) common.Type {
+	if c, isCmd := st.Over.(*ast.Cmd); isCmd && c.Use == ast.UseLoop {
+		return stringType
+	}
+
 	if st.From != nil {
 		t.expectType(st.Location, "loop start", st.From, intType)
 		t.expectType(st.Location, "loop end", st.Over, intType)
@@ -373,6 +401,10 @@ func (t *setTypesPass) loopValue(st *ast.ForIn) common.Type {
 
 	if len(over) == 1 && over[0].IsArray() {
 		return over[0].(*common.ArrayType).ElementType
+	}
+
+	if len(over) == 1 && over[0].Is(&common.PipeType{}) {
+		return stringType
 	}
 
 	if len(over) == 1 && over[0].Is(intType) {
@@ -394,6 +426,9 @@ func (t *setTypesPass) Expression(expression ast.Expression) {
 	switch exp := expression.(type) {
 	case *ast.Func:
 		t.call("", exp)
+
+	case *ast.Cmd:
+		t.cmd(exp)
 
 	case *ast.Method:
 		t.call(exp.Namespace, exp.Func)
@@ -483,6 +518,11 @@ func (t *setTypesPass) variable(x *ast.Var) {
 		}
 
 		x.Type = v.Type
+
+		if x.Type.Is(&common.PipeType{}) && x != t.pipeOver {
+			t.errorf(x.Location, "%v is a pipe, only for line in %v can read it", x.Name, x.Name)
+			x.Type = unknownTypes[0]
+		}
 	}
 }
 
@@ -594,12 +634,12 @@ func breaks(b *ast.Block) bool {
 			}
 
 		case *ast.Assignment:
-			if st.Catch != nil && breaks(st.Catch.Block) {
+			if st.Catch != nil && breaks(st.Catch.Block) || cmdBreaks(st.Expressions...) {
 				return true
 			}
 
 		case *ast.FuncStatement:
-			if st.Catch != nil && breaks(st.Catch.Block) {
+			if st.Catch != nil && breaks(st.Catch.Block) || cmdBreaks(st.Call) {
 				return true
 			}
 		}
@@ -617,7 +657,7 @@ func (t *setTypesPass) call(namespace string, f *ast.Func) {
 	f.ReturnTypes = t.returnTypes(namespace, name, f)
 
 	if known(f.ReturnTypes) {
-		t.failingCall(name, f)
+		t.failingCall(name, f, f.Try, f.CanFail, f.Location)
 	}
 
 	// spreading would silently drop a call without values from the values around it
@@ -627,24 +667,24 @@ func (t *setTypesPass) call(namespace string, f *ast.Func) {
 	}
 }
 
-// failingCall checks that a call of a function that can fail passes the error on with try
-// or catches it, and that try is only used where the error can go on.
-func (t *setTypesPass) failingCall(name string, f *ast.Func) {
+// failingCall checks that a call that can fail passes the error on with try or catches
+// it, and that try is only used where the error can go on. call is a *ast.Func or *ast.Cmd.
+func (t *setTypesPass) failingCall(name string, call ast.Expression, try, canFail bool, loc *common.Location) {
 	switch {
-	case f.Try && f == t.catchCall:
-		t.errorf(f.Location, "the error of %v can't go on with try and be caught, remove one", name)
+	case try && call == t.catchCall:
+		t.errorf(loc, "the error of %v can't go on with try and be caught, remove one", name)
 
-	case f.CanFail && t.pkgGlobal:
-		t.errorf(f.Location, "%v can fail, a global of a package can't call it", name)
+	case canFail && t.pkgGlobal:
+		t.errorf(loc, "%v can fail, a global of a package can't call it", name)
 
-	case f.Try && !f.CanFail:
-		t.errorf(f.Location, "%v can't fail, it needs no try", name)
+	case try && !canFail:
+		t.errorf(loc, "%v can't fail, it needs no try", name)
 
-	case f.Try && t.funcDef != nil && !t.funcDef.CanFail:
-		t.errorf(f.Location, "try in function %v, which can't fail: add error to its results or catch the error", t.funcDef.Name)
+	case try && t.funcDef != nil && !t.funcDef.CanFail:
+		t.errorf(loc, "try in function %v, which can't fail: add error to its results or catch the error", t.funcDef.Name)
 
-	case f.CanFail && !f.Try && f != t.catchCall:
-		t.errorf(f.Location, "%v can fail, call it with try or catch the error", name)
+	case canFail && !try && call != t.catchCall:
+		t.errorf(loc, "%v can fail, call it with try or catch the error", name)
 	}
 }
 

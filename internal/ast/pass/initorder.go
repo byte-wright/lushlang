@@ -212,6 +212,14 @@ func (p *initOrderPass) BeforeCatch(catch *ast.Catch) {
 
 func (p *initOrderPass) AfterCatch(*ast.Catch) {}
 
+func (p *initOrderPass) BeforeCmdBody(cmd *ast.Cmd) {
+	if p.vars[p.file.Package][cmd.Pipe()] != nil {
+		p.errorf(cmd.Location, "the pipe %v has the name of a global variable", cmd.Pipe())
+	}
+}
+
+func (p *initOrderPass) AfterCmdBody(*ast.Cmd) {}
+
 func (p *initOrderPass) BeforeBlock(*ast.Block) {}
 
 func (p *initOrderPass) AfterBlock(*ast.Block) {}

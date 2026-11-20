@@ -18,10 +18,14 @@ package
 
 importStatement: IMPORT STRING (AS alias = ID)?;
 
+// the block after an assignment is the one of a cmd as its value, the visitor reports it
+// for other values. It only exists in statements, in if try cmd(...) { } it would be the
+// body of the if.
 statement
-    : assignment catchClause?
-    | globalAssignment catchClause?
+    : assignment cmdBody = block? catchClause?
+    | globalAssignment cmdBody = block? catchClause?
     | funcStatement catchClause?
+    | cmdStatement catchClause?
     | if
     | for
     | returnStatement
@@ -99,6 +103,23 @@ globalAssignment: GLOBAL assignment;
 
 funcStatement: TRY? (namespace = ID DOT)? func;
 
+cmdStatement: cmd block?;
+
+cmd
+    : TRY? CMD LPAREN (
+        cmdArg (COMMA cmdArg)* COMMA?
+    )? RPAREN
+    ;
+
+cmdArg
+    : name = ID COLON cmdValue
+    | env = ENVVAR COLON cmdValue
+    | expression spread = ELLIPSIS?
+    ;
+
+// []string is an expression too, the empty array
+cmdValue: primitiveType | expression;
+
 expression
     : atom
     | slice = expression LSQ from = expression? COLON to =
@@ -135,6 +156,7 @@ atom
     | envVar
     | var
     | TRY? (namespace = ID DOT)? func
+    | cmd
     | LPAREN group = expression RPAREN
     | array
     ;
@@ -199,6 +221,7 @@ TRY: 'try';
 CATCH: 'catch';
 FAIL: 'fail';
 ERROR_TYPE: 'error';
+CMD: 'cmd';
 
 LAND: '&&';
 LOR: '||';
@@ -227,6 +250,7 @@ COMMA: ',';
 QUESTION: '?';
 COLON: ':';
 SEMICOLON: ';';
+ELLIPSIS: '...';
 DOT: '.';
 
 ENVVAR: '$' [a-zA-Z_0-9]+;

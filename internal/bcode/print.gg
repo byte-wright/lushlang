@@ -156,3 +156,35 @@ bcode.NotEqual type:
 
 bcode.ExecVar type:
   ${.Stdout.Name}, ${.Stderr.Name}, ${.Err.Name} = exec(@{.Command}, @{.Parameters})
+
+bcode.Cmd type:
+  {for i, p, first in .Procs-}
+    @{p}
+  {end-}
+  {if .Body-}
+    read ${.Pipe.Name} {
+    @{.Body}
+  }
+  {end-}
+
+bcode.Proc type:
+  ${.Code.Name}{if .Stopped}, ${.Stopped.Name}{end} = proc(@{.Name}{for i, a in .Args}, @{a}{end})
+  {-if .Stdin} <@{.Stdin}{end}
+  {-if .Stdout} >@{.Stdout}{end}
+  {-if .Stderr} 2>@{.Stderr}{end}
+  {-if .Dir} dir @{.Dir}{end}
+  {-for i, e in .Env} $${e.Name}=@{e.Value}{end}
+
+bcode.ProcArg type:
+  {if .Source}pipe(${.Source.Code.Name}){else}@{.Value}{if .Spread}...{end}{end}
+
+bcode.ProcInput type:
+  {if .Source}pipe(${.Source.Code.Name}){else}@{.Value}{end}
+
+bcode.ProcOutput type:
+  ${.Name}{if .Path}(@{.Path}){end}{if .Var} @{.Var}{end}{if .Text} @{.Text}{end}
+
+bcode.ReadLines type:
+  for @{.Line} in ${.Pipe.Name} {
+    @{.Block}
+  }

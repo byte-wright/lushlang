@@ -33,6 +33,24 @@ ast.Fail type:
 ast.Func type:
   {if .Try}try {end}${.Name}(@{.Parameters})
 
+ast.Cmd type:
+  {if .Try}try {end}cmd({for i, a, first in .Args}{if !first}, {end}@{a.Value}{if a.Spread}...{end}{end}
+  {-if .Stdout}, stdout: @{.Stdout}{end}
+  {-if .Stderr}, stderr: @{.Stderr}{end}
+  {-if .Exit.Print != ""}, exit: ${.Exit.Print}{end}
+  {-if .Stdin}, stdin: @{.Stdin}{end}
+  {-if .Dir}, dir: @{.Dir}{end}
+  {-for i, e in .Env}, $${e.Name}: @{e.Value}{end})
+  {-if .Body} {
+    @{.Body}
+  }{end}
+
+ast.Target type:
+  ${.Print}{if .Path}(@{.Path}){end}
+
+ast.Input type:
+  {if .IsFile}file(@{.Value}){else}@{.Value}{end}
+
 ast.Method type:
   {if .Func.Try}try {end}${.Namespace}.${.Func.Name}(@{.Func.Parameters})
 

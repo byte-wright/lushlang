@@ -76,3 +76,19 @@ func (a *ArrayType) Is(o Type) bool {
 func (a *ArrayType) Print() string {
 	return "[]" + a.ElementType.Print()
 }
+
+// PipeType is the pipe in the block after a cmd, only a for can read it
+type PipeType struct{}
+
+func (p *PipeType) IsArray() bool {
+	return false
+}
+
+func (p *PipeType) Is(o Type) bool {
+	_, is := o.(*PipeType)
+	return is
+}
+
+func (p *PipeType) Print() string {
+	return "pipe"
+}

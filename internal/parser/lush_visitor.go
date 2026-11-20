@@ -62,6 +62,18 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#funcStatement.
 	VisitFuncStatement(ctx *FuncStatementContext) interface{}
 
+	// Visit a parse tree produced by LushParser#cmdStatement.
+	VisitCmdStatement(ctx *CmdStatementContext) interface{}
+
+	// Visit a parse tree produced by LushParser#cmd.
+	VisitCmd(ctx *CmdContext) interface{}
+
+	// Visit a parse tree produced by LushParser#cmdArg.
+	VisitCmdArg(ctx *CmdArgContext) interface{}
+
+	// Visit a parse tree produced by LushParser#cmdValue.
+	VisitCmdValue(ctx *CmdValueContext) interface{}
+
 	// Visit a parse tree produced by LushParser#expression.
 	VisitExpression(ctx *ExpressionContext) interface{}
 

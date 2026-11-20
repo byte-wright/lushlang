@@ -1,0 +1,611 @@
+name: Cmd
+tests:
+  - name: collect a string
+    code: |
+      tag = try cmd("echo", "v1.2", stdout: string)
+      println("[" + tag + "]")
+    expected: |
+      [v1.2]
+
+  - name: only the last newline is removed
+    description: a command substitution would remove all of them
+    code: |
+      s = try cmd("printf", "a\n\n", stdout: string)
+      println(len(s), s == "a\n")
+      s = try cmd("printf", "a", stdout: string)
+      println(s)
+      s = try cmd("true", stdout: string)
+      println(len(s))
+    expected: |
+      2 true
+      a
+      0
+
+  - name: collect lines
+    code: |
+      lines = try cmd("printf", "a\n\nb", stdout: []string)
+      println(len(lines), lines[0], lines[1] == "", lines[2])
+      none = try cmd("true", stdout: []string)
+      println(len(none))
+    expected: |
+      3 a true b
+      0
+
+  - name: stderr and exit code
+    code: |
+      out, errText, code = cmd("bash", "-c", "echo out; echo err >&2; exit 3", stdout: string, stderr: string, exit: int)
+      println(out, errText, code)
+      out, code = cmd("true", stdout: string, exit: int)
+      println(len(out), code)
+    expected: |
+      out err 3
+      0 0
+
+  - name: the script's own streams
+    code: |
+      try cmd("bash", "-c", "echo out; echo err >&2")
+    expected: |
+      out
+    stderr: |
+      err
+
+  - name: discard
+    code: |
+      cmd("bash", "-c", "echo out; echo err >&2; exit 1", stdout: _, stderr: _, exit: _)
+      println("done")
+    expected: |
+      done
+
+  - name: stderr into stdout
+    code: |
+      out = try cmd("bash", "-c", "echo a; echo b >&2; echo c", stdout: string, stderr: stdout)
+      println(out)
+      try cmd("bash", "-c", "echo err >&2", stderr: stdout)
+    expected: |
+      a
+      b
+      c
+      err
+
+  - name: exit as bool
+    description: grep, test and cmp use 1 for no and more for trouble
+    code: |
+      if try cmd("test", "-d", "/", exit: bool) {
+        println("dir")
+      }
+      println(try cmd("test", "-f", "/", exit: bool))
+      ok = cmd("bash", "-c", "exit 2", exit: bool) catch err {
+        println(err)
+        return
+      }
+    expected: |
+      dir
+      false
+      bash failed with exit code 2
+
+  - name: a failure ends the script
+    code: |
+      try cmd("bash", "-c", "exit 4")
+      println("not reached")
+    stderr: |
+      bash failed with exit code 4
+    exit: 1
+
+  - name: the message has the collected stderr
+    code: |
+      func describe() string, error {
+        out, errText = try cmd("bash", "-c", "echo fatal: no names >&2; exit 128", stdout: string, stderr: string)
+        return out
+      }
+
+      func lines() error {
+        errs = try cmd("bash", "-c", "echo a >&2; echo b >&2; exit 1", stderr: []string)
+      }
+
+      v = ""
+      v = describe() catch err {
+        println(err)
+      }
+      lines() catch err {
+        println(err)
+      }
+      errText, ok = cmd("bash", "-c", "exit 2", stderr: string, exit: bool) catch err {
+        println(err)
+        return
+      }
+    expected: |
+      bash failed with exit code 128: fatal: no names
+      bash failed with exit code 1: a
+      b
+      bash failed with exit code 2
+
+  - name: catch keeps the values
+    description: the results of a failed command aren't assigned
+    code: |
+      x = "old"
+      e = ""
+      x, e = cmd("bash", "-c", "echo new; exit 1", stdout: string, stderr: string) catch err {
+        println(err)
+      }
+      println(x)
+      cmd("false") catch err {
+        println(err)
+      }
+    expected: |
+      bash failed with exit code 1
+      old
+      false failed with exit code 1
+
+  - name: a result in an expression
+    code: |
+      println("got " + try cmd("echo", "x", stdout: string) + "!")
+    expected: |
+      got x!
+
+  - name: arguments
+    code: |
+      xs = ["a b", "c"]
+      println(try cmd("printf", "%s|", 1, true, xs..., "d", stdout: string))
+      empty = []string
+      println(try cmd("echo", empty..., "x", stdout: string))
+      println(try cmd("echo", args()..., stdout: string))
+    args: ["p", "q"]
+    expected: |
+      1|true|a b|c|d|
+      x
+      p q
+
+  - name: commands are no functions or builtins
+    description: exec skips the script's functions, main would run the script again
+    code: |
+      func echo(s string) {
+        println("function")
+      }
+      try cmd("echo", "command")
+      println(cmd("main", stderr: _, exit: int), cmd("lsh__println", stderr: _, exit: int))
+      println(cmd("cd", "/", stderr: _, exit: int))
+    expected: |
+      command
+      127 127
+      127
+
+  - name: dir
+    code: |
+      println(try cmd("pwd", dir: "/", stdout: string))
+      println(cmd("pwd", dir: "/nonexistent", stderr: _, exit: int))
+      before = try cmd("pwd", stdout: string)
+      println(before != "/")
+    expected: |
+      /
+      1
+      true
+
+  - name: env
+    code: |
+      println(try cmd("printenv", "LUSH_X", $LUSH_X: "1 2", stdout: string))
+      println(try cmd("bash", "-c", "echo $A $B", $A: 5, $B: true, stdout: string))
+      println($LUSH_X == "", try cmd("printenv", "LUSH_TEST", stdout: string))
+    expected: |
+      1 2
+      5 true
+      true hello
+
+  - name: stdin
+    description: a string is the input as it is, without a newline added
+    code: |
+      println(try cmd("bash", "-c", "x=$(cat; echo .); echo ${#x}", stdin: "ab", stdout: string))
+      println(try cmd("cat", stdin: "a\nb\n", stdout: string))
+      println(try cmd("head", "-1", stdin: file("./exec/files/foo.txt"), stdout: string))
+    expected: |
+      3
+      a
+      b
+      1: Foo content
+
+  - name: files
+    code: |
+      path = try cmd("mktemp", stdout: string)
+      try cmd("echo", "a", stdout: file(path))
+      try cmd("echo", "b", stdout: appendFile(path))
+      try cmd("bash", "-c", "echo c >&2", stderr: appendFile(path))
+      println(try cmd("cat", path, stdout: string))
+      try cmd("echo", "d", stdout: file(path))
+      println(try cmd("cat", path, stdout: string))
+      try cmd("rm", path)
+    expected: |
+      a
+      b
+      c
+      d
+
+  - name: a file that can't be opened
+    description: bash's message goes into the collected stderr
+    code: |
+      errText, code = cmd("echo", "x", stdout: file("/nonexistent/x"), stderr: string, exit: int)
+      println(code, len(errText) > 0)
+    expected: |
+      1 true
+
+  - name: for over a pipe
+    code: |
+      for line, i in try cmd("printf", "a\n\nc", stdout: pipe) {
+        println(i, "[" + line + "]")
+      }
+      count = 0
+      for line in try cmd("seq", "1", "100", stdout: pipe) {
+        count += 1
+      }
+      println(count)
+    expected: |
+      0 [a]
+      1 []
+      2 [c]
+      100
+
+  - name: break stops the command
+    code: |
+      n = 0
+      for line in try cmd("yes", stdout: pipe) {
+        n += 1
+        if n == 3 {
+          break
+        }
+      }
+      println(n)
+      code = cmd("yes", stdout: pipe, exit: int) {
+        for line in stdout {
+          break
+        }
+      }
+      println(code)
+      code = cmd("yes", stdout: pipe, exit: int) {
+      }
+      println(code)
+    expected: |
+      3
+      143
+      143
+
+  - name: a command that stops itself
+    description: when the pipe is read to its end, the exit code counts
+    code: |
+      code = cmd("bash", "-c", "echo a; exit 3", stdout: pipe, exit: int) {
+        for line in stdout {
+        }
+      }
+      println(code)
+      for line in try cmd("bash", "-c", "echo a; exit 3", stdout: pipe) {
+        println(line)
+      }
+    expected: |
+      3
+      a
+    stderr: |
+      bash failed with exit code 3
+    exit: 1
+
+  - name: pipe of stderr
+    code: |
+      for line in cmd("bash", "-c", "echo out; echo err >&2", stderr: pipe, exit: _) {
+        println("e:" + line)
+      }
+      for line in try cmd("bash", "-c", "echo a; echo b >&2", stdout: pipe, stderr: stdout) {
+        println(line)
+      }
+    expected: |
+      out
+      e:err
+      a
+      b
+
+  - name: the block after the call
+    code: |
+      errText, code = cmd("bash", "-c", "echo a; echo b; echo e >&2; exit 2", stdout: pipe, stderr: string, exit: int) {
+        for line in stdout {
+          println(">" + line)
+        }
+      }
+      println(errText, code)
+      lines = 0
+      try cmd("printf", "a\nb\nc", stdout: pipe) {
+        for line, i in stdout {
+          if i == 0 {
+            println("header", line)
+            continue
+          }
+          lines += 1
+        }
+      }
+      println(lines)
+    expected: |
+      >a
+      >b
+      e 2
+      header a
+      2
+
+  - name: return and fail stop the command
+    code: |
+      func first() string, error {
+        for line in try cmd("yes", "x", stdout: pipe) {
+          return line
+        }
+        return ""
+      }
+
+      func stop() error {
+        for line in try cmd("yes", stdout: pipe) {
+          fail("stop at " + line)
+        }
+      }
+
+      func check(s string) error {
+        if s == "c" {
+          fail("bad line " + s)
+        }
+      }
+
+      func lines() error {
+        for line in try cmd("printf", "a\nb\nc\nd", stdout: pipe) {
+          try check(line)
+          println(line)
+        }
+      }
+
+      println(try first(), try first())
+      stop() catch err {
+        println(err)
+      }
+      lines() catch err {
+        println(err)
+      }
+    expected: |
+      x x
+      stop at y
+      a
+      b
+      bad line c
+
+  - name: break and continue of an outer loop
+    code: |
+      for word in ["a", "b", "c", "d"] {
+        try cmd("yes", word, stdout: pipe) {
+          if word == "b" {
+            continue
+          }
+          for line in stdout {
+            println(line)
+            break
+          }
+          if word == "c" {
+            break
+          }
+        }
+      }
+      println("done")
+    expected: |
+      a
+      c
+      done
+
+  - name: nested pipes
+    code: |
+      func depth(n int) int, error {
+        if n == 0 {
+          return 0
+        }
+        total = 0
+        for line in try cmd("printf", "a\nb", stdout: pipe) {
+          total += 1 + try depth(n - 1)
+        }
+        return total
+      }
+
+      pairs = ""
+      for a in try cmd("printf", "1\n2", stdout: pipe) {
+        for b in try cmd("printf", "x\ny", stdout: pipe) {
+          pairs += a + b + ","
+        }
+      }
+      println(pairs)
+      println(try depth(3))
+    expected: |
+      1x,1y,2x,2y,
+      14
+
+  - name: command chains
+    code: |
+      up = try cmd("tr", "a-z", "A-Z", stdin: cmd("echo", "hello", stdout: pipe), stdout: string)
+      println(up)
+      two = try cmd("head", "-2", stdin: cmd("sort", stdin: cmd("printf", "c\na\nb\n", stdout: pipe), stdout: pipe), stdout: []string)
+      println(len(two), two[0], two[1])
+      for line in try cmd("sort", "-r", stdin: cmd("printf", "1\n2\n", stdout: pipe), stdout: pipe) {
+        println(line)
+      }
+    expected: |
+      HELLO
+      2 a b
+      2
+      1
+
+  - name: a failing source
+    description: the statement fails like with pipefail, and names the command
+    code: |
+      s = cmd("cat", stdin: cmd("bash", "-c", "echo partial; exit 3", stdout: pipe), stdout: string) catch err {
+        println(err)
+        return
+      }
+    expected: |
+      bash failed with exit code 3
+
+  - name: a source that isn't read to its end
+    description: it's stopped when the command it feeds has ended, also when it doesn't write
+    code: |
+      println(try cmd("head", "-1", stdin: cmd("yes", stdout: pipe), stdout: string))
+      println(try cmd("head", "-1", stdin: cmd("bash", "-c", "echo a; exec sleep 30", stdout: pipe), stdout: string))
+      println(try cmd("true", stdin: cmd("bash", "-c", "exec sleep 30", stdout: pipe), exit: int))
+    expected: |
+      y
+      a
+      0
+
+  - name: pipes as arguments
+    code: |
+      println(try cmd("cat", cmd("echo", "1", stdout: pipe), cmd("echo", "2", stdout: pipe), stdout: string))
+      same = try cmd("cmp", "-s", cmd("sort", "./exec/files/foo.txt", stdout: pipe), cmd("sort", "./exec/files/foo.txt", stdout: pipe), exit: bool)
+      println(same)
+      println(try cmd("true", cmd("bash", "-c", "exec sleep 30", stdout: pipe), exit: int))
+    expected: |
+      1
+      2
+      true
+      0
+
+  - name: call in a loop
+    description: every call starts with empty output
+    code: |
+      for i = 0; i < 3; i += 1 {
+        o, e = try cmd("bash", "-c", "echo out" + i + "; echo err >&2", stdout: []string, stderr: []string)
+        println(len(o), o[0], len(e))
+      }
+    expected: |
+      1 out0 1
+      1 out1 1
+      1 out2 1
+
+  - name: assignments in the block stay
+    description: the block runs in the script's shell, not in a subshell
+    code: |
+      global seen = ""
+      func record(s string) {
+        global seen = seen + s
+      }
+      last = ""
+      try cmd("printf", "a\nb", stdout: pipe) {
+        for line in stdout {
+          record(line)
+          last = line
+        }
+      }
+      println(seen, last)
+    expected: |
+      ab b
+
+  - name: for over collected lines
+    code: |
+      for line in try cmd("printf", "a\nb", stdout: []string) {
+        println(line)
+      }
+    expected: |
+      a
+      b
+
+  - name: option errors
+    code: |
+      try cmd()
+      try cmd(stdout: _)
+      try cmd("ls", stdout: int)
+      try cmd("ls", stderr: x)
+      try cmd("ls", exit: string)
+      try cmd("ls", foo: 1)
+      try cmd("ls", stdout: _, stdout: _)
+      cmd("ls", exit: _, stdout: _)
+      try cmd("ls", stdout: _, "-l")
+      try cmd("ls", stdout: file())
+      try cmd("ls", dir: string)
+      try cmd("ls", stdin: string)
+    errors:
+      - "cmd/option errors.lsh Ln:1 Col:5 cmd needs the name of the command"
+      - "cmd/option errors.lsh Ln:2 Col:5 cmd needs the name of the command"
+      - "cmd/option errors.lsh Ln:3 Col:15 stdout: takes string, []string, pipe, file(path), appendFile(path) or _"
+      - "cmd/option errors.lsh Ln:4 Col:15 stderr: takes string, []string, pipe, file(path), appendFile(path), stdout or _"
+      - "cmd/option errors.lsh Ln:5 Col:15 exit: takes int, bool or _"
+      - "cmd/option errors.lsh Ln:6 Col:15 cmd has no option foo:, it has stdout:, stderr:, exit:, stdin:, dir: and $NAME: for env vars"
+      - "cmd/option errors.lsh Ln:7 Col:26 option stdout: is given twice"
+      - "cmd/option errors.lsh Ln:8 Col:20 stdout: must come before exit:, the results are in the order stdout, stderr, exit"
+      - "cmd/option errors.lsh Ln:9 Col:26 the arguments of cmd come before its options"
+      - "cmd/option errors.lsh Ln:10 Col:15 file takes 1 argument, the path, not 0"
+      - "cmd/option errors.lsh Ln:11 Col:15 dir: takes the path of a folder, not a type"
+      - "cmd/option errors.lsh Ln:12 Col:15 stdin: takes a string, file(path) or a cmd with stdout: pipe, not a type"
+
+  - name: argument and option types
+    code: |
+      try cmd("ls", ["-l"])
+      try cmd("ls", "x"...)
+      try cmd(1)
+      try cmd(["ls"]...)
+      try cmd("ls", stdout: file(1))
+      try cmd("ls", dir: 1)
+      try cmd("cat", stdin: 1)
+      try cmd("ls", $X: ["a"])
+      try cmd("ls", $1: "a")
+      try cmd("cat", cmd("ls", stdout: pipe)...)
+    errors:
+      - "cmd/argument and option types.lsh Ln:1 Col:15 argument 2 of cmd is []string, spread it with ... to pass its elements"
+      - "cmd/argument and option types.lsh Ln:2 Col:15 argument 2 of cmd is string, only an array can be spread with ..."
+      - "cmd/argument and option types.lsh Ln:3 Col:9 the name of the command must be a string, not int"
+      - "cmd/argument and option types.lsh Ln:4 Col:9 the name of the command can't be spread with ..."
+      - "cmd/argument and option types.lsh Ln:5 Col:15 the path of a file must be of type string, not int"
+      - "cmd/argument and option types.lsh Ln:6 Col:5 dir must be of type string, not int"
+      - "cmd/argument and option types.lsh Ln:7 Col:5 stdin must be of type string, not int"
+      - "cmd/argument and option types.lsh Ln:8 Col:15 the value of $X must be a string, int or bool, not []string"
+      - "cmd/argument and option types.lsh Ln:9 Col:15 $1 is not an environment variable"
+      - "cmd/argument and option types.lsh Ln:10 Col:16 argument 2 of cmd is a pipe, it can't be spread with ..."
+
+  - name: result errors
+    code: |
+      try cmd("ls", stdout: string)
+      cmd("ls", exit: int)
+      x = cmd("ls")
+      y = cmd("ls", stdout: string)
+      z = try cmd("ls", exit: int)
+      cmd("x", exit: _) catch err {
+      }
+      for f in cmd("ls", exit: _) {
+      }
+      func f() {
+        try cmd("ls")
+      }
+    errors:
+      - "cmd/result errors.lsh Ln:1 Col:5 the results of cmd aren't used, assign them or discard the streams with _"
+      - "cmd/result errors.lsh Ln:2 Col:1 the results of cmd aren't used, assign them or discard the streams with _"
+      - "cmd/result errors.lsh Ln:3 Col:5 cmd doesn't return a value"
+      - "cmd/result errors.lsh Ln:4 Col:5 cmd can fail, call it with try or catch the error"
+      - "cmd/result errors.lsh Ln:5 Col:9 cmd can't fail, it needs no try"
+      - "cmd/result errors.lsh Ln:6 Col:19 cmd can't fail, there is no error to catch"
+      - "cmd/result errors.lsh Ln:8 Col:10 cmd doesn't return a value"
+      - "cmd/result errors.lsh Ln:11 Col:7 try in function f, which can't fail: add error to its results or catch the error"
+
+  - name: pipe errors
+    code: |
+      cmd("ls", stdout: pipe, exit: _)
+      cmd("ls", exit: _) {
+      }
+      cmd("ls", stdout: pipe, stderr: pipe, exit: _) {
+      }
+      for l in cmd("ls", stdout: pipe, exit: int) {
+      }
+      try cmd("cat", stdin: cmd("ls", stdout: pipe, exit: int))
+      try cmd("cat", stdin: try cmd("ls", stdout: pipe))
+      try cmd("cat", stdin: cmd("ls", stdout: pipe, stderr: string))
+      cmd("ls", stdout: pipe, exit: _) {
+        a = stdout
+        println(stdout)
+      }
+      stdout = 1
+      cmd("ls", stdout: pipe, exit: _) {
+      }
+      w = 5 {
+      }
+    errors:
+      - "cmd/pipe errors.lsh Ln:1 Col:1 the pipe of cmd isn't read, read it with for line in cmd(...), in the block after the call or as stdin: of another cmd"
+      - "cmd/pipe errors.lsh Ln:2 Col:1 the block after cmd reads its pipe, it needs stdout: pipe or stderr: pipe"
+      - "cmd/pipe errors.lsh Ln:4 Col:1 lush reads one pipe per cmd, stdout: and stderr: can't both be pipe"
+      - "cmd/pipe errors.lsh Ln:6 Col:10 a cmd in a for can't have results, get them with the block after the call: cmd(...) { for line in stdout { } }"
+      - "cmd/pipe errors.lsh Ln:8 Col:23 exit: int isn't possible in a cmd that feeds another one, it has no results"
+      - "cmd/pipe errors.lsh Ln:9 Col:27 a cmd that feeds another one takes no try, the outer cmd fails when it fails"
+      - "cmd/pipe errors.lsh Ln:10 Col:47 stderr: string isn't possible in a cmd that feeds another one, it has no results"
+      - "cmd/pipe errors.lsh Ln:12 Col:7 stdout is a pipe, only for line in stdout can read it"
+      - "cmd/pipe errors.lsh Ln:13 Col:11 stdout is a pipe, only for line in stdout can read it"
+      - "cmd/pipe errors.lsh Ln:16 Col:1 pipe variable stdout is already defined"
+      - "cmd/pipe errors.lsh Ln:18 Col:7 only a cmd has a block after it, as the only value of the assignment"

@@ -35,6 +35,7 @@ Its in no way optimized and quite rudimentary.
   - loops with `break` and `continue`, see [Loops](#loops)
   - `return` outside of functions ends the script with exit code 0
   - environment variables as `$NAME`, the script's arguments as `args()`
+  - commands with `cmd`, see [Commands](#commands)
   - names start with a lowercase letter or `_`, so they can't clash with bash's
     variables like `PATH` and `IFS`
   - packages: `import "strings"` from std, `import "./deploy"` and `import "../lib/log"` from
@@ -98,8 +99,58 @@ rejects a call that does neither, and a `try` or `catch` on a function that can'
     statement needs a block that ends with `return`, `fail`, `break` or `continue`
   - `err` only exists in the block, like a loop variable, and `_` ignores it
   - a global of a package can't call a function that can fail
-  - errors come from `fail` and `parseInt`. `execVar` still returns the exit code of the
-    command, and an index out of range still ends the script with exit code 2
+  - errors come from `fail`, `parseInt` and `cmd`. `execVar` still returns the exit code of
+    the command, and an index out of range still ends the script with exit code 2
+
+Commands
+--------
+
+`cmd(name, args..., options...)` runs a command, the statement waits until it has ended.
+The options say where its streams go, the ones with a type are the results, always in the
+order stdout, stderr, exit. Without options, the command uses the script's own streams
+and a nonzero exit is an error. [cr-cmd.md](cr-cmd.md) has the reasons.
+
+      tag = try cmd("git", "describe", "--tags", "--always", stdout: string)
+      try cmd("docker", "build", buildArgs..., ".", dir: "./api", $DOCKER_BUILDKIT: "1")
+
+      if try cmd("test", "-f", path, exit: bool) { }
+
+      out, errText, code = cmd("make", stdout: string, stderr: string, exit: int)
+
+      for line in try cmd("docker", "logs", "-f", id, stdout: pipe, stderr: stdout) {
+        if strings.hasPrefix(line, "ready") {
+          break                // stops docker logs
+        }
+      }
+
+      errText, code = cmd("docker", "build", ".", stdout: pipe, stderr: string, exit: int) {
+        for line in stdout {   // the block runs while the command runs
+          println(line)
+        }
+      }
+
+      sum = try cmd("sha256sum", stdin: cmd("gzip", "-dc", "dump.gz", stdout: pipe), stdout: string)
+
+  - `stdout:` and `stderr:` take `string` (without the last newline), `[]string` (the
+    lines), `pipe`, `file(path)`, `appendFile(path)` or `_` to discard it. `stderr:` also
+    takes `stdout`, like `2>&1`
+  - `exit:` takes `int`, `bool` (0 is true, 1 is false, the rest is an error) or `_`, a
+    nonzero exit is no error with all three
+  - `stdin:` takes a string, which the command reads as it is, `file(path)` or a
+    `cmd(..., stdout: pipe)`, which runs together with it like `a | b`. A command that
+    feeds another one can't have results, and the statement fails when it fails, like with
+    `pipefail`
+  - `dir:` is the working directory, `$NAME:` sets an env var for this command only
+  - a `cmd(..., stdout: pipe)` as an argument is a path to read its output, like `<(...)`
+  - `xs...` passes the elements of an array as arguments
+  - a pipe is read while the command runs, by a `for`, by the block after the call or by
+    another command. When its reader stops early, or the block is left with `return`,
+    `fail`, an error or `break`, the command gets SIGTERM. That's no error, with `exit: int`
+    the code is 143
+  - the error message has the command's name and the exit code, not its arguments, and
+    the collected stderr: `git failed with exit code 128: fatal: No names found`
+  - the command runs with `exec`, so `cmd("main")` doesn't run a function of the script
+    and `cmd("cd", "/")` fails, builtins aren't commands
 
 Globals
 -------

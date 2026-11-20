@@ -114,6 +114,52 @@ L_ret0="$L_sign$L_s"
 return 0`,
 	})
 
+	// The temp dir holds the collected output and the FIFOs of cmd. The fds of the pipes
+	// that lush reads start at 3.
+	register(&bFunc{
+		name: "cmdInit",
+		code: `if [ -n "$L_cmd_dir" ]; then
+	return
+fi
+L_cmd_dir=$(mktemp -d "${TMPDIR:-/tmp}/lush.XXXXXX") || exit 2
+L_cmd_seq=0
+L_cmd_fd=2
+trap lsh__cmdExit EXIT`,
+		uses: []string{"cmdExit"},
+	})
+
+	// A job that gets a signal right after its fork, before bash resets its traps, runs
+	// this too. Its copy of L_cmd_fork is set, so it leaves the script's jobs and files
+	// alone. The exec hides the messages of bash 3.2 about the stopped jobs, the script's
+	// own messages are already printed.
+	register(&bFunc{
+		name: "cmdExit",
+		code: `if [ -n "$L_cmd_fork" ]; then
+	return
+fi
+exec 2>/dev/null
+local L_p
+for L_p in $(jobs -p); do
+	kill -TERM "$L_p"
+done
+rm -rf "$L_cmd_dir"`,
+	})
+
+	// cmdStop stops the procs of a cmd whose body is left early, $1 is the fd of its pipe
+	register(&bFunc{
+		name: "cmdStop",
+		code: `local L_fd="$1" L_p
+shift
+for L_p in "$@"; do
+	kill -TERM "$L_p" 2>/dev/null
+done
+eval "exec $L_fd<&-"
+L_cmd_fd=$(( L_cmd_fd - 1 ))
+for L_p in "$@"; do
+	wait "$L_p" 2>/dev/null
+done`,
+	})
+
 	register(&bFunc{
 		name: "println",
 		code: `local i=1

@@ -376,6 +376,9 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 	case *ast.Method:
 		return c.evalCall(block, x.Func)
 
+	case *ast.Cmd:
+		return c.evalCmd(block, x, nil)
+
 	case *ast.Array:
 		a := &ArrayValue{
 			Values: []Atom{},
@@ -404,9 +407,15 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 	if ass.Catch != nil {
-		c.evalCatch(b, ass.Expressions[0], ass.Catch, func(then *Block, results []Value) {
+		assign := func(then *Block, results []Value) {
 			c.assignTargets(b, then, ass.Targets, results)
-		})
+		}
+
+		if x, isCmd := ass.Expressions[0].(*ast.Cmd); isCmd {
+			c.catchCmd(b, x, ass.Catch, assign)
+		} else {
+			c.evalCatch(b, ass.Expressions[0], ass.Catch, assign)
+		}
 
 		return
 	}
@@ -554,6 +563,11 @@ func (c *Compiler) evalIndex(block *Block, s *ast.Index) Atom {
 }
 
 func (c *Compiler) evalFuncStatement(block *Block, f *ast.FuncStatement) {
+	if x, isCmd := f.Call.(*ast.Cmd); isCmd && f.Catch != nil {
+		c.catchCmd(block, x, f.Catch, nil)
+		return
+	}
+
 	if f.Catch != nil {
 		c.evalCatch(block, f.Call, f.Catch, nil)
 		return
@@ -659,6 +673,16 @@ func (c *Compiler) evalForStatement(block *Block, forst *ast.For) {
 // evalForInStatement sets the loop variables and moves the counter on at the start of the
 // body, so a continue needs no step and changing them doesn't change the loop
 func (c *Compiler) evalForInStatement(block *Block, st *ast.ForIn) {
+	if x, isCmd := st.Over.(*ast.Cmd); isCmd && x.Use == ast.UseLoop {
+		c.evalCmd(block, x, st)
+		return
+	}
+
+	if st.Over.Types()[0].Is(&common.PipeType{}) {
+		c.readLines(block, c.evalExpression(block, st.Over)[0].(*VarValue), st)
+		return
+	}
+
 	body := block.subBlock()
 	var loop Command
 

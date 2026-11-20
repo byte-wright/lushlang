@@ -18,6 +18,10 @@ type bash struct {
 	usedFuncs map[string]bool
 	// canFail is set while translating a function that can fail, and main
 	canFail bool
+	// active are the cmds whose bodies are around the current command, loops is the
+	// number of loops around it, both in the current function
+	active []*activeCmd
+	loops  int
 }
 
 func Translate(p *bcode.Program) string {
@@ -130,12 +134,20 @@ func (b *bash) block(block *bcode.Block) {
 
 		case *bcode.Func:
 			call := b.call(cmd)
-			if cmd.Try {
+			if !cmd.Try {
+				b.print(call)
+			} else if len(b.active) == 0 {
 				// L_err still holds the message of the failed call
-				call += " || return 1"
+				b.print(call + " || return 1")
+			} else {
+				b.print(call + " || {")
+				b.indent++
+				b.stop(0)
+				b.print("return 1")
+				b.indent--
+				b.print("}")
 			}
 
-			b.print(call)
 			b.results(cmd)
 
 		case *bcode.Catch:
@@ -158,6 +170,7 @@ func (b *bash) block(block *bcode.Block) {
 
 		case *bcode.Fail:
 			b.print("L_err=" + b.atom(cmd.Message))
+			b.stop(0)
 			b.print("return 1")
 
 		case *bcode.If:
@@ -185,7 +198,9 @@ func (b *bash) block(block *bcode.Block) {
 				b.print("do")
 			}
 
+			b.loops++
 			b.block(cmd.Block)
+			b.loops--
 
 			b.print("done")
 
@@ -194,20 +209,25 @@ func (b *bash) block(block *bcode.Block) {
 			b.print("local " + cmd.Element.Name)
 			b.print("for " + cmd.Element.Name + " in \"${" + cmd.Array.Name + "[@]}\"; do")
 
+			b.loops++
 			b.block(cmd.Block)
+			b.loops--
 
 			b.print("done")
 
 		case *bcode.Break:
+			b.stopForJump()
 			b.print("break")
 
 		case *bcode.Continue:
+			b.stopForJump()
 			b.print("continue")
 
 		case *bcode.Return:
 			for i, val := range cmd.Values {
 				b.print("L_ret" + strconv.Itoa(i) + "=" + b.atom(val))
 			}
+			b.stop(0)
 
 			if b.canFail {
 				b.print("return 0")
@@ -241,6 +261,12 @@ func (b *bash) block(block *bcode.Block) {
 			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + appendInPlace(cmd.Stdout.Name, `"$L_line"`) + `; done < "$L_stdout"`)
 			b.print(`while IFS= read -r L_line || [ -n "$L_line" ]; do ` + appendInPlace(cmd.Stderr.Name, `"$L_line"`) + `; done < "$L_stderr"`)
 			b.print("rm -f \"$L_stdout\" \"$L_stderr\"")
+
+		case *bcode.Cmd:
+			b.cmd(cmd)
+
+		case *bcode.ReadLines:
+			b.readLines(cmd)
 
 		case *bcode.Params:
 			b.params(cmd.Vars)

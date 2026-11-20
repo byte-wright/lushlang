@@ -18,6 +18,10 @@ type Visitor interface {
 	AfterCatch(*ast.Catch)
 	BeforeBlock(*ast.Block)
 	AfterBlock(*ast.Block)
+	// BeforeCmdBody comes after the expressions of the statement, AfterCmdBody before its
+	// catch
+	BeforeCmdBody(*ast.Cmd)
+	AfterCmdBody(*ast.Cmd)
 }
 
 type context struct {
@@ -68,6 +72,7 @@ func (c context) evalStatement(statement ast.Statement) {
 		for _, exp := range st.Expressions {
 			c.evalExpression(exp)
 		}
+		c.evalCmdBody(st.Expressions...)
 		c.evalCatch(st.Catch)
 	case *ast.For:
 		if st.Initial != nil {
@@ -96,6 +101,7 @@ func (c context) evalStatement(statement ast.Statement) {
 
 	case *ast.FuncStatement:
 		c.evalExpression(st.Call)
+		c.evalCmdBody(st.Call)
 		c.evalCatch(st.Catch)
 
 	case *ast.ReturnStatement:
@@ -125,8 +131,46 @@ func (c context) evalCatch(catch *ast.Catch) {
 	c.visitor.AfterCatch(catch)
 }
 
+// evalCmdBody visits the block after a cmd, only the value of a statement can have one
+func (c context) evalCmdBody(exps ...ast.Expression) {
+	for _, exp := range exps {
+		cmd, isCmd := exp.(*ast.Cmd)
+		if isCmd && cmd.Body != nil {
+			c.visitor.BeforeCmdBody(cmd)
+			c.evalBlock(cmd.Body)
+			c.visitor.AfterCmdBody(cmd)
+		}
+	}
+}
+
+func (c context) evalCmd(cmd *ast.Cmd) {
+	for _, arg := range cmd.Args {
+		c.evalExpression(arg.Value)
+	}
+
+	for _, t := range []*ast.Target{cmd.Stdout, cmd.Stderr} {
+		if t != nil && t.Path != nil {
+			c.evalExpression(t.Path)
+		}
+	}
+
+	if cmd.Stdin != nil {
+		c.evalExpression(cmd.Stdin.Value)
+	}
+
+	if cmd.Dir != nil {
+		c.evalExpression(cmd.Dir)
+	}
+
+	for _, env := range cmd.Env {
+		c.evalExpression(env.Value)
+	}
+}
+
 func (c context) evalExpression(expression ast.Expression) {
 	switch exp := expression.(type) {
+	case *ast.Cmd:
+		c.evalCmd(exp)
 	case *ast.Func:
 		for _, p := range exp.Parameters {
 			c.evalExpression(p)

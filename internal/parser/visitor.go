@@ -135,18 +135,26 @@ func (v *Visitor) importError(loc *common.Location, format string, a ...any) {
 func (v *Visitor) VisitStatement(ctx *StatementContext) any {
 	if ctx.Assignment() != nil {
 		assignment := ctx.Assignment().Accept(v).(*ast.Assignment)
+		v.cmdBody(assignment, ctx.GetCmdBody())
 		assignment.Catch = v.catch(ctx.CatchClause())
 		return assignment
 	}
 
 	if ctx.GlobalAssignment() != nil {
 		assignment := ctx.GlobalAssignment().Accept(v).(*ast.Assignment)
+		v.cmdBody(assignment, ctx.GetCmdBody())
 		assignment.Catch = v.catch(ctx.CatchClause())
 		return assignment
 	}
 
 	if ctx.FuncStatement() != nil {
 		st := ctx.FuncStatement().Accept(v).(*ast.FuncStatement)
+		st.Catch = v.catch(ctx.CatchClause())
+		return st
+	}
+
+	if ctx.CmdStatement() != nil {
+		st := ctx.CmdStatement().Accept(v).(*ast.FuncStatement)
 		st.Catch = v.catch(ctx.CatchClause())
 		return st
 	}
@@ -294,6 +302,11 @@ func (v *Visitor) forIn(ctx *ForContext) *ast.ForIn {
 		Over:     ctx.GetOver().Accept(v).(ast.Expression),
 		Body:     ctx.Block().Accept(v).(*ast.Block),
 		Location: v.loc(ctx),
+	}
+
+	// without a pipe, it's a loop over the lines of stdout: []string
+	if c, isCmd := st.Over.(*ast.Cmd); isCmd && c.Pipe() != "" {
+		c.Use = ast.UseLoop
 	}
 
 	if ctx.GetIndex() != nil {
@@ -586,6 +599,10 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 
 	if ctx.Func_() != nil {
 		return v.call(ctx.GetNamespace(), ctx.Func_(), ctx.TRY())
+	}
+
+	if ctx.Cmd() != nil {
+		return ctx.Cmd().Accept(v)
 	}
 
 	if ctx.GetGroup() != nil {

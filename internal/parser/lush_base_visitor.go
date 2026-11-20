@@ -80,6 +80,22 @@ func (v *BaseLushVisitor) VisitFuncStatement(ctx *FuncStatementContext) interfac
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitCmdStatement(ctx *CmdStatementContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitCmd(ctx *CmdContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitCmdArg(ctx *CmdArgContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseLushVisitor) VisitCmdValue(ctx *CmdValueContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitExpression(ctx *ExpressionContext) interface{} {
 	return v.VisitChildren(ctx)
 }

@@ -46,9 +46,11 @@ func (t *setParentPass) evalBlock(block *ast.Block) {
 			}
 
 		case *ast.Assignment:
+			t.evalCmdBody(block, st.Expressions...)
 			t.evalCatch(block, st.Catch)
 
 		case *ast.FuncStatement:
+			t.evalCmdBody(block, st.Call)
 			t.evalCatch(block, st.Catch)
 		}
 	}
@@ -58,5 +60,15 @@ func (t *setParentPass) evalCatch(block *ast.Block, catch *ast.Catch) {
 	if catch != nil {
 		catch.Block.Parent = block
 		t.evalBlock(catch.Block)
+	}
+}
+
+func (t *setParentPass) evalCmdBody(block *ast.Block, exps ...ast.Expression) {
+	for _, exp := range exps {
+		cmd, isCmd := exp.(*ast.Cmd)
+		if isCmd && cmd.Body != nil {
+			cmd.Body.Parent = block
+			t.evalBlock(cmd.Body)
+		}
 	}
 }
