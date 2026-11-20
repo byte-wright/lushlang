@@ -190,6 +190,8 @@ tests:
       p = try parseInt()
       p = try parseInt(5)
       p = try parseInt("1", "2")
+      print(["a"])
+      eprintln(1, [true])
     errors:
       - "typeerrors/builtin arguments.lsh Ln:1 Col:5 len takes 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh Ln:2 Col:5 argument 1 of len must be an array or string, not int"
@@ -200,6 +202,8 @@ tests:
       - "typeerrors/builtin arguments.lsh Ln:7 Col:9 parseInt takes 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh Ln:8 Col:9 argument 1 of parseInt must be of type string, not int"
       - "typeerrors/builtin arguments.lsh Ln:9 Col:9 parseInt takes 1 argument, not 2"
+      - "typeerrors/builtin arguments.lsh Ln:10 Col:1 argument 1 of print can't be of type []string"
+      - "typeerrors/builtin arguments.lsh Ln:11 Col:1 argument 2 of eprintln can't be of type []bool"
   - name: return values
     code: |
       func one() int {

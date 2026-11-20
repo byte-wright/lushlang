@@ -905,7 +905,7 @@ func findFunc(pkg *ast.Package, name string) *signature {
 // checked here.
 func builtin(name string, args []common.Type) (*signature, error) {
 	switch name {
-	case "println":
+	case "print", "println", "eprint", "eprintln":
 		return &signature{returns: []common.Type{}}, noArrays(name, args)
 
 	case "len":
@@ -962,7 +962,7 @@ func builtin(name string, args []common.Type) (*signature, error) {
 	return nil, nil
 }
 
-// noArrays is for println, an array would show up as its length followed by its elements.
+// noArrays is for the print functions, an array would show up as its length followed by its elements.
 func noArrays(name string, args []common.Type) error {
 	for i, arg := range args {
 		if arg.IsArray() {

@@ -34,6 +34,9 @@ Its in no way optimized and quite rudimentary.
   - if, else if, else
   - loops with `break` and `continue`, see [Loops](#loops)
   - `return` outside of functions ends the script with exit code 0
+  - `println(a, b)` writes its arguments to stdout with a space between them and a newline
+    at the end, `print(a, b)` does the same without the newline. `eprintln` and `eprint`
+    write to stderr
   - environment variables as `$NAME`, the script's arguments as `args()`
   - commands with `cmd`, see [Commands](#commands)
   - names start with a lowercase letter or `_`, so they can't clash with bash's

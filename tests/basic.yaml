@@ -10,6 +10,27 @@ tests:
       println("Hello", world)
     expected: "Hello World\n"
 
+  - name: Print
+    description: print is println without the newline at the end
+    code: |
+      for i in 3 {
+        print(".")
+      }
+      print()
+      print("-n", 2, true)
+      println()
+      print("no newline")
+    expected: "...-n 2 true\nno newline"
+
+  - name: Print to stderr
+    code: |
+      eprint("warning:", 3)
+      eprintln(" files", "-e")
+      println("out")
+      eprint("last")
+    expected: "out\n"
+    stderr: "warning: 3 files -e\nlast"
+
   - name: Multi assignment
     code: |
       hello, world, num = "Hello", "World", 42

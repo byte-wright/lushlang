@@ -161,6 +161,17 @@ done`,
 	})
 
 	register(&bFunc{
+		name: "print",
+		code: `local i=1
+for (( ; i<=$#; i++ )); do
+	if [ $i -gt 1 ]; then
+		printf " "
+	fi
+	printf -- "%s" "${!i}"
+done`,
+	})
+
+	register(&bFunc{
 		name: "println",
 		code: `local i=1
 for (( ; i<=$#; i++ )); do
@@ -170,5 +181,17 @@ for (( ; i<=$#; i++ )); do
 	printf -- "%s" "${!i}"
 done
 printf "\n"`,
+	})
+
+	register(&bFunc{
+		name: "eprint",
+		code: `lsh__print "$@" >&2`,
+		uses: []string{"print"},
+	})
+
+	register(&bFunc{
+		name: "eprintln",
+		code: `lsh__println "$@" >&2`,
+		uses: []string{"println"},
 	})
 }
