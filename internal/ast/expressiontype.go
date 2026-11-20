@@ -139,3 +139,7 @@ func (s *Func) Types() []common.Type {
 func (s *Method) Types() []common.Type {
 	return s.Func.Types()
 }
+
+func (v *TargetValue) Types() []common.Type {
+	return v.Target.Element.Types()
+}

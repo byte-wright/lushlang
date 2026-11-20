@@ -366,13 +366,9 @@ func (v *Visitor) VisitBlock(ctx *BlockContext) any {
 }
 
 func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
-	targets := []*ast.AssignmentTarget{}
-	for _, id := range ctx.AllID() {
-		targets = append(targets, &ast.AssignmentTarget{
-			Location: v.locTk(id.GetSymbol()),
-			Name:     id.GetText(),
-		})
-	}
+	targets := common.Map(ctx.AllAssignTarget(), func(t IAssignTargetContext) *ast.AssignmentTarget {
+		return t.Accept(v).(*ast.AssignmentTarget)
+	})
 
 	expressions := common.Map(ctx.AllExpression(), func(x IExpressionContext) ast.Expression {
 		return x.Accept(v).(ast.Expression)
@@ -396,9 +392,26 @@ func (v *Visitor) VisitAssignment(ctx *AssignmentContext) any {
 	}
 }
 
+func (v *Visitor) VisitAssignTarget(ctx *AssignTargetContext) any {
+	target := v.target(ctx.ID().GetSymbol())
+
+	if ctx.GetPosition() != nil {
+		target.Element = &ast.Index{
+			Value:    &ast.Var{Name: target.Name, Location: target.Location},
+			Position: ctx.GetPosition().Accept(v).(ast.Expression),
+			Location: v.loc(ctx),
+		}
+	}
+
+	return target
+}
+
 // compound turns x += y into x = x + (y)
 func (v *Visitor) compound(ctx *AssignmentContext, target *ast.AssignmentTarget, value ast.Expression) ast.Expression {
-	a := &ast.Var{Name: target.Name, Location: target.Location}
+	var a ast.Expression = &ast.Var{Name: target.Name, Location: target.Location}
+	if target.Element != nil {
+		a = &ast.TargetValue{Target: target}
+	}
 	b := &ast.Group{Expression: value}
 	loc := v.loc(ctx)
 

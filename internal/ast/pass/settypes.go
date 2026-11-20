@@ -283,7 +283,8 @@ func (t *setTypesPass) catchAssignment(st *ast.Assignment) {
 			block = target.GlobalOf.Globals
 		}
 
-		if target.Name != "_" && block.GetVar(target.Name) == nil {
+		// an element target needs an existing array, its index check reports a missing one
+		if target.Name != "_" && target.Element == nil && block.GetVar(target.Name) == nil {
 			t.errorf(target.Location, "%v isn't assigned when %v fails, assign it before or end the catch block with return or fail", target.Name, callName(st))
 		}
 	}
@@ -334,12 +335,36 @@ func (t *setTypesPass) assignment(st *ast.Assignment) {
 	}
 
 	for i, target := range st.Targets {
+		if target.Element != nil {
+			t.assignElement(target, types[i])
+			continue
+		}
+
 		block := t.block
 		if target.GlobalOf != nil {
 			block = target.GlobalOf.Globals
 		}
 
 		t.assignTarget(block, target, types[i])
+	}
+}
+
+// assignElement checks the value of x[i] = value, the index check of the target already
+// reports an x that can't be indexed
+func (t *setTypesPass) assignElement(target *ast.AssignmentTarget, tp common.Type) {
+	array := target.Element.Value.Types()
+	if !known(array) || !known([]common.Type{tp}) {
+		return
+	}
+
+	if array[0].Is(stringType) {
+		t.errorf(target.Element.Location, "cannot assign to a character of string '%v', strings can't be changed", target.Name)
+		return
+	}
+
+	el := target.Element.Types()[0]
+	if array[0].IsArray() && !tp.Is(el) {
+		t.errorf(target.Element.Location, "an element of '%v' must be of type %v, not %v", target.Name, el.Print(), tp.Print())
 	}
 }
 
@@ -403,7 +428,7 @@ func (t *setTypesPass) loopValue(st *ast.ForIn) common.Type {
 		return over[0].(*common.ArrayType).ElementType
 	}
 
-	if len(over) == 1 && over[0].Is(&common.PipeType{}) {
+	if len(over) == 1 && (over[0].Is(&common.PipeType{}) || over[0].Is(stringType)) {
 		return stringType
 	}
 
@@ -412,7 +437,7 @@ func (t *setTypesPass) loopValue(st *ast.ForIn) common.Type {
 		return intType
 	}
 
-	t.errorf(st.Location, "for in needs an array or an int, not %v", printTypes(over))
+	t.errorf(st.Location, "for in needs an array, a string or an int, not %v", printTypes(over))
 	return unknownTypes[0]
 }
 

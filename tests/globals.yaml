@@ -213,6 +213,20 @@ tests:
       3 a b d  e 0 3 2
       4 3
 
+  - name: write an element
+    code: |
+      global names = ["a", "b"]
+
+      func rename(i int) {
+        global names[i] = "z"
+      }
+
+      rename(1)
+      global names[0] = "y"
+      println(names[0], names[1])
+    expected: |
+      y z
+
   - name: swap
     code: |
       global a = 1
@@ -407,6 +421,29 @@ tests:
       }
     errors:
       - globals/plain assignment in a function.lsh Ln:4 Col:3 count is a global variable, write it with global count = ... or use another name
+
+  - name: element write without global
+    code: |
+      global items = [1]
+
+      func f() {
+        items[0] = 2
+      }
+    errors:
+      - globals/element write without global.lsh Ln:4 Col:3 items is a global variable, write its elements with global items[...] = ...
+
+  - name: element write before the definition
+    code: |
+      global items[0] = 1
+      global items = [1]
+    errors:
+      - globals/element write before the definition.lsh Ln:1 Col:8 items is used before it is assigned at globals/element write before the definition.lsh Ln:2 Col:8
+
+  - name: element in the definition of a package global
+    code: |
+      import "./globalelement"
+    errors:
+      - std/globalelement/globalelement.lsh Ln:2 Col:8 a global definition can't assign an element, items[...] = ... only works in a function
 
   - name: plain assignment at the top level
     code: |

@@ -89,7 +89,7 @@ catchClause: CATCH name = ID block;
 block: LCUR (statement)* RCUR;
 
 assignment
-    : ID (COMMA ID)* op = (
+    : assignTarget (COMMA assignTarget)* op = (
         ASSIGN
         | PLUS_ASSIGN
         | MINUS_ASSIGN
@@ -98,6 +98,8 @@ assignment
         | MOD_ASSIGN
     ) expression (COMMA expression)*
     ;
+
+assignTarget: ID (LSQ position = expression RSQ)?;
 
 globalAssignment: GLOBAL assignment;
 

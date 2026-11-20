@@ -74,6 +74,24 @@ L_ret0="${1:$2:$(( $3 - $2 ))}"`,
 		uses: []string{"findUtf8", "checkSlice"},
 	})
 
+	// Every ${s:i:1} counts the characters of the whole string, so one per character
+	// would be quadratic. Cutting off chunks first makes that n²/300.
+	register(&bFunc{
+		name: "strChars",
+		code: `local LC_ALL="$L_utf8"
+local L_s="$1" L_c L_i L_n=0
+L_ret0=()
+while [ -n "$L_s" ]; do
+	L_c="${L_s:0:300}"
+	L_s="${L_s:300}"
+	for (( L_i = 0; L_i < ${#L_c}; L_i++ )); do
+		L_ret0[L_n]="${L_c:L_i:1}"
+		L_n=$(( L_n + 1 ))
+	done
+done`,
+		uses: []string{"findUtf8"},
+	})
+
 	// The text never reaches $(( )): bash would evaluate it as an expression, a[$(cmd)]
 	// runs cmd, a leading 0 means octal and too many digits wrap around. 19 digits are
 	// compared to the int range in two parts that each fit an int. The digits are listed,

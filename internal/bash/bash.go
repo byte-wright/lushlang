@@ -132,6 +132,12 @@ func (b *bash) block(block *bcode.Block) {
 
 			b.print(scope + cmd.Var.Name + "=" + b.atom(cmd.Value))
 
+		case *bcode.SetElement:
+			// bash would add an element past the end, and leave a gap before it
+			b.useFunc("checkIndex")
+			b.print("lsh__checkIndex " + b.atom(cmd.Index) + " " + arrayLength(cmd.Array) + " " + b.location(cmd.Location))
+			b.print(cmd.Array.Name + "[" + b.arith(cmd.Index) + "]=" + b.atom(cmd.Value))
+
 		case *bcode.Func:
 			call := b.call(cmd)
 			if !cmd.Try {
@@ -330,7 +336,12 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!L_i}"
 
 	// the str helpers return in L_ret0, it's safe to read because bcode assigns
-	// every Len, Index and Slice to a variable right away
+	// every Len, Index, Slice and Chars to a variable right away
+	case *bcode.Chars:
+		b.useFunc("strChars")
+		b.print("lsh__strChars " + b.atom(at.Value))
+		return `("${L_ret0[@]}")`
+
 	case *bcode.Slice:
 		from, to := b.atom(at.From), b.atom(at.To)
 		if !at.Value.Type().IsArray() {

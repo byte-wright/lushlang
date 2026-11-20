@@ -102,6 +102,9 @@ func (p *initOrderPass) declare(pkg *ast.Package) {
 			switch {
 			case target.Name == "_":
 
+			case target.Element != nil:
+				p.errorf(target.Location, "a global definition can't assign an element, %v[...] = ... only works in a function", target.Name)
+
 			case first != nil:
 				p.errorf(target.Location, "global variable %v is already defined at %v", target.Name, first)
 
@@ -128,7 +131,7 @@ func (p *initOrderPass) declareMain() {
 		}
 
 		for _, target := range assignment.Targets {
-			if target.Name != "_" && p.vars[main][target.Name] == nil {
+			if target.Name != "_" && target.Element == nil && p.vars[main][target.Name] == nil {
 				p.vars[main][target.Name] = &initNode{
 					kind:       mainGlobalNode,
 					label:      target.Name,
@@ -272,10 +275,14 @@ func (p *initOrderPass) Statement(statement ast.Statement) {
 			target.GlobalOf = pkg
 			// a write counts as a use: a package's initial value would overwrite it, and in
 			// main it would come before the definition. A top level write of main is never
-			// early, it's the definition or after it.
+			// early, it's the definition or after it. An element target reads the array,
+			// that reference comes from its index expression.
 			if statement != p.root {
 				p.refer(node, target.Location)
 			}
+
+		case node != nil && target.Element != nil:
+			p.errorf(target.Location, "%v is a global variable, write its elements with global %v[...] = ...", target.Name, target.Name)
 
 		case node != nil:
 			p.errorf(target.Location, "%v is a global variable, write it with global %v = ... or use another name", target.Name, target.Name)

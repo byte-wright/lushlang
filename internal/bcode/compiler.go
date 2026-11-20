@@ -18,6 +18,13 @@ type Compiler struct {
 	// steps holds the step of each loop around the current statement, nil for loops
 	// without one
 	steps []*ast.Assignment
+	// elements are the evaluated element targets of the current assignment
+	elements map[*ast.AssignmentTarget]*elementTarget
+}
+
+type elementTarget struct {
+	array *VarValue
+	index Atom
 }
 
 func Compile(program *ast.Program) (*Program, error) {
@@ -25,6 +32,7 @@ func Compile(program *ast.Program) (*Program, error) {
 		prog:       &Program{},
 		ast:        program,
 		namespaces: map[*ast.Package]string{program.Main: "main"},
+		elements:   map[*ast.AssignmentTarget]*elementTarget{},
 	}
 
 	// the number makes them unique, the name is only for reading the generated code
@@ -210,6 +218,10 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 	case *ast.EnvVar:
 		return []Value{&EnvVarValue{Name: x.Name}}
 
+	case *ast.TargetValue:
+		el := c.elements[x.Target]
+		return []Value{block.setTmp(&Index{Value: el.array, Position: el.index, Location: x.Target.Element.Location})}
+
 	case *ast.Add:
 		a := c.evalExpression(block, x.A)
 		b := c.evalExpression(block, x.B)
@@ -389,6 +401,13 @@ func (c *Compiler) evalExpressions(block *Block, exps []ast.Expression) []Value 
 }
 
 func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
+	targets := map[string]bool{}
+	for _, target := range ass.Targets {
+		targets[c.targetName(target)] = true
+	}
+
+	c.evalElements(b, ass.Targets, targets)
+
 	if ass.Catch != nil {
 		assign := func(then *Block, results []Value) {
 			c.assignTargets(b, then, ass.Targets, results)
@@ -409,11 +428,6 @@ func (c *Compiler) evalAssignment(b *Block, ass *ast.Assignment) {
 		b.add(&Append{Array: array, Elements: c.evalExpressions(b, call.Parameters[1:]), Target: array})
 
 		return
-	}
-
-	targets := map[string]bool{}
-	for _, target := range ass.Targets {
-		targets[c.targetName(target)] = true
 	}
 
 	results := []Value{}
@@ -437,6 +451,12 @@ func (c *Compiler) assignTargets(scope, b *Block, targets []*ast.AssignmentTarge
 			continue
 		}
 
+		if target.Element != nil {
+			el := c.elements[target]
+			b.add(&SetElement{Array: el.array, Index: el.index, Value: results[i], Location: target.Element.Location})
+			continue
+		}
+
 		v := &VarValue{Name: c.targetName(target), T: results[i].Type()}
 		if target.GlobalOf != nil {
 			b.add(&Assignment{Var: v, Value: results[i], Global: true})
@@ -447,6 +467,24 @@ func (c *Compiler) assignTargets(scope, b *Block, targets []*ast.AssignmentTarge
 			scope.registerVar(v)
 		}
 		b.add(&Assignment{Var: v, Value: results[i]})
+	}
+}
+
+// evalElements evaluates the arrays and indexes of the element targets. Like in Go, that
+// comes before the values, so i, a[i] = 1, 2 assigns the element at the old i.
+func (c *Compiler) evalElements(b *Block, targets []*ast.AssignmentTarget, names map[string]bool) {
+	for _, target := range targets {
+		if target.Element == nil {
+			continue
+		}
+
+		array := c.evalExpression(b, target.Element.Value)[0].(*VarValue)
+		index := c.evalExpression(b, target.Element.Position)[0]
+		if v, isVar := index.(*VarValue); isVar && names[v.Name] {
+			index = b.setTmp(v)
+		}
+
+		c.elements[target] = &elementTarget{array: array, index: index}
 	}
 }
 
@@ -464,7 +502,7 @@ func selfAppend(ass *ast.Assignment) *ast.Func {
 
 	array, isVar := call.Parameters[0].(*ast.Var)
 	target := ass.Targets[0]
-	if !isVar || array.Name != target.Name || array.GlobalOf != target.GlobalOf {
+	if !isVar || target.Element != nil || array.Name != target.Name || array.GlobalOf != target.GlobalOf {
 		return nil
 	}
 
@@ -669,8 +707,12 @@ func (c *Compiler) evalForInStatement(block *Block, st *ast.ForIn) {
 	body := block.subBlock()
 	var loop Command
 
-	if st.From == nil && st.Over.Types()[0].IsArray() {
+	over := st.Over.Types()[0]
+	if st.From == nil && (over.IsArray() || over.Is(&common.BasicType{Type: common.String})) {
 		array := block.asVar(c.evalExpression(block, st.Over)[0])
+		if !over.IsArray() {
+			array = block.setTmp(&Chars{Value: array})
+		}
 		element := block.nextTmp(array.T.(*common.ArrayType).ElementType)
 		block.registerVar(element)
 

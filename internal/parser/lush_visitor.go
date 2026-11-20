@@ -56,6 +56,9 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#assignment.
 	VisitAssignment(ctx *AssignmentContext) interface{}
 
+	// Visit a parse tree produced by LushParser#assignTarget.
+	VisitAssignTarget(ctx *AssignTargetContext) interface{}
+
 	// Visit a parse tree produced by LushParser#globalAssignment.
 	VisitGlobalAssignment(ctx *GlobalAssignmentContext) interface{}
 

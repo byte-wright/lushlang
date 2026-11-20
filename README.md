@@ -28,7 +28,9 @@ Its in no way optimized and quite rudimentary.
     whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
     This needs a UTF-8 locale on the system, which nearly every system has. Without one,
     a script that uses these operations exits with code 2 before it starts
-  - arrays (very slow)
+  - arrays (very slow). `a[i] = x` and `a[i] += x` set an element, an index out of range
+    ends the script with exit code 2 like reading it. Arrays are values like strings:
+    `b = a` and a call copy them, so changing an element only changes that variable
   - functions with params and (multiple) return params
   - errors with `fail`, `try` and `catch`, see [Errors](#errors)
   - if, else if, else
@@ -55,14 +57,16 @@ Loops
       for i = 0; i < 3; i = i + 1 { }
       for x in ["a", "b"] { }      // x is the element
       for x, i in ["a", "b"] { }   // i is the index
+      for c, i in "héllo" { }      // c is a character as a string, i its index
       for x in 7 { }               // 0 to 6
       for x in 3 until 7 { }       // 3 to 6
 
   - `break` leaves the innermost loop, `continue` goes on with its next iteration. In the
     `for init; cond; step` form, continue runs the step first, like in Go
-  - `for x in` reads the array, or the numbers, once before the first iteration. Changing
-    them in the body doesn't change what the loop goes over, and neither does changing `x`
-    or `i`
+  - the characters of a string count like `len` and `s[i]`, so `s[i] == c`
+  - `for x in` reads the array, the string or the numbers once before the first iteration.
+    Changing them in the body doesn't change what the loop goes over, and neither does
+    changing `x` or `i`
   - `x` and `i` only exist in the loop. A variable, parameter or outer loop variable with
     the same name is a compile error, so a loop can't change one by accident
 
@@ -178,9 +182,9 @@ package, other packages can read it as `pkg.name`.
     one comes after everything it reads or writes, also through the functions it calls,
     and a cycle is a compile error. Apart from that, imported packages come first, each in
     source order
-  - every write needs `global` too, and only works inside the global's package. A plain
-    `x = ...` with the name of a global is a compile error, so adding a global can't
-    silently change what a function does
+  - every write needs `global` too, also `global x[i] = ...`, and only works inside the
+    global's package. A plain `x = ...` with the name of a global is a compile error, so
+    adding a global can't silently change what a function does
   - locals and parameters can't have the name of a global of their package
 
 Tests

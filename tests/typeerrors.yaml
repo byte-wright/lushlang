@@ -424,3 +424,27 @@ tests:
       a = args("x")
     errors:
       - "typeerrors/args takes no arguments.lsh Ln:1 Col:5 args takes 0 arguments, not 1"
+  - name: assign an element
+    code: |
+      s = "abc"
+      s[0] = "x"
+      n = 1
+      n[0] = 2
+      a = [1]
+      a[0] = "x"
+      a["x"] = 1
+      b[0] = 1
+      a[0] += "x"
+      s[1] += "y"
+      for c in s {
+        c[0] = "z"
+      }
+    errors:
+      - "typeerrors/assign an element.lsh Ln:2 Col:1 cannot assign to a character of string 's', strings can't be changed"
+      - "typeerrors/assign an element.lsh Ln:4 Col:1 cannot index a value of type int"
+      - "typeerrors/assign an element.lsh Ln:6 Col:1 an element of 'a' must be of type int, not string"
+      - "typeerrors/assign an element.lsh Ln:7 Col:1 index must be of type int, not string"
+      - "typeerrors/assign an element.lsh Ln:8 Col:1 variable 'b' is not defined"
+      - "typeerrors/assign an element.lsh Ln:9 Col:1 operator '+' can't be used with int and string"
+      - "typeerrors/assign an element.lsh Ln:10 Col:1 cannot assign to a character of string 's', strings can't be changed"
+      - "typeerrors/assign an element.lsh Ln:12 Col:3 cannot assign to a character of string 'c', strings can't be changed"

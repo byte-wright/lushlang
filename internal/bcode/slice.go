@@ -37,3 +37,21 @@ func (i *Index) Type() common.Type {
 
 	panic(fmt.Sprintf("invalid type to index %T", t))
 }
+
+// SetElement assigns Value to the element of Array at Index, an index out of range ends
+// the script like reading it
+type SetElement struct {
+	Array    *VarValue
+	Index    Atom
+	Value    Atom
+	Location *common.Location
+}
+
+// Chars are the characters of a string, as an array of strings
+type Chars struct {
+	Value *VarValue
+}
+
+func (c *Chars) Type() common.Type {
+	return &common.ArrayType{ElementType: c.Value.Type()}
+}

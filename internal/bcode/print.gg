@@ -25,6 +25,12 @@ bcode.VarValue type:
 bcode.Index type:
   @{.Value}[@{.Position}]
 
+bcode.SetElement type:
+  ${.Array.Name}[@{.Index}] = @{.Value}
+
+bcode.Chars type:
+  chars(@{.Value})
+
 bcode.Slice type:
   @{.Value}[{if .From}@{.From}{end}:{if .To}@{.To}{end}]
 

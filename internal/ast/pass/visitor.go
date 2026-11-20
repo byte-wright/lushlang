@@ -69,6 +69,12 @@ func (c context) evalStatement(statement ast.Statement) {
 
 	switch st := statement.(type) {
 	case *ast.Assignment:
+		// like in Go, the indexes on the left come before the values
+		for _, target := range st.Targets {
+			if target.Element != nil {
+				c.evalExpression(target.Element)
+			}
+		}
 		for _, exp := range st.Expressions {
 			c.evalExpression(exp)
 		}
@@ -243,7 +249,8 @@ func (c context) evalExpression(expression ast.Expression) {
 		c.evalExpression(exp.False)
 	case *ast.Group:
 		c.evalExpression(exp.Expression)
-	case *ast.String, *ast.Number, *ast.Bool, *ast.Var, *ast.EnvVar:
+	// the target of a TargetValue visits its index
+	case *ast.String, *ast.Number, *ast.Bool, *ast.Var, *ast.EnvVar, *ast.TargetValue:
 
 	default:
 		common.IncompleteSwitch(exp)

@@ -16,6 +16,65 @@ tests:
       0 a
       1 b
 
+  - name: Characters of a string
+    description: like s[i], a character is a UTF-8 code point and i counts characters
+    code: |
+      for c in "ab" {
+        println(c)
+      }
+      for c, i in "h€ *" {
+        println(i, "[" + c + "]")
+      }
+      s = "x\ny"
+      for c in s {
+        s = "changed"
+        print("<" + c + ">")
+      }
+      println()
+      for c in "" {
+        println("never")
+      }
+      println(s)
+    expected: |
+      a
+      b
+      0 [h]
+      1 [€]
+      2 [ ]
+      3 [*]
+      <x><
+      ><y>
+      changed
+
+  - name: Characters of a long string
+    description: the characters are read in chunks of 300, the ones around the borders are in place
+    code: |
+      long = ""
+      for i in 350 {
+        long += "é" + i % 10
+      }
+      n = 0
+      same = true
+      for c, i in long {
+        n += 1
+        if long[i] != c {
+          same = false
+        }
+      }
+      println(n, len(long), same, long[299], long[300], long[301])
+    expected: |
+      700 700 true 9 é 0
+
+  - name: Characters in the C locale
+    env: [LC_ALL=C]
+    code: |
+      for c in "é€" {
+        println(c)
+      }
+    expected: |
+      é
+      €
+
   - name: Numbers
     code: |
       for x in 3 {
@@ -228,7 +287,7 @@ tests:
 
   - name: Wrong types
     code: |
-      for x in "abc" {
+      for x in true {
       }
       for x, i in 3 {
       }
@@ -237,7 +296,7 @@ tests:
       for x in "a" until true {
       }
     errors:
-      - "forin/Wrong types.lsh Ln:1 Col:1 for in needs an array or an int, not string"
+      - "forin/Wrong types.lsh Ln:1 Col:1 for in needs an array, a string or an int, not bool"
       - "forin/Wrong types.lsh Ln:3 Col:8 only a loop over an array has an index"
       - "forin/Wrong types.lsh Ln:5 Col:8 only a loop over an array has an index"
       - "forin/Wrong types.lsh Ln:7 Col:1 loop start must be of type int, not string"

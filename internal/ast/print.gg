@@ -76,7 +76,7 @@ ast.Block type:
   {-end}
 
 ast.Assignment type:
-  {if .Global}global {end}{for i, n, first in .Targets}{if !first}, {end}${n.Name}{end}
+  {if .Global}global {end}{for i, n, first in .Targets}{if !first}, {end}${n.Name}{if n.Element}[@{n.Element.Position}]{end}{end}
   ${-" = "-}
   @{.Expressions}{if .Catch} @{.Catch}{end}
 
@@ -108,6 +108,9 @@ ast.Array type:
 
 ast.Index type:
   (@{.Value})[@{.Position}]
+
+ast.TargetValue type:
+  ${.Target.Name}[@{.Target.Element.Position}]
 
 ast.Slice type:
   (@{.Value})[{if .From}@{.From}{end}:{if .To}@{.To}{end}]

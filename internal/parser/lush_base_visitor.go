@@ -72,6 +72,10 @@ func (v *BaseLushVisitor) VisitAssignment(ctx *AssignmentContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitAssignTarget(ctx *AssignTargetContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitGlobalAssignment(ctx *GlobalAssignmentContext) interface{} {
 	return v.VisitChildren(ctx)
 }
