@@ -1,5 +1,3 @@
-order: 2
-name: Conversion
 tests:
   - name: string plus int and bool
     description: a string on the left takes the text of an int or bool on the right

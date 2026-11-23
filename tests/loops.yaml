@@ -1,5 +1,3 @@
-order: 2
-name: Loops
 tests:
   - name: For loop
     description: Normal loop
@@ -185,9 +183,9 @@ tests:
         f()
       }
     errors:
-      - "loops/Break and continue outside of a loop.lsh Ln:1 Col:1 break is not in a loop"
-      - "loops/Break and continue outside of a loop.lsh Ln:3 Col:3 continue is not in a loop"
-      - "loops/Break and continue outside of a loop.lsh Ln:7 Col:3 break is not in a loop"
+      - "loops/Break and continue outside of a loop.lsh:1:1: break is not in a loop"
+      - "loops/Break and continue outside of a loop.lsh:3:3: continue is not in a loop"
+      - "loops/Break and continue outside of a loop.lsh:7:3: break is not in a loop"
 
   - name: A loop with a break doesn't end a function
     code: |
@@ -205,8 +203,8 @@ tests:
         }
       }
     errors:
-      - "loops/A loop with a break doesn't end a function.lsh Ln:7 Col:1 missing return at the end of function f"
-      - "loops/A loop with a break doesn't end a function.lsh Ln:13 Col:1 missing return at the end of function g"
+      - "loops/A loop with a break doesn't end a function.lsh:7:1: missing return at the end of function f"
+      - "loops/A loop with a break doesn't end a function.lsh:13:1: missing return at the end of function g"
 
   - name: Condition must be a bool
     code: |
@@ -214,4 +212,4 @@ tests:
         println(1)
       }
     errors:
-      - "loops/Condition must be a bool.lsh Ln:1 Col:1 for condition must be of type bool, not int"
+      - "loops/Condition must be a bool.lsh:1:1: for condition must be of type bool, not int"

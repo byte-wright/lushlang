@@ -1,4 +1,3 @@
-name: Cmd
 tests:
   - name: collect a string
     code: |
@@ -522,18 +521,18 @@ tests:
       try cmd("ls", dir: string)
       try cmd("ls", stdin: string)
     errors:
-      - "cmd/option errors.lsh Ln:1 Col:5 cmd needs the name of the command"
-      - "cmd/option errors.lsh Ln:2 Col:5 cmd needs the name of the command"
-      - "cmd/option errors.lsh Ln:3 Col:15 stdout: takes string, []string, pipe, file(path), appendFile(path) or _"
-      - "cmd/option errors.lsh Ln:4 Col:15 stderr: takes string, []string, pipe, file(path), appendFile(path), stdout or _"
-      - "cmd/option errors.lsh Ln:5 Col:15 exit: takes int, bool or _"
-      - "cmd/option errors.lsh Ln:6 Col:15 cmd has no option foo:, it has stdout:, stderr:, exit:, stdin:, dir: and $NAME: for env vars"
-      - "cmd/option errors.lsh Ln:7 Col:26 option stdout: is given twice"
-      - "cmd/option errors.lsh Ln:8 Col:20 stdout: must come before exit:, the results are in the order stdout, stderr, exit"
-      - "cmd/option errors.lsh Ln:9 Col:26 the arguments of cmd come before its options"
-      - "cmd/option errors.lsh Ln:10 Col:15 file takes 1 argument, the path, not 0"
-      - "cmd/option errors.lsh Ln:11 Col:15 dir: takes the path of a folder, not a type"
-      - "cmd/option errors.lsh Ln:12 Col:15 stdin: takes a string, file(path) or a cmd with stdout: pipe, not a type"
+      - "cmd/option errors.lsh:1:5: cmd needs the name of the command"
+      - "cmd/option errors.lsh:2:5: cmd needs the name of the command"
+      - "cmd/option errors.lsh:3:15: stdout: takes string, []string, pipe, file(path), appendFile(path) or _"
+      - "cmd/option errors.lsh:4:15: stderr: takes string, []string, pipe, file(path), appendFile(path), stdout or _"
+      - "cmd/option errors.lsh:5:15: exit: takes int, bool or _"
+      - "cmd/option errors.lsh:6:15: cmd has no option foo:, it has stdout:, stderr:, exit:, stdin:, dir: and $NAME: for env vars"
+      - "cmd/option errors.lsh:7:26: option stdout: is given twice"
+      - "cmd/option errors.lsh:8:20: stdout: must come before exit:, the results are in the order stdout, stderr, exit"
+      - "cmd/option errors.lsh:9:26: the arguments of cmd come before its options"
+      - "cmd/option errors.lsh:10:15: file takes 1 argument, the path, not 0"
+      - "cmd/option errors.lsh:11:15: dir: takes the path of a folder, not a type"
+      - "cmd/option errors.lsh:12:15: stdin: takes a string, file(path) or a cmd with stdout: pipe, not a type"
 
   - name: argument and option types
     code: |
@@ -548,16 +547,16 @@ tests:
       try cmd("ls", $1: "a")
       try cmd("cat", cmd("ls", stdout: pipe)...)
     errors:
-      - "cmd/argument and option types.lsh Ln:1 Col:15 argument 2 of cmd is []string, spread it with ... to pass its elements"
-      - "cmd/argument and option types.lsh Ln:2 Col:15 argument 2 of cmd is string, only an array can be spread with ..."
-      - "cmd/argument and option types.lsh Ln:3 Col:9 the name of the command must be a string, not int"
-      - "cmd/argument and option types.lsh Ln:4 Col:9 the name of the command can't be spread with ..."
-      - "cmd/argument and option types.lsh Ln:5 Col:15 the path of a file must be of type string, not int"
-      - "cmd/argument and option types.lsh Ln:6 Col:5 dir must be of type string, not int"
-      - "cmd/argument and option types.lsh Ln:7 Col:5 stdin must be of type string, not int"
-      - "cmd/argument and option types.lsh Ln:8 Col:15 the value of $X must be a string, int or bool, not []string"
-      - "cmd/argument and option types.lsh Ln:9 Col:15 $1 is not an environment variable"
-      - "cmd/argument and option types.lsh Ln:10 Col:16 argument 2 of cmd is a pipe, it can't be spread with ..."
+      - "cmd/argument and option types.lsh:1:15: argument 2 of cmd is []string, spread it with ... to pass its elements"
+      - "cmd/argument and option types.lsh:2:15: argument 2 of cmd is string, only an array can be spread with ..."
+      - "cmd/argument and option types.lsh:3:9: the name of the command must be a string, not int"
+      - "cmd/argument and option types.lsh:4:9: the name of the command can't be spread with ..."
+      - "cmd/argument and option types.lsh:5:15: the path of a file must be of type string, not int"
+      - "cmd/argument and option types.lsh:6:5: dir must be of type string, not int"
+      - "cmd/argument and option types.lsh:7:5: stdin must be of type string, not int"
+      - "cmd/argument and option types.lsh:8:15: the value of $X must be a string, int or bool, not []string"
+      - "cmd/argument and option types.lsh:9:15: $1 is not an environment variable"
+      - "cmd/argument and option types.lsh:10:16: argument 2 of cmd is a pipe, it can't be spread with ..."
 
   - name: result errors
     code: |
@@ -574,14 +573,14 @@ tests:
         try cmd("ls")
       }
     errors:
-      - "cmd/result errors.lsh Ln:1 Col:5 the results of cmd aren't used, assign them or discard the streams with _"
-      - "cmd/result errors.lsh Ln:2 Col:1 the results of cmd aren't used, assign them or discard the streams with _"
-      - "cmd/result errors.lsh Ln:3 Col:5 cmd doesn't return a value"
-      - "cmd/result errors.lsh Ln:4 Col:5 cmd can fail, call it with try or catch the error"
-      - "cmd/result errors.lsh Ln:5 Col:9 cmd can't fail, it needs no try"
-      - "cmd/result errors.lsh Ln:6 Col:19 cmd can't fail, there is no error to catch"
-      - "cmd/result errors.lsh Ln:8 Col:10 cmd doesn't return a value"
-      - "cmd/result errors.lsh Ln:11 Col:7 try in function f, which can't fail: add error to its results or catch the error"
+      - "cmd/result errors.lsh:1:5: the results of cmd aren't used, assign them or discard the streams with _"
+      - "cmd/result errors.lsh:2:1: the results of cmd aren't used, assign them or discard the streams with _"
+      - "cmd/result errors.lsh:3:5: cmd doesn't return a value"
+      - "cmd/result errors.lsh:4:5: cmd can fail, call it with try or catch the error"
+      - "cmd/result errors.lsh:5:9: cmd can't fail, it needs no try"
+      - "cmd/result errors.lsh:6:19: cmd can't fail, there is no error to catch"
+      - "cmd/result errors.lsh:8:10: cmd doesn't return a value"
+      - "cmd/result errors.lsh:11:7: try in function f, which can't fail: add error to its results or catch the error"
 
   - name: pipe errors
     code: |
@@ -605,14 +604,14 @@ tests:
       w = 5 {
       }
     errors:
-      - "cmd/pipe errors.lsh Ln:1 Col:1 the pipe of cmd isn't read, read it with for line in cmd(...), in the block after the call or as stdin: of another cmd"
-      - "cmd/pipe errors.lsh Ln:2 Col:1 the block after cmd reads its pipe, it needs stdout: pipe or stderr: pipe"
-      - "cmd/pipe errors.lsh Ln:4 Col:1 lush reads one pipe per cmd, stdout: and stderr: can't both be pipe"
-      - "cmd/pipe errors.lsh Ln:6 Col:10 a cmd in a for can't have results, get them with the block after the call: cmd(...) { for line in stdout { } }"
-      - "cmd/pipe errors.lsh Ln:8 Col:23 exit: int isn't possible in a cmd that feeds another one, it has no results"
-      - "cmd/pipe errors.lsh Ln:9 Col:27 a cmd that feeds another one takes no try, the outer cmd fails when it fails"
-      - "cmd/pipe errors.lsh Ln:10 Col:47 stderr: string isn't possible in a cmd that feeds another one, it has no results"
-      - "cmd/pipe errors.lsh Ln:12 Col:7 stdout is a pipe, only for line in stdout can read it"
-      - "cmd/pipe errors.lsh Ln:13 Col:11 stdout is a pipe, only for line in stdout can read it"
-      - "cmd/pipe errors.lsh Ln:16 Col:1 pipe variable stdout is already defined"
-      - "cmd/pipe errors.lsh Ln:18 Col:7 only a cmd has a block after it, as the only value of the assignment"
+      - "cmd/pipe errors.lsh:1:1: the pipe of cmd isn't read, read it with for line in cmd(...), in the block after the call or as stdin: of another cmd"
+      - "cmd/pipe errors.lsh:2:1: the block after cmd reads its pipe, it needs stdout: pipe or stderr: pipe"
+      - "cmd/pipe errors.lsh:4:1: lush reads one pipe per cmd, stdout: and stderr: can't both be pipe"
+      - "cmd/pipe errors.lsh:6:10: a cmd in a for can't have results, get them with the block after the call: cmd(...) { for line in stdout { } }"
+      - "cmd/pipe errors.lsh:8:23: exit: int isn't possible in a cmd that feeds another one, it has no results"
+      - "cmd/pipe errors.lsh:9:27: a cmd that feeds another one takes no try, the outer cmd fails when it fails"
+      - "cmd/pipe errors.lsh:10:47: stderr: string isn't possible in a cmd that feeds another one, it has no results"
+      - "cmd/pipe errors.lsh:12:7: stdout is a pipe, only for line in stdout can read it"
+      - "cmd/pipe errors.lsh:13:11: stdout is a pipe, only for line in stdout can read it"
+      - "cmd/pipe errors.lsh:16:1: pipe variable stdout is already defined"
+      - "cmd/pipe errors.lsh:18:7: only a cmd has a block after it, as the only value of the assignment"

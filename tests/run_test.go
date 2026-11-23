@@ -24,20 +24,21 @@ import (
 )
 
 type TestSuite struct {
-	Name  string  `json:"name"`
-	Tests []*Test `json:"tests"`
+	Name  string  `yaml:"-"`
+	Tests []*Test `yaml:"tests"`
 }
 
 type Test struct {
-	Name     string   `json:"name"`
-	Only     bool     `json:"only"`
-	Code     string   `json:"code"`
-	Args     []string `json:"args"`
-	Env      []string `json:"env"`
-	Expected string   `json:"expected"`
-	Stderr   string   `json:"stderr"`
-	Exit     int      `json:"exit"`
-	Errors   []string `json:"errors"`
+	Name        string   `yaml:"name"`
+	Description string   `yaml:"description"`
+	Only        bool     `yaml:"only"`
+	Code        string   `yaml:"code"`
+	Args        []string `yaml:"args"`
+	Env         []string `yaml:"env"`
+	Expected    string   `yaml:"expected"`
+	Stderr      string   `yaml:"stderr"`
+	Exit        int      `yaml:"exit"`
+	Errors      []string `yaml:"errors"`
 }
 
 var scripts = "scripts"
@@ -66,7 +67,7 @@ func TestAll(t *testing.T) {
 				t.Fatal(err)
 			}
 			suite := &TestSuite{}
-			err = yaml.Unmarshal(d, &suite)
+			err = yaml.UnmarshalStrict(d, &suite)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -113,6 +114,12 @@ func runSuites(t *testing.T, suites []*TestSuite, only bool, run runner) {
 				if !only || tc.Only {
 					t.Run(tc.Name, func(t *testing.T) {
 						t.Parallel()
+
+						defer func() {
+							if t.Failed() && tc.Description != "" {
+								t.Log(tc.Description)
+							}
+						}()
 
 						prog, errors, err := parser.Parse(string(tc.Code), suite.Name+"/"+tc.Name+".lsh", "./std", os.DirFS("../std"))
 						if err != nil {

@@ -1,5 +1,3 @@
-order: 2
-name: Boolean operations
 tests:
   - name: Basic operations
     description: Normal precende

@@ -17,7 +17,7 @@ func init() {
 	register(&bFunc{
 		name: "checkIndex",
 		code: `if (( $1 < 0 || $1 >= $2 )); then
-	printf '%s index out of range [%s] with length %s\n' "$3" "$1" "$2" >&2
+	printf '%s: index out of range [%s] with length %s\n' "$3" "$1" "$2" >&2
 	exit 2
 fi`,
 	})
@@ -25,7 +25,7 @@ fi`,
 	register(&bFunc{
 		name: "checkSlice",
 		code: `if (( $1 < 0 || $1 > $2 || $2 > $3 )); then
-	printf '%s slice bounds out of range [%s:%s] with length %s\n' "$4" "$1" "$2" "$3" >&2
+	printf '%s: slice bounds out of range [%s:%s] with length %s\n' "$4" "$1" "$2" "$3" >&2
 	exit 2
 fi`,
 	})

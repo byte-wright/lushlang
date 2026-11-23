@@ -1,5 +1,3 @@
-order: 3
-name: Globals
 tests:
   - name: function reads a global
     code: |
@@ -420,7 +418,7 @@ tests:
         count = 1
       }
     errors:
-      - globals/plain assignment in a function.lsh Ln:4 Col:3 count is a global variable, write it with global count = ... or use another name
+      - "globals/plain assignment in a function.lsh:4:3: count is a global variable, write it with global count = ... or use another name"
 
   - name: element write without global
     code: |
@@ -430,20 +428,20 @@ tests:
         items[0] = 2
       }
     errors:
-      - globals/element write without global.lsh Ln:4 Col:3 items is a global variable, write its elements with global items[...] = ...
+      - "globals/element write without global.lsh:4:3: items is a global variable, write its elements with global items[...] = ..."
 
   - name: element write before the definition
     code: |
       global items[0] = 1
       global items = [1]
     errors:
-      - globals/element write before the definition.lsh Ln:1 Col:8 items is used before it is assigned at globals/element write before the definition.lsh Ln:2 Col:8
+      - "globals/element write before the definition.lsh:1:8: items is used before it is assigned at globals/element write before the definition.lsh:2:8"
 
   - name: element in the definition of a package global
     code: |
       import "./globalelement"
     errors:
-      - std/globalelement/globalelement.lsh Ln:2 Col:8 a global definition can't assign an element, items[...] = ... only works in a function
+      - "std/globalelement/globalelement.lsh:2:8: a global definition can't assign an element, items[...] = ... only works in a function"
 
   - name: plain assignment at the top level
     code: |
@@ -451,7 +449,7 @@ tests:
 
       count = 1
     errors:
-      - globals/plain assignment at the top level.lsh Ln:3 Col:1 count is a global variable, write it with global count = ... or use another name
+      - "globals/plain assignment at the top level.lsh:3:1: count is a global variable, write it with global count = ... or use another name"
 
   - name: loop variable named like a global
     code: |
@@ -462,8 +460,8 @@ tests:
         }
       }
     errors:
-      - globals/loop variable named like a global.lsh Ln:4 Col:7 i is a global variable, write it with global i = ... or use another name
-      - globals/loop variable named like a global.lsh Ln:4 Col:21 i is a global variable, write it with global i = ... or use another name
+      - "globals/loop variable named like a global.lsh:4:7: i is a global variable, write it with global i = ... or use another name"
+      - "globals/loop variable named like a global.lsh:4:21: i is a global variable, write it with global i = ... or use another name"
 
   - name: parameter named like a global
     code: |
@@ -472,7 +470,7 @@ tests:
       func f(host string) {
       }
     errors:
-      - globals/parameter named like a global.lsh Ln:3 Col:8 parameter host has the name of a global variable
+      - "globals/parameter named like a global.lsh:3:8: parameter host has the name of a global variable"
 
   - name: name clash is not reported as an early use
     code: |
@@ -482,7 +480,7 @@ tests:
         return a
       }
     errors:
-      - globals/name clash is not reported as an early use.lsh Ln:3 Col:8 parameter a has the name of a global variable
+      - "globals/name clash is not reported as an early use.lsh:3:8: parameter a has the name of a global variable"
 
   - name: write to an undefined global
     code: |
@@ -490,7 +488,7 @@ tests:
         global missing = 1
       }
     errors:
-      - globals/write to an undefined global.lsh Ln:2 Col:10 global variable missing is not defined
+      - "globals/write to an undefined global.lsh:2:10: global variable missing is not defined"
 
   - name: global in a block does not define it
     description: only the top level outside of blocks defines a global, a block might not run
@@ -499,27 +497,27 @@ tests:
         global x = 1
       }
     errors:
-      - globals/global in a block does not define it.lsh Ln:2 Col:10 global variable x is not defined
+      - "globals/global in a block does not define it.lsh:2:10: global variable x is not defined"
 
   - name: local named like a later global
     code: |
       x = 1
       global x = 2
     errors:
-      - globals/local named like a later global.lsh Ln:1 Col:1 x is a global variable, write it with global x = ... or use another name
+      - "globals/local named like a later global.lsh:1:1: x is a global variable, write it with global x = ... or use another name"
 
   - name: assigned again with another type
     code: |
       global a = 1
       global a = "s"
     errors:
-      - globals/assigned again with another type.lsh Ln:2 Col:8 you cannot assign an string value to the variable 'a' of type int
+      - "globals/assigned again with another type.lsh:2:8: you cannot assign an string value to the variable 'a' of type int"
 
   - name: defined in two files of a package
     code: |
       import "./dupglobal"
     errors:
-      - std/dupglobal/b.lsh Ln:1 Col:8 global variable x is already defined at std/dupglobal/a.lsh Ln:1 Col:8
+      - "std/dupglobal/b.lsh:1:8: global variable x is already defined at std/dupglobal/a.lsh:1:8"
 
   - name: wrong type in a write
     code: |
@@ -529,7 +527,7 @@ tests:
         global count = "s"
       }
     errors:
-      - globals/wrong type in a write.lsh Ln:4 Col:10 you cannot assign an string value to the variable 'count' of type int
+      - "globals/wrong type in a write.lsh:4:10: you cannot assign an string value to the variable 'count' of type int"
 
   - name: wrong number of values
     code: |
@@ -537,7 +535,7 @@ tests:
 
       println(a, b)
     errors:
-      - globals/wrong number of values.lsh Ln:1 Col:8 Wrong number of expressions
+      - "globals/wrong number of values.lsh:1:8: Wrong number of expressions"
 
   - name: operator on a global
     code: |
@@ -545,7 +543,7 @@ tests:
 
       println(text * 2)
     errors:
-      - globals/operator on a global.lsh Ln:3 Col:9 operator '*' can't be used with string and int
+      - "globals/operator on a global.lsh:3:9: operator '*' can't be used with string and int"
 
   - name: initial value without a value
     code: |
@@ -554,13 +552,13 @@ tests:
       func f() {
       }
     errors:
-      - globals/initial value without a value.lsh Ln:1 Col:12 f doesn't return a value
+      - "globals/initial value without a value.lsh:1:12: f doesn't return a value"
 
   - name: unknown function in an initial value
     code: |
       global a = missing()
     errors:
-      - globals/unknown function in an initial value.lsh Ln:1 Col:12 function missing not found
+      - "globals/unknown function in an initial value.lsh:1:12: function missing not found"
 
   - name: top level variable in the value of a global
     description: the value is evaluated in place, so it can use what the top level defined before
@@ -576,7 +574,7 @@ tests:
     code: |
       println(nope.value)
     errors:
-      - globals/unknown namespace.lsh Ln:1 Col:9 namespace nope not found
+      - "globals/unknown namespace.lsh:1:9: namespace nope not found"
 
   - name: unknown global in a namespace
     code: |
@@ -584,7 +582,7 @@ tests:
 
       println(settings.missing)
     errors:
-      - globals/unknown global in a namespace.lsh Ln:3 Col:9 variable missing in namespace settings not found
+      - "globals/unknown global in a namespace.lsh:3:9: variable missing in namespace settings not found"
 
   - name: package global needs its namespace
     code: |
@@ -592,7 +590,7 @@ tests:
 
       println(host)
     errors:
-      - globals/package global needs its namespace.lsh Ln:3 Col:9 variable 'host' is not defined
+      - "globals/package global needs its namespace.lsh:3:9: variable 'host' is not defined"
 
   - name: package does not see the globals of main
     code: |
@@ -602,20 +600,20 @@ tests:
 
       println(noglobals.run())
     errors:
-      - std/noglobals/noglobals.lsh Ln:2 Col:10 variable 'fromMain' is not defined
+      - "std/noglobals/noglobals.lsh:2:10: variable 'fromMain' is not defined"
 
   - name: read before the assignment
     code: |
       global a = b + 1
       global b = 1
     errors:
-      - globals/read before the assignment.lsh Ln:1 Col:12 b is used before it is assigned at globals/read before the assignment.lsh Ln:2 Col:8
+      - "globals/read before the assignment.lsh:1:12: b is used before it is assigned at globals/read before the assignment.lsh:2:8"
 
   - name: self reference
     code: |
       global a = a
     errors:
-      - globals/self reference.lsh Ln:1 Col:12 a is used before it is assigned at globals/self reference.lsh Ln:1 Col:8
+      - "globals/self reference.lsh:1:12: a is used before it is assigned at globals/self reference.lsh:1:8"
 
   - name: use in a block before the assignment
     code: |
@@ -627,8 +625,8 @@ tests:
       }
       global x = 1
     errors:
-      - globals/use in a block before the assignment.lsh Ln:2 Col:11 x is used before it is assigned at globals/use in a block before the assignment.lsh Ln:7 Col:8
-      - globals/use in a block before the assignment.lsh Ln:5 Col:10 x is used before it is assigned at globals/use in a block before the assignment.lsh Ln:7 Col:8
+      - "globals/use in a block before the assignment.lsh:2:11: x is used before it is assigned at globals/use in a block before the assignment.lsh:7:8"
+      - "globals/use in a block before the assignment.lsh:5:10: x is used before it is assigned at globals/use in a block before the assignment.lsh:7:8"
 
   - name: call before the assignment
     code: |
@@ -641,7 +639,7 @@ tests:
         }
       }
     errors:
-      - globals/call before the assignment.lsh Ln:1 Col:1 log uses verbose before it is assigned at globals/call before the assignment.lsh Ln:2 Col:8
+      - "globals/call before the assignment.lsh:1:1: log uses verbose before it is assigned at globals/call before the assignment.lsh:2:8"
 
   - name: call in the value of the global it uses
     code: |
@@ -651,7 +649,7 @@ tests:
         return a
       }
     errors:
-      - globals/call in the value of the global it uses.lsh Ln:1 Col:12 f uses a before it is assigned at globals/call in the value of the global it uses.lsh Ln:1 Col:8
+      - "globals/call in the value of the global it uses.lsh:1:12: f uses a before it is assigned at globals/call in the value of the global it uses.lsh:1:8"
 
   - name: use through nested functions before the assignment
     code: |
@@ -666,7 +664,7 @@ tests:
         return b
       }
     errors:
-      - globals/use through nested functions before the assignment.lsh Ln:1 Col:12 f -> g uses b before it is assigned at globals/use through nested functions before the assignment.lsh Ln:2 Col:8
+      - "globals/use through nested functions before the assignment.lsh:1:12: f -> g uses b before it is assigned at globals/use through nested functions before the assignment.lsh:2:8"
 
   - name: write through a call before the assignment
     description: the assignment would overwrite the value the function wrote
@@ -679,7 +677,7 @@ tests:
         return 1
       }
     errors:
-      - globals/write through a call before the assignment.lsh Ln:1 Col:12 setB uses b before it is assigned at globals/write through a call before the assignment.lsh Ln:2 Col:8
+      - "globals/write through a call before the assignment.lsh:1:12: setB uses b before it is assigned at globals/write through a call before the assignment.lsh:2:8"
 
   - name: use in a branch that never runs
     code: |
@@ -693,7 +691,7 @@ tests:
         return 1
       }
     errors:
-      - globals/use in a branch that never runs.lsh Ln:1 Col:12 f uses a before it is assigned at globals/use in a branch that never runs.lsh Ln:1 Col:8
+      - "globals/use in a branch that never runs.lsh:1:12: f uses a before it is assigned at globals/use in a branch that never runs.lsh:1:8"
 
   - name: one error per global and statement
     code: |
@@ -708,26 +706,26 @@ tests:
         return b
       }
     errors:
-      - globals/one error per global and statement.lsh Ln:1 Col:12 f uses b before it is assigned at globals/one error per global and statement.lsh Ln:2 Col:8
+      - "globals/one error per global and statement.lsh:1:12: f uses b before it is assigned at globals/one error per global and statement.lsh:2:8"
 
   - name: cycle in a package found through a function that was already followed
     code: |
       import "./cyclefollowed"
     errors:
-      - "std/cyclefollowed/cyclefollowed.lsh Ln:2 Col:8 initialization cycle: cyclefollowed.b -> cyclefollowed.g -> cyclefollowed.f -> cyclefollowed.b"
+      - "std/cyclefollowed/cyclefollowed.lsh:2:8: initialization cycle: cyclefollowed.b -> cyclefollowed.g -> cyclefollowed.f -> cyclefollowed.b"
 
   - name: two cycles in a package through one function
     code: |
       import "./twocycles"
     errors:
-      - "std/twocycles/twocycles.lsh Ln:1 Col:8 initialization cycle: twocycles.a -> twocycles.f -> twocycles.a"
-      - "std/twocycles/twocycles.lsh Ln:2 Col:8 initialization cycle: twocycles.b -> twocycles.f -> twocycles.b"
+      - "std/twocycles/twocycles.lsh:1:8: initialization cycle: twocycles.a -> twocycles.f -> twocycles.a"
+      - "std/twocycles/twocycles.lsh:2:8: initialization cycle: twocycles.b -> twocycles.f -> twocycles.b"
 
   - name: cycle across packages
     code: |
       import "./initloopa"
     errors:
-      - "std/initloopa/a.lsh Ln:3 Col:8 initialization cycle: initloopa.a -> initloopb.viaA -> initloopa.read -> initloopa.a"
+      - "std/initloopa/a.lsh:3:8: initialization cycle: initloopa.a -> initloopb.viaA -> initloopa.read -> initloopa.a"
 
   - name: var is no keyword
     code: |
@@ -742,7 +740,7 @@ tests:
 
       global settings.host = "x"
     errors:
-      - "globals/write to the global of another package.lsh Ln:3 Col:16 mismatched input '.' expecting {',', '=', '+=', '-=', '*=', '/=', '%='}"
+      - "globals/write to the global of another package.lsh:3:16: mismatched input '.' expecting {',', '=', '+=', '-=', '*=', '/=', '%='}"
 
   - name: plain write to the global of another package
     code: |
@@ -750,10 +748,10 @@ tests:
 
       settings.host = "x"
     errors:
-      - "globals/plain write to the global of another package.lsh Ln:3 Col:15 mismatched input '=' expecting '('"
+      - "globals/plain write to the global of another package.lsh:3:15: mismatched input '=' expecting '('"
 
   - name: uppercase global
     code: |
       global Host = 1
     errors:
-      - globals/uppercase global.lsh Ln:1 Col:8 name Host must start with a lowercase letter
+      - "globals/uppercase global.lsh:1:8: name Host must start with a lowercase letter"

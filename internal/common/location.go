@@ -11,5 +11,5 @@ type Location struct {
 }
 
 func (l *Location) String() string {
-	return l.File + " Ln:" + strconv.Itoa(l.LineFrom) + " Col:" + strconv.Itoa(l.ColFrom)
+	return l.File + ":" + strconv.Itoa(l.LineFrom) + ":" + strconv.Itoa(l.ColFrom)
 }

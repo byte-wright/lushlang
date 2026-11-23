@@ -1,5 +1,3 @@
-order: 2
-name: If
 tests:
   - name: if statement
     code: |

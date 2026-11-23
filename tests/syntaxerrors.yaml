@@ -1,18 +1,41 @@
-order: 3
-name: SyntaxErrors
 tests:
   - name: missing paren
     code: |
       println("a"
       println("after")
     errors:
-      - "syntaxerrors/missing paren.lsh Ln:2 Col:1 mismatched input 'println' expecting {')', ','}"
+      - "syntaxerrors/missing paren.lsh:2:1: mismatched input 'println' expecting {')', ','}"
+
+  - name: invalid escapes
+    description: one error for each, at its backslash
+    code: |
+      a = "x\qy"
+      b = "\x4g\u12" + "\'"
+      c = "line
+        \z"
+      d = "\x00\000\u0000"
+      e = "\ud800\U00110000\400"
+      f = "a\
+      b"
+    errors:
+      - "syntaxerrors/invalid escapes.lsh:1:7: unknown escape \\q"
+      - "syntaxerrors/invalid escapes.lsh:2:6: escape \\x needs 2 hex digits"
+      - "syntaxerrors/invalid escapes.lsh:2:10: escape \\u needs 4 hex digits of a valid code point"
+      - "syntaxerrors/invalid escapes.lsh:2:19: unknown escape \\'"
+      - "syntaxerrors/invalid escapes.lsh:4:3: unknown escape \\z"
+      - "syntaxerrors/invalid escapes.lsh:5:6: strings can't hold NUL"
+      - "syntaxerrors/invalid escapes.lsh:5:10: strings can't hold NUL"
+      - "syntaxerrors/invalid escapes.lsh:5:14: strings can't hold NUL"
+      - "syntaxerrors/invalid escapes.lsh:6:6: escape \\u needs 4 hex digits of a valid code point"
+      - "syntaxerrors/invalid escapes.lsh:6:12: escape \\U needs 8 hex digits of a valid code point"
+      - "syntaxerrors/invalid escapes.lsh:6:22: octal escape needs 3 digits from \\000 to \\377"
+      - "syntaxerrors/invalid escapes.lsh:7:7: unknown escape, \\ is followed by U+000A"
 
   - name: invalid token
     code: |
       x = 1 #
     errors:
-      - "syntaxerrors/invalid token.lsh Ln:1 Col:7 token recognition error at: '#'"
+      - "syntaxerrors/invalid token.lsh:1:7: token recognition error at: '#'"
 
   - name: return value on the next line
     code: |
@@ -21,23 +44,23 @@ tests:
           1
       }
     errors:
-      - "syntaxerrors/return value on the next line.lsh Ln:3 Col:5 no viable alternative at input '1'"
+      - "syntaxerrors/return value on the next line.lsh:3:5: no viable alternative at input '1'"
 
   - name: call on a value
     description: only package functions can be called with a dot, values have no methods
     code: |
       println("abc".hasPrefix("a"))
     errors:
-      - "syntaxerrors/call on a value.lsh Ln:1 Col:14 mismatched input '.' expecting {')', ','}"
-      - "syntaxerrors/call on a value.lsh Ln:1 Col:29 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', 'break', 'continue', 'global', 'try', 'fail', 'cmd', ID}"
+      - "syntaxerrors/call on a value.lsh:1:14: mismatched input '.' expecting {')', ','}"
+      - "syntaxerrors/call on a value.lsh:1:29: extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', 'break', 'continue', 'global', 'try', 'fail', 'cmd', ID}"
 
   - name: call on the result of a call
     code: |
       import "strings"
       println(strings.trimPrefix("abc", "a").hasPrefix("b"))
     errors:
-      - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:39 mismatched input '.' expecting {')', ','}"
-      - "syntaxerrors/call on the result of a call.lsh Ln:2 Col:54 extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', 'break', 'continue', 'global', 'try', 'fail', 'cmd', ID}"
+      - "syntaxerrors/call on the result of a call.lsh:2:39: mismatched input '.' expecting {')', ','}"
+      - "syntaxerrors/call on the result of a call.lsh:2:54: extraneous input ')' expecting {<EOF>, 'if', 'for', 'func', 'return', 'break', 'continue', 'global', 'try', 'fail', 'cmd', ID}"
 
   - name: nested array type
     description: bash arrays can't be nested
@@ -45,10 +68,10 @@ tests:
       func f(a [][]int) {
       }
     errors:
-      - "syntaxerrors/nested array type.lsh Ln:1 Col:12 mismatched input '[' expecting {'string', 'int', 'bool'}"
+      - "syntaxerrors/nested array type.lsh:1:12: mismatched input '[' expecting {'string', 'int', 'bool'}"
 
   - name: uppercase names
-    description: names start lowercase, so they can't clash with bash variables like PATH or IFS
+    description: names are written one way, they start with a lowercase letter or _
     code: |
       import "strings"
       URL = "x"
@@ -57,15 +80,15 @@ tests:
       func Fetch(IFS string) {
       }
     errors:
-      - "syntaxerrors/uppercase names.lsh Ln:2 Col:1 name URL must start with a lowercase letter"
-      - "syntaxerrors/uppercase names.lsh Ln:3 Col:9 name URL must start with a lowercase letter"
-      - "syntaxerrors/uppercase names.lsh Ln:4 Col:24 name Cut must start with a lowercase letter"
-      - "syntaxerrors/uppercase names.lsh Ln:5 Col:6 name Fetch must start with a lowercase letter"
-      - "syntaxerrors/uppercase names.lsh Ln:5 Col:12 name IFS must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh:2:1: name URL must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh:3:9: name URL must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh:4:24: name Cut must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh:5:6: name Fetch must start with a lowercase letter"
+      - "syntaxerrors/uppercase names.lsh:5:12: name IFS must start with a lowercase letter"
 
   - name: uppercase names in a package
-    description: parameters of external functions keep their names in bash, so IFS would change how bash splits words
+    description: the rule holds in packages and for the parameters of external functions
     code: |
       import "./uppercase"
     errors:
-      - "std/uppercase/uppercase.lsh Ln:1 Col:11 name IFS must start with a lowercase letter"
+      - "std/uppercase/uppercase.lsh:1:11: name IFS must start with a lowercase letter"

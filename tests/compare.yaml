@@ -1,5 +1,3 @@
-order: 2
-name: Compare
 tests:
   - name: Basic operations
     description: Numbers in bash are all int32/64 depending on the system.

@@ -36,7 +36,7 @@ func Translate(p *bcode.Program) string {
 }
 
 func (b *bash) translate() {
-	b.print("#!/bin/bash")
+	b.print("#!/usr/bin/env bash")
 
 	for _, gd := range b.p.Funcs {
 		b.print("function lsh_" + gd.FullName() + "() {")

@@ -1,5 +1,3 @@
-order: 1
-name: Basics
 tests:
   - name: Hello world
     description: |
@@ -76,7 +74,7 @@ tests:
     code: |
       hello, world, num = "Hello", "World", 42, true
     errors:
-      - basic/Multi assignment error.lsh Ln:1 Col:1 Wrong number of expressions
+      - "basic/Multi assignment error.lsh:1:1: Wrong number of expressions"
 
   - name: Identifiers with digits
     code: |

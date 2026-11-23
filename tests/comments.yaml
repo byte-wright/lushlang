@@ -1,5 +1,3 @@
-order: 1
-name: Comments
 tests:
   - name: Line comments
     code: |

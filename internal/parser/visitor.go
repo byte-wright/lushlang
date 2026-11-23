@@ -5,6 +5,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/byte-wright/lush/internal/ast"
@@ -572,13 +574,8 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) any {
 
 func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 	if ctx.String_() != nil {
-		txt := ctx.String_().GetText()
-		txt = txt[1 : len(txt)-1]
-
-		txt = strEscapes.Replace(txt)
-
 		return &ast.String{
-			Value: txt,
+			Value: v.unquote(ctx.String_().GetStart()),
 		}
 	}
 
@@ -694,5 +691,74 @@ func (v *Visitor) VisitPrimitiveType(ctx *PrimitiveTypeContext) any {
 	return common.PrimitiveTypeFor(ctx.GetText())
 }
 
-// a single pass, so \\n becomes a backslash followed by n, not a newline
-var strEscapes = strings.NewReplacer(`\n`, "\n", `\t`, "\t", `\\`, `\`, `\"`, `"`)
+// unquote decodes the escapes of a Go string. The lexer lets any character follow a \,
+// so a wrong escape is one error here instead of several from the lexer.
+func (v *Visitor) unquote(tk antlr.Token) string {
+	txt := tk.GetText()
+	txt = txt[1 : len(txt)-1]
+
+	var b strings.Builder
+	for i := 0; i < len(txt); {
+		if txt[i] != '\\' {
+			b.WriteByte(txt[i])
+			i++
+			continue
+		}
+
+		r, multibyte, rest, err := strconv.UnquoteChar(txt[i:], '"')
+		if err != nil {
+			_, size := utf8.DecodeRuneInString(txt[i+1:])
+			v.errors = append(v.errors, &ast.ASTError{Location: escapeLoc(v.locTk(tk), txt[:i]), Message: escapeError(txt[i:])})
+			i += 1 + size
+			continue
+		}
+
+		if r == 0 {
+			// bash strings end at a NUL
+			v.errors = append(v.errors, &ast.ASTError{Location: escapeLoc(v.locTk(tk), txt[:i]), Message: "strings can't hold NUL"})
+		}
+
+		// like strconv.Unquote: \xff and octal escapes are single bytes, not UTF-8
+		if r < utf8.RuneSelf || !multibyte {
+			b.WriteByte(byte(r))
+		} else {
+			b.WriteRune(r)
+		}
+		i = len(txt) - len(rest)
+	}
+
+	return b.String()
+}
+
+// before is the text between the opening quote and the escape
+func escapeLoc(loc *common.Location, before string) *common.Location {
+	nl := strings.LastIndexByte(before, '\n')
+	if nl < 0 {
+		loc.ColFrom += 1 + utf8.RuneCountInString(before)
+	} else {
+		loc.LineFrom += strings.Count(before, "\n")
+		loc.ColFrom = 1 + utf8.RuneCountInString(before[nl+1:])
+	}
+	loc.LineTo = loc.LineFrom
+	loc.ColTo = loc.ColFrom
+
+	return loc
+}
+
+func escapeError(s string) string {
+	c, _ := utf8.DecodeRuneInString(s[1:])
+	switch {
+	case c == 'x':
+		return `escape \x needs 2 hex digits`
+	case c == 'u':
+		return `escape \u needs 4 hex digits of a valid code point`
+	case c == 'U':
+		return `escape \U needs 8 hex digits of a valid code point`
+	case c >= '0' && c <= '7':
+		return `octal escape needs 3 digits from \000 to \377`
+	case unicode.IsPrint(c):
+		return fmt.Sprintf(`unknown escape \%c`, c)
+	}
+
+	return fmt.Sprintf(`unknown escape, \ is followed by %U`, c)
+}

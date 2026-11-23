@@ -1,5 +1,3 @@
-order: 3
-name: Bounds
 tests:
   - name: in range
     description: an index goes from 0 to len - 1, a slice from 0 to len
@@ -27,7 +25,7 @@ tests:
     expected: |
       before
     stderr: |
-      bounds/index past the end.lsh Ln:3 Col:9 index out of range [3] with length 3
+      bounds/index past the end.lsh:3:9: index out of range [3] with length 3
     exit: 2
 
   - name: negative index
@@ -35,7 +33,7 @@ tests:
       s = "abc"
       println(s[-1])
     stderr: |
-      bounds/negative index.lsh Ln:2 Col:9 index out of range [-1] with length 3
+      bounds/negative index.lsh:2:9: index out of range [-1] with length 3
     exit: 2
 
   - name: reversed slice
@@ -43,7 +41,7 @@ tests:
       a = [1, 2, 3]
       b = a[2:1]
     stderr: |
-      bounds/reversed slice.lsh Ln:2 Col:5 slice bounds out of range [2:1] with length 3
+      bounds/reversed slice.lsh:2:5: slice bounds out of range [2:1] with length 3
     exit: 2
 
   - name: slice past the end
@@ -51,7 +49,7 @@ tests:
       s = "abc"
       println(s[1:4])
     stderr: |
-      bounds/slice past the end.lsh Ln:2 Col:9 slice bounds out of range [1:4] with length 3
+      bounds/slice past the end.lsh:2:9: slice bounds out of range [1:4] with length 3
     exit: 2
 
   - name: indexOf not found
@@ -62,7 +60,7 @@ tests:
       branch = "feature"
       println(branch[0:strings.indexOf(branch, "-")])
     stderr: |
-      bounds/indexOf not found.lsh Ln:4 Col:9 slice bounds out of range [0:-1] with length 7
+      bounds/indexOf not found.lsh:4:9: slice bounds out of range [0:-1] with length 7
     exit: 2
 
   - name: index error in a function
@@ -75,7 +73,7 @@ tests:
       println(first([]string))
       println("after")
     stderr: |
-      bounds/index error in a function.lsh Ln:2 Col:10 index out of range [0] with length 0
+      bounds/index error in a function.lsh:2:10: index out of range [0] with length 0
     exit: 2
 
   - name: utf-8 index past the end
@@ -88,7 +86,7 @@ tests:
     expected: |
       €
     stderr: |
-      bounds/utf-8 index past the end.lsh Ln:3 Col:9 index out of range [2] with length 2
+      bounds/utf-8 index past the end.lsh:3:9: index out of range [2] with length 2
     exit: 2
 
   - name: assign past the end
@@ -102,7 +100,7 @@ tests:
     expected: |
       y
     stderr: |
-      bounds/assign past the end.lsh Ln:4 Col:1 index out of range [1] with length 1
+      bounds/assign past the end.lsh:4:1: index out of range [1] with length 1
     exit: 2
 
   - name: assign at a negative index
@@ -111,5 +109,5 @@ tests:
       i = -1
       a[i] += 1
     stderr: |
-      bounds/assign at a negative index.lsh Ln:3 Col:1 index out of range [-1] with length 2
+      bounds/assign at a negative index.lsh:3:1: index out of range [-1] with length 2
     exit: 2

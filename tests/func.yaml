@@ -1,5 +1,3 @@
-order: 1
-name: Basics
 tests:
   - name: Simple procedure
     code: |

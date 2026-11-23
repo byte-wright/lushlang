@@ -1,8 +1,5 @@
-order: 3
-name: Bash
 tests:
   - name: bash fun
-    description:
     code: |
       import "strings"
 
@@ -21,7 +18,7 @@ tests:
       hello
 
   - name: identifiers that look like generated names
-    description: generated variables start with an uppercase letter, identifiers can't
+    description: the backend prefixes user names, so they can't hit its own like lsh__stdout
     code: |
       func one() int {
         return 1

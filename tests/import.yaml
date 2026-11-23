@@ -1,5 +1,3 @@
-order: 3
-name: Import
 tests:
   - name: imported methods
     description:
@@ -54,7 +52,7 @@ tests:
       import "strings"
       import "./strings"
     errors:
-      - import/same package name in one file.lsh Ln:2 Col:1 package strings is already imported from "strings"
+      - "import/same package name in one file.lsh:2:1: package strings is already imported from \"strings\""
 
   - name: package scope
     description: a package sees neither the imports nor the functions of the main file
@@ -68,8 +66,8 @@ tests:
         return 1
       }
     errors:
-      - std/isolated/isolated.lsh Ln:2 Col:15 namespace math not found
-      - std/isolated/isolated.lsh Ln:2 Col:27 function mainOnly not found
+      - "std/isolated/isolated.lsh:2:15: namespace math not found"
+      - "std/isolated/isolated.lsh:2:27: function mainOnly not found"
 
   - name: missing package
     description: missing packages are reported at the import that added them, also in packages
@@ -81,16 +79,16 @@ tests:
 
       println(nope.foo())
     errors:
-      - import/missing package.lsh Ln:1 Col:1 package "nope" not found
-      - import/missing package.lsh Ln:2 Col:1 package "./gone" not found
-      - import/missing package.lsh Ln:3 Col:1 package "../gone" not found
-      - std/broken/broken.lsh Ln:1 Col:1 package "../missing" not found
+      - "import/missing package.lsh:1:1: package \"nope\" not found"
+      - "import/missing package.lsh:2:1: package \"./gone\" not found"
+      - "import/missing package.lsh:3:1: package \"../gone\" not found"
+      - "std/broken/broken.lsh:1:1: package \"../missing\" not found"
 
   - name: leading slash
     code: |
       import "/math"
     errors:
-      - import/leading slash.lsh Ln:1 Col:1 package "/math" can't start with /, a local package starts with ./ or ../
+      - "import/leading slash.lsh:1:1: package \"/math\" can't start with /, a local package starts with ./ or ../"
 
   - name: relative to the importing file
     description: inner imports ../../math, the package is the same as ./math here
@@ -120,9 +118,9 @@ tests:
 
       println(my-pkg.foo())
     errors:
-      - import/invalid package name.lsh Ln:1 Col:1 package "./my-pkg" needs a name with as, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _
-      - import/invalid package name.lsh Ln:2 Col:1 package "./MyPkg" needs a name with as, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _
-      - import/invalid package name.lsh Ln:3 Col:1 package "./if" needs a name with as, the folder name if is a keyword
+      - "import/invalid package name.lsh:1:1: package \"./my-pkg\" needs a name with as, the folder name my-pkg must start with a lowercase letter or _ and contain only letters, digits and _"
+      - "import/invalid package name.lsh:2:1: package \"./MyPkg\" needs a name with as, the folder name MyPkg must start with a lowercase letter or _ and contain only letters, digits and _"
+      - "import/invalid package name.lsh:3:1: package \"./if\" needs a name with as, the folder name if is a keyword"
 
   - name: import with a name
     code: |
@@ -139,7 +137,7 @@ tests:
 
       println(strings.hasPrefix("a", "a"))
     errors:
-      - import/only the new name.lsh Ln:3 Col:17 namespace strings not found
+      - "import/only the new name.lsh:3:17: namespace strings not found"
 
   - name: a name for a folder that can't be one
     code: |
@@ -176,14 +174,14 @@ tests:
       import "./greet" as m
       import "./math" as m
     errors:
-      - import/name already used.lsh Ln:2 Col:1 package strings is already imported from "./math"
-      - import/name already used.lsh Ln:4 Col:1 package m is already imported from "./greet"
+      - "import/name already used.lsh:2:1: package strings is already imported from \"./math\""
+      - "import/name already used.lsh:4:1: package m is already imported from \"./greet\""
 
   - name: uppercase name after as
     code: |
       import "./math" as Math
     errors:
-      - import/uppercase name after as.lsh Ln:1 Col:20 name Math must start with a lowercase letter
+      - "import/uppercase name after as.lsh:1:20: name Math must start with a lowercase letter"
 
   - name: package function shadows a builtin only in its package
     code: |

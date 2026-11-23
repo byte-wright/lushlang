@@ -12,7 +12,7 @@ type ASTError struct {
 func (a *ASTError) Error() string {
 	l := ""
 	if a.Location != nil {
-		l = a.Location.String() + " "
+		l = a.Location.String() + ": "
 	}
 	return l + a.Message
 }

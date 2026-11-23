@@ -276,4 +276,4 @@ EXTERNAL_CODE
     : '```' (. | '\r' | '\n')*? '```'
     ;
 
-fragment ESCAPED_VALUE: '\\' [nt\\"];
+fragment ESCAPED_VALUE: '\\' .;

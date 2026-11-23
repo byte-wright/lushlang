@@ -1,5 +1,3 @@
-order: 3
-name: TypeErrors
 tests:
   - name: assign
     description: Assign int to string
@@ -9,7 +7,7 @@ tests:
       str = "foo"
       str = 1
     errors:
-      - typeerrors/assign.lsh Ln:4 Col:1 you cannot assign an int value to the variable 'str' of type string
+      - "typeerrors/assign.lsh:4:1: you cannot assign an int value to the variable 'str' of type string"
   - name: multi assign
     description: Assign int to string
     code: |
@@ -18,7 +16,7 @@ tests:
       str = "foo"
       n, str = 0, 1
     errors:
-      - typeerrors/multi assign.lsh Ln:4 Col:4 you cannot assign an int value to the variable 'str' of type string
+      - "typeerrors/multi assign.lsh:4:4: you cannot assign an int value to the variable 'str' of type string"
   - name: assign in function
     description: Assign int to string inside a function body
     code: |
@@ -27,7 +25,7 @@ tests:
         str = 1
       }
     errors:
-      - typeerrors/assign in function.lsh Ln:3 Col:3 you cannot assign an int value to the variable 'str' of type string
+      - "typeerrors/assign in function.lsh:3:3: you cannot assign an int value to the variable 'str' of type string"
   - name: assign to param
     description: Assign string to an int parameter
     code: |
@@ -37,20 +35,20 @@ tests:
         }
       }
     errors:
-      - typeerrors/assign to param.lsh Ln:3 Col:5 you cannot assign an string value to the variable 'n' of type int
+      - "typeerrors/assign to param.lsh:3:5: you cannot assign an string value to the variable 'n' of type int"
   - name: undefined variable
     code: |
       println(nope)
     errors:
-      - typeerrors/undefined variable.lsh Ln:1 Col:9 variable 'nope' is not defined
+      - "typeerrors/undefined variable.lsh:1:9: variable 'nope' is not defined"
   - name: undefined function
     code: |
       x = 1
       foo(x)
       y = bar()
     errors:
-      - typeerrors/undefined function.lsh Ln:2 Col:1 function foo not found
-      - typeerrors/undefined function.lsh Ln:3 Col:5 function bar not found
+      - "typeerrors/undefined function.lsh:2:1: function foo not found"
+      - "typeerrors/undefined function.lsh:3:5: function bar not found"
   - name: variable out of scope
     code: |
       if true {
@@ -58,7 +56,7 @@ tests:
       }
       println(inner)
     errors:
-      - typeerrors/variable out of scope.lsh Ln:4 Col:9 variable 'inner' is not defined
+      - "typeerrors/variable out of scope.lsh:4:9: variable 'inner' is not defined"
   - name: top level variable in function
     code: |
       top = 1
@@ -66,7 +64,7 @@ tests:
         println(top)
       }
     errors:
-      - typeerrors/top level variable in function.lsh Ln:3 Col:11 variable 'top' is not defined
+      - "typeerrors/top level variable in function.lsh:3:11: variable 'top' is not defined"
   - name: operators
     code: |
       a = 1 + "a"
@@ -81,17 +79,17 @@ tests:
       j = "a" + [1]
       k = true + "a"
     errors:
-      - "typeerrors/operators.lsh Ln:1 Col:5 operator '+' can't be used with int and string"
-      - "typeerrors/operators.lsh Ln:2 Col:5 operator '-' can't be used with string and string"
-      - "typeerrors/operators.lsh Ln:3 Col:5 operator '==' can't be used with int and string"
-      - "typeerrors/operators.lsh Ln:4 Col:5 operator '!' can't be used with int"
-      - "typeerrors/operators.lsh Ln:5 Col:5 operator '-' can't be used with string"
-      - "typeerrors/operators.lsh Ln:6 Col:5 operator '&&' can't be used with int and bool"
-      - "typeerrors/operators.lsh Ln:7 Col:5 operator '==' can't be used with []int and []int"
-      - "typeerrors/operators.lsh Ln:8 Col:14 operator '>' can't be used with string and string"
-      - "typeerrors/operators.lsh Ln:9 Col:5 operator '+' can't be used with int and string"
-      - "typeerrors/operators.lsh Ln:10 Col:5 operator '+' can't be used with string and []int"
-      - "typeerrors/operators.lsh Ln:11 Col:5 operator '+' can't be used with bool and string"
+      - "typeerrors/operators.lsh:1:5: operator '+' can't be used with int and string"
+      - "typeerrors/operators.lsh:2:5: operator '-' can't be used with string and string"
+      - "typeerrors/operators.lsh:3:5: operator '==' can't be used with int and string"
+      - "typeerrors/operators.lsh:4:5: operator '!' can't be used with int"
+      - "typeerrors/operators.lsh:5:5: operator '-' can't be used with string"
+      - "typeerrors/operators.lsh:6:5: operator '&&' can't be used with int and bool"
+      - "typeerrors/operators.lsh:7:5: operator '==' can't be used with []int and []int"
+      - "typeerrors/operators.lsh:8:14: operator '>' can't be used with string and string"
+      - "typeerrors/operators.lsh:9:5: operator '+' can't be used with int and string"
+      - "typeerrors/operators.lsh:10:5: operator '+' can't be used with string and []int"
+      - "typeerrors/operators.lsh:11:5: operator '+' can't be used with bool and string"
   - name: conditions
     code: |
       if 1 {
@@ -103,10 +101,10 @@ tests:
       x = 1 ? "a" : "b"
       y = true ? "a" : 1
     errors:
-      - "typeerrors/conditions.lsh Ln:1 Col:1 if condition must be of type bool, not int"
-      - "typeerrors/conditions.lsh Ln:4 Col:1 for condition must be of type bool, not int"
-      - "typeerrors/conditions.lsh Ln:7 Col:5 ternary condition must be of type bool, not int"
-      - "typeerrors/conditions.lsh Ln:8 Col:5 ternary branches must have the same type, not string and int"
+      - "typeerrors/conditions.lsh:1:1: if condition must be of type bool, not int"
+      - "typeerrors/conditions.lsh:4:1: for condition must be of type bool, not int"
+      - "typeerrors/conditions.lsh:7:5: ternary condition must be of type bool, not int"
+      - "typeerrors/conditions.lsh:8:5: ternary branches must have the same type, not string and int"
   - name: index and slice
     code: |
       n = 5
@@ -115,10 +113,10 @@ tests:
       c = n[1:2]
       d = [1, 2][0:"x"]
     errors:
-      - "typeerrors/index and slice.lsh Ln:2 Col:5 cannot index a value of type int"
-      - "typeerrors/index and slice.lsh Ln:3 Col:5 index must be of type int, not string"
-      - "typeerrors/index and slice.lsh Ln:4 Col:5 cannot slice a value of type int"
-      - "typeerrors/index and slice.lsh Ln:5 Col:5 slice bound must be of type int, not string"
+      - "typeerrors/index and slice.lsh:2:5: cannot index a value of type int"
+      - "typeerrors/index and slice.lsh:3:5: index must be of type int, not string"
+      - "typeerrors/index and slice.lsh:4:5: cannot slice a value of type int"
+      - "typeerrors/index and slice.lsh:5:5: slice bound must be of type int, not string"
   - name: no follow-up errors
     code: |
       y = bar()
@@ -130,10 +128,10 @@ tests:
       }
       y = 1
     errors:
-      - "typeerrors/no follow-up errors.lsh Ln:1 Col:5 function bar not found"
-      - "typeerrors/no follow-up errors.lsh Ln:2 Col:8 function bar not found"
-      - "typeerrors/no follow-up errors.lsh Ln:4 Col:5 variable 'nope' is not defined"
-      - "typeerrors/no follow-up errors.lsh Ln:5 Col:4 variable 'nope' is not defined"
+      - "typeerrors/no follow-up errors.lsh:1:5: function bar not found"
+      - "typeerrors/no follow-up errors.lsh:2:8: function bar not found"
+      - "typeerrors/no follow-up errors.lsh:4:5: variable 'nope' is not defined"
+      - "typeerrors/no follow-up errors.lsh:5:4: variable 'nope' is not defined"
   - name: wrong number of expressions in function
     code: |
       func f() {
@@ -142,7 +140,7 @@ tests:
         }
       }
     errors:
-      - "typeerrors/wrong number of expressions in function.lsh Ln:3 Col:5 Wrong number of expressions"
+      - "typeerrors/wrong number of expressions in function.lsh:3:5: Wrong number of expressions"
   - name: call arguments
     code: |
       func add(a int, b int) int {
@@ -154,10 +152,10 @@ tests:
       add()
       w = add(1, 2) + 1
     errors:
-      - "typeerrors/call arguments.lsh Ln:4 Col:5 add takes 2 arguments, not 1"
-      - "typeerrors/call arguments.lsh Ln:5 Col:5 add takes 2 arguments, not 3"
-      - "typeerrors/call arguments.lsh Ln:6 Col:5 argument 2 of add must be of type int, not string"
-      - "typeerrors/call arguments.lsh Ln:7 Col:1 add takes 2 arguments, not 0"
+      - "typeerrors/call arguments.lsh:4:5: add takes 2 arguments, not 1"
+      - "typeerrors/call arguments.lsh:5:5: add takes 2 arguments, not 3"
+      - "typeerrors/call arguments.lsh:6:5: argument 2 of add must be of type int, not string"
+      - "typeerrors/call arguments.lsh:7:1: add takes 2 arguments, not 0"
   - name: package call arguments
     code: |
       import "./math"
@@ -166,9 +164,9 @@ tests:
       y = strings.hasPrefix(1, "a")
       z = strings.join(["a"], ["b"])
     errors:
-      - "typeerrors/package call arguments.lsh Ln:3 Col:10 math.double takes 1 argument, not 2"
-      - "typeerrors/package call arguments.lsh Ln:4 Col:13 argument 1 of strings.hasPrefix must be of type string, not int"
-      - "typeerrors/package call arguments.lsh Ln:5 Col:13 argument 2 of strings.join must be of type string, not []string"
+      - "typeerrors/package call arguments.lsh:3:10: math.double takes 1 argument, not 2"
+      - "typeerrors/package call arguments.lsh:4:13: argument 1 of strings.hasPrefix must be of type string, not int"
+      - "typeerrors/package call arguments.lsh:5:13: argument 2 of strings.join must be of type string, not []string"
   - name: multiple values as arguments
     code: |
       func pair() int, int {
@@ -178,7 +176,7 @@ tests:
       }
       one(pair())
     errors:
-      - "typeerrors/multiple values as arguments.lsh Ln:6 Col:1 one takes 1 argument, not 2"
+      - "typeerrors/multiple values as arguments.lsh:6:1: one takes 1 argument, not 2"
   - name: builtin arguments
     code: |
       a = len()
@@ -193,17 +191,17 @@ tests:
       print(["a"])
       eprintln(1, [true])
     errors:
-      - "typeerrors/builtin arguments.lsh Ln:1 Col:5 len takes 1 argument, not 0"
-      - "typeerrors/builtin arguments.lsh Ln:2 Col:5 argument 1 of len must be an array or string, not int"
-      - "typeerrors/builtin arguments.lsh Ln:3 Col:5 append takes at least 1 argument, not 0"
-      - "typeerrors/builtin arguments.lsh Ln:4 Col:5 argument 1 of append must be an array, not int"
-      - "typeerrors/builtin arguments.lsh Ln:5 Col:5 argument 3 of append must be of type int, not string"
-      - "typeerrors/builtin arguments.lsh Ln:6 Col:1 argument 2 of println can't be of type []int"
-      - "typeerrors/builtin arguments.lsh Ln:7 Col:9 parseInt takes 1 argument, not 0"
-      - "typeerrors/builtin arguments.lsh Ln:8 Col:9 argument 1 of parseInt must be of type string, not int"
-      - "typeerrors/builtin arguments.lsh Ln:9 Col:9 parseInt takes 1 argument, not 2"
-      - "typeerrors/builtin arguments.lsh Ln:10 Col:1 argument 1 of print can't be of type []string"
-      - "typeerrors/builtin arguments.lsh Ln:11 Col:1 argument 2 of eprintln can't be of type []bool"
+      - "typeerrors/builtin arguments.lsh:1:5: len takes 1 argument, not 0"
+      - "typeerrors/builtin arguments.lsh:2:5: argument 1 of len must be an array or string, not int"
+      - "typeerrors/builtin arguments.lsh:3:5: append takes at least 1 argument, not 0"
+      - "typeerrors/builtin arguments.lsh:4:5: argument 1 of append must be an array, not int"
+      - "typeerrors/builtin arguments.lsh:5:5: argument 3 of append must be of type int, not string"
+      - "typeerrors/builtin arguments.lsh:6:1: argument 2 of println can't be of type []int"
+      - "typeerrors/builtin arguments.lsh:7:9: parseInt takes 1 argument, not 0"
+      - "typeerrors/builtin arguments.lsh:8:9: argument 1 of parseInt must be of type string, not int"
+      - "typeerrors/builtin arguments.lsh:9:9: parseInt takes 1 argument, not 2"
+      - "typeerrors/builtin arguments.lsh:10:1: argument 1 of print can't be of type []string"
+      - "typeerrors/builtin arguments.lsh:11:1: argument 2 of eprintln can't be of type []bool"
   - name: return values
     code: |
       func one() int {
@@ -219,10 +217,10 @@ tests:
       }
       return 1
     errors:
-      - "typeerrors/return values.lsh Ln:12 Col:1 return outside of a function can't have values"
-      - "typeerrors/return values.lsh Ln:2 Col:3 return value 1 of one must be of type int, not string"
-      - "typeerrors/return values.lsh Ln:5 Col:3 function two returns 2 values, not 1"
-      - "typeerrors/return values.lsh Ln:9 Col:5 function none returns 0 values, not 1"
+      - "typeerrors/return values.lsh:12:1: return outside of a function can't have values"
+      - "typeerrors/return values.lsh:2:3: return value 1 of one must be of type int, not string"
+      - "typeerrors/return values.lsh:5:3: function two returns 2 values, not 1"
+      - "typeerrors/return values.lsh:9:5: function none returns 0 values, not 1"
   - name: no follow-up errors in calls
     code: |
       func add(a int, b int) int {
@@ -233,10 +231,10 @@ tests:
       z = append(nope, 1)
       println(add(1, 2) + 1)
     errors:
-      - "typeerrors/no follow-up errors in calls.lsh Ln:4 Col:9 variable 'nope' is not defined"
-      - "typeerrors/no follow-up errors in calls.lsh Ln:5 Col:9 function bar not found"
-      - "typeerrors/no follow-up errors in calls.lsh Ln:6 Col:12 variable 'nope' is not defined"
-      - "typeerrors/no follow-up errors in calls.lsh Ln:2 Col:10 function bar not found"
+      - "typeerrors/no follow-up errors in calls.lsh:4:9: variable 'nope' is not defined"
+      - "typeerrors/no follow-up errors in calls.lsh:5:9: function bar not found"
+      - "typeerrors/no follow-up errors in calls.lsh:6:12: variable 'nope' is not defined"
+      - "typeerrors/no follow-up errors in calls.lsh:2:10: function bar not found"
   - name: missing return
     code: |
       func empty() int {
@@ -277,18 +275,18 @@ tests:
         }
       }
     errors:
-      - "typeerrors/missing return.lsh Ln:2 Col:1 missing return at the end of function empty"
-      - "typeerrors/missing return.lsh Ln:7 Col:1 missing return at the end of function ifOnly"
-      - "typeerrors/missing return.lsh Ln:12 Col:1 missing return at the end of function loop"
-      - "typeerrors/missing return.lsh Ln:21 Col:1 missing return at the end of function ifElse"
-      - "typeerrors/missing return.lsh Ln:28 Col:1 missing return at the end of function elseIf"
+      - "typeerrors/missing return.lsh:2:1: missing return at the end of function empty"
+      - "typeerrors/missing return.lsh:7:1: missing return at the end of function ifOnly"
+      - "typeerrors/missing return.lsh:12:1: missing return at the end of function loop"
+      - "typeerrors/missing return.lsh:21:1: missing return at the end of function ifElse"
+      - "typeerrors/missing return.lsh:28:1: missing return at the end of function elseIf"
   - name: return without values in a function with return types
     code: |
       func f() int {
         return
       }
     errors:
-      - "typeerrors/return without values in a function with return types.lsh Ln:2 Col:3 function f returns 1 value, not 0"
+      - "typeerrors/return without values in a function with return types.lsh:2:3: function f returns 1 value, not 0"
   - name: call without a value used as value
     code: |
       import "./greet"
@@ -307,20 +305,20 @@ tests:
       }
       c = greet.hello("a")
     errors:
-      - "typeerrors/call without a value used as value.lsh Ln:7 Col:10 f doesn't return a value"
-      - "typeerrors/call without a value used as value.lsh Ln:9 Col:6 println doesn't return a value"
-      - "typeerrors/call without a value used as value.lsh Ln:10 Col:8 println doesn't return a value"
-      - "typeerrors/call without a value used as value.lsh Ln:11 Col:6 println doesn't return a value"
-      - "typeerrors/call without a value used as value.lsh Ln:12 Col:9 f doesn't return a value"
-      - "typeerrors/call without a value used as value.lsh Ln:13 Col:4 f doesn't return a value"
-      - "typeerrors/call without a value used as value.lsh Ln:15 Col:11 greet.hello doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:7:10: f doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:9:6: println doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:10:8: println doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:11:6: println doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:12:9: f doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:13:4: f doesn't return a value"
+      - "typeerrors/call without a value used as value.lsh:15:11: greet.hello doesn't return a value"
   - name: else if condition must be bool
     code: |
       if true {
       } else if 1 {
       }
     errors:
-      - "typeerrors/else if condition must be bool.lsh Ln:2 Col:8 if condition must be of type bool, not int"
+      - "typeerrors/else if condition must be bool.lsh:2:8: if condition must be of type bool, not int"
   - name: blank identifier as value
     code: |
       _ = 1
@@ -330,9 +328,9 @@ tests:
         return _
       }
     errors:
-      - "typeerrors/blank identifier as value.lsh Ln:2 Col:5 cannot use _ as value"
-      - "typeerrors/blank identifier as value.lsh Ln:3 Col:9 cannot use _ as value"
-      - "typeerrors/blank identifier as value.lsh Ln:5 Col:10 cannot use _ as value"
+      - "typeerrors/blank identifier as value.lsh:2:5: cannot use _ as value"
+      - "typeerrors/blank identifier as value.lsh:3:9: cannot use _ as value"
+      - "typeerrors/blank identifier as value.lsh:5:10: cannot use _ as value"
   - name: variables of if aren't visible in else
     code: |
       if true {
@@ -341,7 +339,7 @@ tests:
         println(x)
       }
     errors:
-      - "typeerrors/variables of if aren't visible in else.lsh Ln:4 Col:11 variable 'x' is not defined"
+      - "typeerrors/variables of if aren't visible in else.lsh:4:11: variable 'x' is not defined"
   - name: array elements
     description: bash arrays can't nest, and an empty array has no element to take the type from
     code: |
@@ -357,13 +355,13 @@ tests:
         return 1, "a"
       }
     errors:
-      - "typeerrors/array elements.lsh Ln:1 Col:5 array element 2 must be of type int, not string"
-      - "typeerrors/array elements.lsh Ln:2 Col:5 array element 1 can't be of type []int"
-      - "typeerrors/array elements.lsh Ln:3 Col:5 array element 1 can't be of type []int"
-      - "typeerrors/array elements.lsh Ln:4 Col:5 empty array needs an element type, like []int"
-      - "typeerrors/array elements.lsh Ln:5 Col:9 variable 'nope' is not defined"
-      - "typeerrors/array elements.lsh Ln:7 Col:5 array element 2 can't be of type []string"
-      - "typeerrors/array elements.lsh Ln:8 Col:5 array element 2 must be of type int, not string"
+      - "typeerrors/array elements.lsh:1:5: array element 2 must be of type int, not string"
+      - "typeerrors/array elements.lsh:2:5: array element 1 can't be of type []int"
+      - "typeerrors/array elements.lsh:3:5: array element 1 can't be of type []int"
+      - "typeerrors/array elements.lsh:4:5: empty array needs an element type, like []int"
+      - "typeerrors/array elements.lsh:5:9: variable 'nope' is not defined"
+      - "typeerrors/array elements.lsh:7:5: array element 2 can't be of type []string"
+      - "typeerrors/array elements.lsh:8:5: array element 2 must be of type int, not string"
   - name: duplicate functions
     code: |
       func f() int {
@@ -378,15 +376,15 @@ tests:
       }
       println(f())
     errors:
-      - "typeerrors/duplicate functions.lsh Ln:4 Col:6 function f is already defined at typeerrors/duplicate functions.lsh Ln:1 Col:6"
-      - "typeerrors/duplicate functions.lsh Ln:9 Col:6 function g is already defined at typeerrors/duplicate functions.lsh Ln:7 Col:6"
+      - "typeerrors/duplicate functions.lsh:4:6: function f is already defined at typeerrors/duplicate functions.lsh:1:6"
+      - "typeerrors/duplicate functions.lsh:9:6: function g is already defined at typeerrors/duplicate functions.lsh:7:6"
   - name: duplicate functions in a package
     description: the functions of all files of a package and its external functions share one namespace
     code: |
       import "./duplicate"
     errors:
-      - "std/duplicate/b.lsh Ln:1 Col:6 function twice is already defined at std/duplicate/a.lsh Ln:1 Col:6"
-      - "std/duplicate/b.lsh Ln:5 Col:22 parameter a is already defined"
+      - "std/duplicate/b.lsh:1:6: function twice is already defined at std/duplicate/a.lsh:1:6"
+      - "std/duplicate/b.lsh:5:22: parameter a is already defined"
   - name: duplicate parameters
     description: a duplicate of another type is only reported once, not also as an assignment
     code: |
@@ -398,8 +396,8 @@ tests:
       func h(_ int, _ int) {
       }
     errors:
-      - "typeerrors/duplicate parameters.lsh Ln:1 Col:15 parameter a is already defined"
-      - "typeerrors/duplicate parameters.lsh Ln:4 Col:25 parameter a is already defined"
+      - "typeerrors/duplicate parameters.lsh:1:15: parameter a is already defined"
+      - "typeerrors/duplicate parameters.lsh:4:25: parameter a is already defined"
   - name: number out of range
     description: bash numbers have 64 bits
     code: |
@@ -407,8 +405,8 @@ tests:
       println(9223372036854775807)
       println([99999999999999999999][0])
     errors:
-      - "typeerrors/number out of range.lsh Ln:1 Col:9 number 99999999999999999999 is too big for an int"
-      - "typeerrors/number out of range.lsh Ln:3 Col:10 number 99999999999999999999 is too big for an int"
+      - "typeerrors/number out of range.lsh:1:9: number 99999999999999999999 is too big for an int"
+      - "typeerrors/number out of range.lsh:3:10: number 99999999999999999999 is too big for an int"
   - name: env var names
     description: names starting with a digit and _ are shell parameters, not environment variables
     code: |
@@ -416,14 +414,14 @@ tests:
       println($V_x, $L_ret0, $_)
       println($HOME_1, $lush_test)
     errors:
-      - "typeerrors/env var names.lsh Ln:1 Col:9 $1 is not an environment variable, the script's arguments are in args()"
-      - "typeerrors/env var names.lsh Ln:1 Col:13 $10 is not an environment variable, the script's arguments are in args()"
-      - "typeerrors/env var names.lsh Ln:2 Col:24 $_ is not an environment variable"
+      - "typeerrors/env var names.lsh:1:9: $1 is not an environment variable, the script's arguments are in args()"
+      - "typeerrors/env var names.lsh:1:13: $10 is not an environment variable, the script's arguments are in args()"
+      - "typeerrors/env var names.lsh:2:24: $_ is not an environment variable"
   - name: args takes no arguments
     code: |
       a = args("x")
     errors:
-      - "typeerrors/args takes no arguments.lsh Ln:1 Col:5 args takes 0 arguments, not 1"
+      - "typeerrors/args takes no arguments.lsh:1:5: args takes 0 arguments, not 1"
   - name: assign an element
     code: |
       s = "abc"
@@ -440,11 +438,11 @@ tests:
         c[0] = "z"
       }
     errors:
-      - "typeerrors/assign an element.lsh Ln:2 Col:1 cannot assign to a character of string 's', strings can't be changed"
-      - "typeerrors/assign an element.lsh Ln:4 Col:1 cannot index a value of type int"
-      - "typeerrors/assign an element.lsh Ln:6 Col:1 an element of 'a' must be of type int, not string"
-      - "typeerrors/assign an element.lsh Ln:7 Col:1 index must be of type int, not string"
-      - "typeerrors/assign an element.lsh Ln:8 Col:1 variable 'b' is not defined"
-      - "typeerrors/assign an element.lsh Ln:9 Col:1 operator '+' can't be used with int and string"
-      - "typeerrors/assign an element.lsh Ln:10 Col:1 cannot assign to a character of string 's', strings can't be changed"
-      - "typeerrors/assign an element.lsh Ln:12 Col:3 cannot assign to a character of string 'c', strings can't be changed"
+      - "typeerrors/assign an element.lsh:2:1: cannot assign to a character of string 's', strings can't be changed"
+      - "typeerrors/assign an element.lsh:4:1: cannot index a value of type int"
+      - "typeerrors/assign an element.lsh:6:1: an element of 'a' must be of type int, not string"
+      - "typeerrors/assign an element.lsh:7:1: index must be of type int, not string"
+      - "typeerrors/assign an element.lsh:8:1: variable 'b' is not defined"
+      - "typeerrors/assign an element.lsh:9:1: operator '+' can't be used with int and string"
+      - "typeerrors/assign an element.lsh:10:1: cannot assign to a character of string 's', strings can't be changed"
+      - "typeerrors/assign an element.lsh:12:3: cannot assign to a character of string 'c', strings can't be changed"

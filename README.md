@@ -28,6 +28,9 @@ Its in no way optimized and quite rudimentary.
     whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
     This needs a UTF-8 locale on the system, which nearly every system has. Without one,
     a script that uses these operations exits with code 2 before it starts
+  - string literals have Go's escapes: `\n \t \r \a \b \f \v \\ \"`, `\xff` and `\377`
+    for a byte, `é` and `\U0001F600` for a character. Colours are `"\x1b[31m"`.
+    A string can't hold a NUL, so `\x00` is an error
   - arrays (very slow). `a[i] = x` and `a[i] += x` set an element, an index out of range
     ends the script with exit code 2 like reading it. Arrays are values like strings:
     `b = a` and a call copy them, so changing an element only changes that variable
@@ -41,8 +44,7 @@ Its in no way optimized and quite rudimentary.
     write to stderr
   - environment variables as `$NAME`, the script's arguments as `args()`
   - commands with `cmd`, see [Commands](#commands)
-  - names start with a lowercase letter or `_`, so they can't clash with bash's
-    variables like `PATH` and `IFS`
+  - names start with a lowercase letter or `_`, so there's one way to write them
   - packages: `import "strings"` from [std](#std), `import "./deploy"` and `import "../lib/log"` from
     the folder of the importing file, and `import "./util/strings" as ustrings` to use another
     name than the folder's
@@ -246,7 +248,7 @@ prints:
 
 the compiled bash code:
 
-    #!/bin/bash
+    #!/usr/bin/env bash
     function lsh_main_sumGt() {
       local V_a="${1}"
       local V_b="${2}"

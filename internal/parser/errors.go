@@ -28,8 +28,8 @@ func (l *errorListener) SyntaxError(_ antlr.Recognizer, _ any, line, column int,
 	})
 }
 
-// lowercase names can't clash with bash's variables like PATH and IFS, or with the
-// generated L_ ones
+// a convention so names are written one way, not a technical need: the backend prefixes
+// the names it emits
 func (l *errorListener) uppercaseNames(stream *antlr.CommonTokenStream) {
 	for _, tk := range stream.GetAllTokens() {
 		name := tk.GetText()
