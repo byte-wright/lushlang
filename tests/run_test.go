@@ -126,6 +126,26 @@ func runSuites(t *testing.T, suites []*TestSuite, only bool, run runner) {
 							t.Fatal(err)
 						}
 
+						sh := ""
+						if len(errors) == 0 {
+							err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(ast.Print(prog)), 0o600)
+							if err != nil {
+								t.Fatal(err)
+							}
+
+							bc, err := bcode.Compile(prog)
+							if err != nil {
+								t.Fatal(err)
+							}
+
+							err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bcode.Print(bc)), 0o600)
+							if err != nil {
+								t.Fatal(err)
+							}
+
+							sh, errors = bash.Translate(bc)
+						}
+
 						expectedErrors := map[string]bool{}
 						for _, e := range tc.Errors {
 							expectedErrors[e] = true
@@ -146,23 +166,8 @@ func runSuites(t *testing.T, suites []*TestSuite, only bool, run runner) {
 							return
 						}
 
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "ast")), []byte(ast.Print(prog)), 0o600)
-						if err != nil {
-							t.Fatal(err)
-						}
-
-						bc, err := bcode.Compile(prog)
-						if err != nil {
-							t.Fatal(err)
-						}
-
-						err = os.WriteFile(filepath.Join(folder, asFile(tc.Name, "basm")), []byte(bcode.Print(bc)), 0o600)
-						if err != nil {
-							t.Fatal(err)
-						}
-
 						file := filepath.Join(folder, asFile(tc.Name, "sh"))
-						err = os.WriteFile(file, []byte(bash.Translate(bc)), 0o700)
+						err = os.WriteFile(file, []byte(sh), 0o700)
 						if err != nil {
 							t.Fatal(err)
 						}

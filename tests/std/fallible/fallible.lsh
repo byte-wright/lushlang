@@ -6,7 +6,7 @@ func positive(n int) int, error {
 }
 
 // the last command of the bash code fails, the call still succeeds
-func external(ok bool) error ```
+func external(ok bool) error ```bash
   if [ "$ok" != true ]; then
     L_err="external failed"
     return 1

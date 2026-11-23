@@ -70,27 +70,73 @@ func (t *setTypesPass) globalDefs() {
 }
 
 // declarations reports functions and parameters that are defined twice. Calls would be
-// checked against the first one, but in bash the last one wins.
+// checked against the first one, but in bash the last one wins. An external function is
+// defined once for each target, calls are checked against the first definition, so the
+// others must have its types.
 func (t *setTypesPass) declarations(pkg *ast.Package) {
 	defined := map[string]*common.Location{}
 
 	for _, fd := range pkg.FuncDefs {
-		t.declare(defined, fd.Name, fd.Location, fd.Params)
+		t.declare(defined, fd.Name, fd.Location)
+		t.params(fd.Params)
 	}
 
+	type forTarget struct{ name, target string }
+	targets := map[forTarget]*common.Location{}
+	firsts := map[string]*ast.ExternalFuncDef{}
+
 	for _, fd := range pkg.ExternalFuncDefs {
-		t.declare(defined, fd.Name, fd.Location, fd.Params)
+		t.params(fd.Params)
+
+		key := forTarget{fd.Name, fd.Target}
+		other := targets[key]
+		if other != nil {
+			t.errorf(fd.Location, "function %v for %v is already defined at %v", fd.Name, fd.Target, other)
+			continue
+		}
+		targets[key] = fd.Location
+
+		first := firsts[fd.Name]
+		if first == nil {
+			firsts[fd.Name] = fd
+			t.declare(defined, fd.Name, fd.Location)
+		} else if !sameSignature(first, fd) {
+			t.errorf(fd.Location, "function %v for %v has another signature than at %v", fd.Name, fd.Target, first.Location)
+		}
 	}
 }
 
-func (t *setTypesPass) declare(defined map[string]*common.Location, name string, loc *common.Location, params []*ast.Param) {
+func (t *setTypesPass) declare(defined map[string]*common.Location, name string, loc *common.Location) {
 	first := defined[name]
 	if first != nil {
 		t.errorf(loc, "function %v is already defined at %v", name, first)
 	} else {
 		defined[name] = loc
 	}
+}
 
+// the names of the parameters can differ, only the code sees them
+func sameSignature(a, b *ast.ExternalFuncDef) bool {
+	if len(a.Params) != len(b.Params) || len(a.Returns) != len(b.Returns) || a.CanFail != b.CanFail {
+		return false
+	}
+
+	for i, p := range a.Params {
+		if !p.Type.Is(b.Params[i].Type) {
+			return false
+		}
+	}
+
+	for i, r := range a.Returns {
+		if !r.Is(b.Returns[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (t *setTypesPass) params(params []*ast.Param) {
 	seen := map[string]bool{}
 	for _, p := range params {
 		if p.Name != "_" && seen[p.Name] {

@@ -1,7 +1,7 @@
-func twice() int ```
+func twice() int ```bash
   L_ret0=2
 ```
 
-func first(a string, a string) string ```
+func first(a string, a string) string ```bash
   L_ret0="$a"
 ```

@@ -446,3 +446,26 @@ tests:
       - "typeerrors/assign an element.lsh:9:1: operator '+' can't be used with int and string"
       - "typeerrors/assign an element.lsh:10:1: cannot assign to a character of string 's', strings can't be changed"
       - "typeerrors/assign an element.lsh:12:3: cannot assign to a character of string 'c', strings can't be changed"
+
+  - name: external functions for several targets
+    description: each target has one definition of a function, they all take and return the same types
+    code: |
+      import "./baddialects"
+    errors:
+      - "std/baddialects/b.lsh:1:6: function f for sh has another signature than at std/baddialects/a.lsh:1:6"
+      - "std/baddialects/b.lsh:5:6: function g for bash is already defined at std/baddialects/a.lsh:5:6"
+      - "std/baddialects/b.lsh:9:6: function h for sh has another signature than at std/baddialects/a.lsh:9:6"
+
+  - name: call without bash code
+    description: only a call fails, the package can have functions for other targets only
+    code: |
+      import "./dialects"
+
+      println(dialects.onlySh())
+
+      func f() string {
+        return dialects.onlySh()
+      }
+    errors:
+      - "typeerrors/call without bash code.lsh:3:18: function onlySh has no bash definition"
+      - "typeerrors/call without bash code.lsh:6:19: function onlySh has no bash definition"

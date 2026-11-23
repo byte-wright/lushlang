@@ -2,7 +2,7 @@ main visitor:
 
 bcode.Program type:
   {for i, fd, first in .Funcs-}
-    func ${fd.FullName}(){if fd.CanFail} error{end} {
+    func ${fd.FullName}(){if fd.CanFail} error{end}{if fd.Target} for ${fd.Target}{end} {
     @{fd.Body}
   }
   {end-}

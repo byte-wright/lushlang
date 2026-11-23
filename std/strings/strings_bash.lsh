@@ -1,5 +1,5 @@
 
-func hasPrefix(s string, prefix string) bool ```
+func hasPrefix(s string, prefix string) bool ```bash
   if [[ "$s" == "$prefix"* ]]; then
     L_ret0=true
   else
@@ -7,7 +7,7 @@ func hasPrefix(s string, prefix string) bool ```
   fi
 ```
 
-func hasSuffix(s string, suffix string) bool ```
+func hasSuffix(s string, suffix string) bool ```bash
   if [[ "$s" == *"$suffix" ]]; then
     L_ret0=true
   else
@@ -15,15 +15,15 @@ func hasSuffix(s string, suffix string) bool ```
   fi
 ```
 
-func trimPrefix(s string, prefix string) string ```
+func trimPrefix(s string, prefix string) string ```bash
   L_ret0="${s#"$prefix"}"
 ```
 
-func trimSuffix(s string, suffix string) string ```
+func trimSuffix(s string, suffix string) string ```bash
   L_ret0="${s%"$suffix"}"
 ```
 
-func indexOf(s string, sub string) int ```
+func indexOf(s string, sub string) int ```bash
   if [[ "$s" == *"$sub"* ]]; then
     local before="${s%%"$sub"*}"
     lsh__strLen "$before"
@@ -32,7 +32,7 @@ func indexOf(s string, sub string) int ```
   fi
 ```
 
-func cut(s string, sep string) string, string, bool ```
+func cut(s string, sep string) string, string, bool ```bash
   if [[ "$s" == *"$sep"* ]]; then
     L_ret0="${s%%"$sep"*}"
     L_ret1="${s#*"$sep"}"
@@ -44,7 +44,7 @@ func cut(s string, sep string) string, string, bool ```
   fi
 ```
 
-func join(strs []string, sep string) string ```
+func join(strs []string, sep string) string ```bash
   local i=2
   local v=""
   local di=$(($1+2))
@@ -58,7 +58,7 @@ func join(strs []string, sep string) string ```
   L_ret0="${v}"
 ```
 
-func contains(s string, sub string) bool ```
+func contains(s string, sub string) bool ```bash
   local LC_ALL=C
   if [[ "$s" == *"$sub"* ]]; then
     L_ret0=true
@@ -69,7 +69,7 @@ func contains(s string, sub string) bool ```
 
 // like Go: every separator splits, so "a,,b" has an empty part in the middle. An empty
 // separator splits into the characters.
-func split(s string, sep string) []string ```
+func split(s string, sep string) []string ```bash
   if [ -z "$sep" ]; then
     lsh__strChars "$s"
     return
@@ -87,7 +87,7 @@ func split(s string, sep string) []string ```
 ```
 
 // like Go: an empty old puts new before every character and at the end
-func replaceAll(s string, old string, new string) string ```
+func replaceAll(s string, old string, new string) string ```bash
   if [ -z "$old" ]; then
     lsh__strChars "$s"
     local L_r="$new" L_c
@@ -103,14 +103,14 @@ func replaceAll(s string, old string, new string) string ```
 ```
 
 // removes spaces, tabs, newlines, \r, \v and \f at both ends
-func trimSpace(s string) string ```
+func trimSpace(s string) string ```bash
   local LC_ALL=C
   s="${s#"${s%%[![:space:]]*}"}"
   L_ret0="${s%"${s##*[![:space:]]}"}"
 ```
 
 // only changes a to z, bash 3.2 has no case conversion
-func toUpper(s string) string ```
+func toUpper(s string) string ```bash
   local LC_ALL=C L_c L_t L_i L_from=abcdefghijklmnopqrstuvwxyz L_to=ABCDEFGHIJKLMNOPQRSTUVWXYZ
   L_ret0=""
   for (( L_i = 0; L_i < ${#s}; L_i++ )); do
@@ -126,7 +126,7 @@ func toUpper(s string) string ```
 ```
 
 // only changes A to Z, bash 3.2 has no case conversion
-func toLower(s string) string ```
+func toLower(s string) string ```bash
   local LC_ALL=C L_c L_t L_i L_from=ABCDEFGHIJKLMNOPQRSTUVWXYZ L_to=abcdefghijklmnopqrstuvwxyz
   L_ret0=""
   for (( L_i = 0; L_i < ${#s}; L_i++ )); do

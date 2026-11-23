@@ -11,7 +11,8 @@ type Func struct {
 	Return     []*VarValue
 	// Try makes the current function fail with the error of a failing call, main ends the
 	// script with it
-	Try bool
+	Try      bool
+	Location *common.Location
 }
 
 func (f *Func) Type() common.Type {

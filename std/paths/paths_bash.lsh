@@ -1,5 +1,5 @@
 // like the basename command: "a/b/" gives "b", "/" gives "/" and "" gives "."
-func base(path string) string ```
+func base(path string) string ```bash
   if [ -z "$path" ]; then
     L_ret0=.
     return
@@ -11,7 +11,7 @@ func base(path string) string ```
 ```
 
 // like the dirname command: "a/b/" gives "a", "/a" gives "/" and "a" gives "."
-func dir(path string) string ```
+func dir(path string) string ```bash
   if [ -z "$path" ]; then
     L_ret0=.
     return

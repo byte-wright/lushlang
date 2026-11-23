@@ -1,0 +1,7 @@
+func name() string ```bash
+  L_ret0=bash
+```
+
+func greet(name string) string ```bash
+  L_ret0="hello $name"
+```

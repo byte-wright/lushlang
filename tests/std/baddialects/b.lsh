@@ -1,0 +1,11 @@
+func f(a string) int ```sh
+  L_ret0=1
+```
+
+func g() ```bash
+  :
+```
+
+func h() ```sh
+  :
+```

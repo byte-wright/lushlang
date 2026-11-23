@@ -1,6 +1,6 @@
 global s = "global"
 
-func echo(s string) string ```
+func echo(s string) string ```bash
   L_ret0="$s"
 ```
 

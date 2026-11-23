@@ -1,0 +1,12 @@
+func name() string ```sh
+  L_ret0=sh
+```
+
+// the parameter names can differ, only the code sees them
+func greet(who string) string ```sh
+  L_ret0="hello $who"
+```
+
+func onlySh() string ```sh
+  L_ret0=sh
+```

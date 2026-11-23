@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/byte-wright/lush/internal/ast"
 	"github.com/byte-wright/lush/internal/bcode"
 	"github.com/byte-wright/lush/internal/common"
 )
@@ -22,26 +23,43 @@ type bash struct {
 	// number of loops around it, both in the current function
 	active []*activeCmd
 	loops  int
+	// defined are the full names of the functions that have a bash definition
+	defined map[string]bool
+	errors  []*ast.ASTError
 }
 
-func Translate(p *bcode.Program) string {
+// Translate returns the errors of calls to external functions that have no bash code.
+func Translate(p *bcode.Program) (string, []*ast.ASTError) {
 	b := &bash{
 		p:         p,
 		usedFuncs: map[string]bool{},
+		defined:   map[string]bool{},
 	}
 
 	b.translate()
 
-	return strings.Join(b.lines, "\n")
+	if len(b.errors) > 0 {
+		return "", b.errors
+	}
+
+	return strings.Join(b.lines, "\n"), nil
 }
 
 func (b *bash) translate() {
 	b.print("#!/usr/bin/env bash")
 
-	for _, gd := range b.p.Funcs {
-		b.print("function lsh_" + gd.FullName() + "() {")
-		b.canFail = gd.CanFail
-		b.body(gd.Body)
+	defs := []*bcode.FuncDef{}
+	for _, fd := range b.p.Funcs {
+		if fd.Target == "" || fd.Target == "bash" {
+			defs = append(defs, fd)
+			b.defined[fd.FullName()] = true
+		}
+	}
+
+	for _, fd := range defs {
+		b.print("function lsh_" + fd.FullName() + "() {")
+		b.canFail = fd.CanFail
+		b.body(fd.Body)
 		b.print("}")
 	}
 
@@ -506,6 +524,10 @@ func (b *bash) funcName(f *bcode.Func) string {
 	if f.Namespace == "" {
 		b.useFunc(f.Name)
 		return "lsh__" + f.Name
+	}
+
+	if !b.defined[f.FullName()] {
+		b.errors = append(b.errors, &ast.ASTError{Location: f.Location, Message: fmt.Sprintf("function %v has no bash definition", f.Name)})
 	}
 
 	return "lsh_" + f.FullName()

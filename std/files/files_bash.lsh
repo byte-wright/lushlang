@@ -1,4 +1,4 @@
-func exists(path string) bool ```
+func exists(path string) bool ```bash
   if [[ -e "$path" ]]; then
     L_ret0=true
   else
@@ -6,7 +6,7 @@ func exists(path string) bool ```
   fi
 ```
 
-func isFile(path string) bool ```
+func isFile(path string) bool ```bash
   if [[ -f "$path" ]]; then
     L_ret0=true
   else
@@ -14,7 +14,7 @@ func isFile(path string) bool ```
   fi
 ```
 
-func isDir(path string) bool ```
+func isDir(path string) bool ```bash
   if [[ -d "$path" ]]; then
     L_ret0=true
   else
@@ -23,7 +23,7 @@ func isDir(path string) bool ```
 ```
 
 // the whole text, bash strings can't hold NUL bytes, they're dropped
-func read(path string) string, error ```
+func read(path string) string, error ```bash
   if [[ -d "$path" ]]; then
     L_err="can't read $path: Is a directory"
     return 1
@@ -42,7 +42,7 @@ func read(path string) string, error ```
 ```
 
 // the lines without their newline, like the []string of cmd
-func lines(path string) []string, error ```
+func lines(path string) []string, error ```bash
   if [[ -d "$path" ]]; then
     L_err="can't read $path: Is a directory"
     return 1
@@ -58,14 +58,14 @@ func lines(path string) []string, error ```
   }
 ```
 
-func write(path string, text string) error ```
+func write(path string, text string) error ```bash
   printf '%s' "$text" 2>/dev/null > "$path" || {
     lsh__fileError write "$path"
     return 1
   }
 ```
 
-func append(path string, text string) error ```
+func append(path string, text string) error ```bash
   printf '%s' "$text" 2>/dev/null >> "$path" || {
     lsh__fileError append "$path"
     return 1

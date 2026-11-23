@@ -190,3 +190,12 @@ tests:
       println(len("abc"), shadow.len("abc"), shadow.size("abc"))
     expected: |
       3 42 42
+
+  - name: external functions for several targets
+    description: bash leaves out the code for other targets
+    code: |
+      import "./dialects"
+
+      println(dialects.name(), dialects.greet("world"))
+    expected: |
+      bash hello world

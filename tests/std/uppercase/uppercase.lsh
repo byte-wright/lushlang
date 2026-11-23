@@ -1,3 +1,3 @@
-func echo(IFS string) ```
+func echo(IFS string) ```bash
   printf '%s\n' "$IFS"
 ```

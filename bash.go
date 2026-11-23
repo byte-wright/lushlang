@@ -29,15 +29,10 @@ func ToBashDebug(source, name, dir string) (string, string, string, error) {
 	}
 
 	if len(astErrs) > 0 {
-		errs := []error{}
-		for _, e := range astErrs {
-			errs = append(errs, e)
-		}
-
-		return "", "", "", errors.Join(errs...)
+		return "", "", "", joinErrors(astErrs)
 	}
 
-	ast := ast.Print(prog)
+	printed := ast.Print(prog)
 
 	bc, err := bcode.Compile(prog)
 	if err != nil {
@@ -46,5 +41,19 @@ func ToBashDebug(source, name, dir string) (string, string, string, error) {
 
 	bCode := bcode.Print(bc)
 
-	return ast, bCode, bash.Translate(bc), nil
+	sh, astErrs := bash.Translate(bc)
+	if len(astErrs) > 0 {
+		return "", "", "", joinErrors(astErrs)
+	}
+
+	return printed, bCode, sh, nil
+}
+
+func joinErrors(astErrs []*ast.ASTError) error {
+	errs := []error{}
+	for _, e := range astErrs {
+		errs = append(errs, e)
+	}
+
+	return errors.Join(errs...)
 }

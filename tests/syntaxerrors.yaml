@@ -92,3 +92,11 @@ tests:
       import "./uppercase"
     errors:
       - "std/uppercase/uppercase.lsh:1:11: name IFS must start with a lowercase letter"
+
+  - name: external code without a target
+    description: the first line of the code names its target, a body on that line is no target
+    code: |
+      import "./notarget"
+    errors:
+      - "std/notarget/notarget.lsh:1:10: the code of f must start with its target, like ```bash"
+      - "std/notarget/notarget.lsh:5:10: the code of g must start with its target, like ```bash"

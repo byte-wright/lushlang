@@ -216,17 +216,44 @@ func (v *Visitor) VisitExternalFuncDef(ctx *ExternalFuncDefContext) any {
 
 	returns, canFail := v.results(ctx.Results())
 
-	code := ctx.EXTERNAL_CODE().GetText()
+	name := ctx.ID().GetText()
+	tk := ctx.EXTERNAL_CODE().GetSymbol()
+	code := tk.GetText()
 	code = code[3 : len(code)-3]
 
+	end := strings.IndexByte(code, '\n')
+	if end < 0 {
+		end = len(code)
+	}
+
+	target := strings.TrimSpace(code[:end])
+	if !isTargetName(target) {
+		v.errors = append(v.errors, &ast.ASTError{Location: v.locTk(tk), Message: fmt.Sprintf("the code of %v must start with its target, like ```bash", name)})
+	}
+
 	return &ast.ExternalFuncDef{
-		Name:     ctx.ID().GetText(),
+		Name:     name,
 		Location: v.locTk(ctx.ID().GetSymbol()),
 		Params:   params,
 		Returns:  returns,
 		CanFail:  canFail,
-		Code:     code,
+		Target:   target,
+		Code:     code[end:],
 	}
+}
+
+func isTargetName(s string) bool {
+	if s == "" || s[0] < 'a' || s[0] > 'z' {
+		return false
+	}
+
+	for _, r := range s {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+
+	return true
 }
 
 // results returns the types of the values, and whether the last result is an error

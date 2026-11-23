@@ -21,6 +21,8 @@ type FuncDef struct {
 	Params    []*Param
 	Body      *Block
 	CanFail   bool
+	// Target is the dialect of an external function's code, empty for the others
+	Target string
 }
 
 func (fd *FuncDef) FullName() string {

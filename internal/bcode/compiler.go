@@ -134,6 +134,7 @@ func (c *Compiler) addExternalFuncs(namespace string, funcDefs []*ast.ExternalFu
 			Body:      block,
 			Params:    params,
 			CanFail:   fd.CanFail,
+			Target:    fd.Target,
 		}
 
 		c.prog.Funcs = append(c.prog.Funcs, funcDef)
@@ -642,6 +643,7 @@ func (c *Compiler) newCall(block *Block, x *ast.Func) *Func {
 		Name:      x.Name,
 		Return:    ret,
 		Try:       x.Try,
+		Location:  x.Location,
 	}
 	for _, p := range x.Parameters {
 		f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)

@@ -1,0 +1,11 @@
+func f(a int) int ```bash
+  L_ret0=1
+```
+
+func g() ```bash
+  :
+```
+
+func h() error ```bash
+  :
+```

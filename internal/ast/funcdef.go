@@ -27,5 +27,7 @@ type ExternalFuncDef struct {
 	Params   []*Param
 	Returns  []common.Type
 	CanFail  bool
-	Code     string
+	// Target is the dialect of Code, only the backend of that dialect uses it
+	Target string
+	Code   string
 }

@@ -7,6 +7,6 @@ func path(a string, b string) string {
 }
 
 // the body of an external function is bash, a // in it stays
-func url(host string) string ```
+func url(host string) string ```bash
   L_ret0="https://$host"
 ```
