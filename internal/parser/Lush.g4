@@ -158,6 +158,7 @@ atom
     | envVar
     | var
     | TRY? (namespace = ID DOT)? func
+    | TRY? conversion
     | cmd
     | LPAREN group = expression RPAREN
     | array
@@ -165,6 +166,13 @@ atom
 
 func
     : ID LPAREN (
+        expression (COMMA expression)* COMMA?
+    )? RPAREN
+    ;
+
+// any number of arguments, so a wrong one is a type error and not a syntax error
+conversion
+    : type LPAREN (
         expression (COMMA expression)* COMMA?
     )? RPAREN
     ;

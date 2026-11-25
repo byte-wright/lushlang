@@ -132,6 +132,36 @@ L_ret0="$L_sign$L_s"
 return 0`,
 	})
 
+	register(&bFunc{
+		name: "parseBool",
+		code: `case "$1" in
+	true|false)
+		L_ret0="$1"
+		return 0
+		;;
+esac
+L_err="\"$1\" is not a bool"
+return 1`,
+	})
+
+	register(&bFunc{
+		name: "parseInts",
+		code: parseElements("parseInt"),
+		uses: []string{"parseInt"},
+	})
+
+	register(&bFunc{
+		name: "parseBools",
+		code: parseElements("parseBool"),
+		uses: []string{"parseBool"},
+	})
+
+	register(&bFunc{
+		name: "formatArray",
+		code: `local IFS=' '
+L_ret0="[$*]"`,
+	})
+
 	// fileError sets L_err for a file of std/files that can't be opened, $1 is read,
 	// write or append. The reason is the end of bash's own message when it opens the
 	// file again, the C locale makes it the same everywhere.
@@ -237,4 +267,22 @@ printf "\n"`,
 		code: `lsh__println "$@" >&2`,
 		uses: []string{"println"},
 	})
+}
+
+// parseElements is the code of a helper that parses each element of an array with the
+// helper parse. Like every array argument, the array comes as its length followed by the
+// elements.
+func parseElements(parse string) string {
+	return `local L_i=0 L_v L_r=()
+shift
+for L_v in "$@"; do
+	if ! lsh__` + parse + ` "$L_v"; then
+		L_err="index $L_i: $L_err"
+		return 1
+	fi
+	L_r[L_i]="$L_ret0"
+	L_i=$(( L_i + 1 ))
+done
+L_ret0=("${L_r[@]}")
+return 0`
 }

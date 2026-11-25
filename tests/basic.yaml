@@ -29,6 +29,25 @@ tests:
     expected: "out\n"
     stderr: "warning: 3 files -e\nlast"
 
+  - name: Print arrays
+    description: like Go's fmt.Println, the elements with a space between them in []
+    args: ["-x", "a b"]
+    code: |
+      func pair() []int, []bool {
+        return [1, 2], [true]
+      }
+
+      a = ["a b", "", "c*", "-n"]
+      println(a, [1, -2, 3], 4, [false], []string, args())
+      print([7], pair())
+      println()
+      eprintln("err", [""])
+      eprint([3, 4])
+    expected: |
+      [a b  c* -n] [1 -2 3] 4 [false] [] [-x a b]
+      [7] [1 2] [true]
+    stderr: "err []\n[3 4]"
+
   - name: Multi assignment
     code: |
       hello, world, num = "Hello", "World", 42

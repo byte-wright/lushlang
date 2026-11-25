@@ -120,6 +120,9 @@ type Func struct {
 	Location   *common.Location
 	// Try passes the error of a failing call on
 	Try bool
+	// Conversion is the type of a conversion like int(s), Name is its text. It's nil for
+	// calls.
+	Conversion common.Type
 	// calculated
 	ReturnTypes []common.Type
 	CanFail     bool

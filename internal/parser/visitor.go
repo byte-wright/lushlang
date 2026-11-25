@@ -638,6 +638,12 @@ func (v *Visitor) VisitAtom(ctx *AtomContext) any {
 		return v.call(ctx.GetNamespace(), ctx.Func_(), ctx.TRY())
 	}
 
+	if ctx.Conversion() != nil {
+		f := ctx.Conversion().Accept(v).(*ast.Func)
+		f.Try = ctx.TRY() != nil
+		return f
+	}
+
 	if ctx.Cmd() != nil {
 		return ctx.Cmd().Accept(v)
 	}
@@ -657,6 +663,20 @@ func (v *Visitor) VisitFunc(ctx *FuncContext) any {
 	f := &ast.Func{
 		Name:     ctx.ID().GetText(),
 		Location: v.loc(ctx),
+	}
+	for _, p := range ctx.AllExpression() {
+		f.Parameters = append(f.Parameters, p.Accept(v).(ast.Expression))
+	}
+	return f
+}
+
+func (v *Visitor) VisitConversion(ctx *ConversionContext) any {
+	tp := ctx.Type_().Accept(v).(common.Type)
+
+	f := &ast.Func{
+		Name:       tp.Print(),
+		Conversion: tp,
+		Location:   v.loc(ctx),
 	}
 	for _, p := range ctx.AllExpression() {
 		f.Parameters = append(f.Parameters, p.Accept(v).(ast.Expression))

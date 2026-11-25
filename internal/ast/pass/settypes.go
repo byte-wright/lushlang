@@ -354,7 +354,18 @@ func callName(statement ast.Statement) string {
 		return "cmd"
 	}
 
-	return call.(*ast.Func).Name
+	f := call.(*ast.Func)
+	return displayName(f, f.Name)
+}
+
+// displayName is name, for a conversion with the type of its value: whether int(...) can
+// fail depends on it
+func displayName(f *ast.Func, name string) string {
+	if f.Conversion == nil {
+		return name
+	}
+
+	return name + "(" + printTypes(valueTypes(f.Parameters)) + ")"
 }
 
 func (t *setTypesPass) fail(st *ast.Fail) {
@@ -728,7 +739,7 @@ func (t *setTypesPass) call(namespace string, f *ast.Func) {
 	f.ReturnTypes = t.returnTypes(namespace, name, f)
 
 	if known(f.ReturnTypes) {
-		t.failingCall(name, f, f.Try, f.CanFail, f.Location)
+		t.failingCall(displayName(f, name), f, f.Try, f.CanFail, f.Location)
 	}
 
 	// spreading would silently drop a call without values from the values around it
@@ -763,6 +774,15 @@ func (t *setTypesPass) failingCall(name string, call ast.Expression, try, canFai
 // functions of the caller's own package or builtins.
 func (t *setTypesPass) returnTypes(namespace, name string, f *ast.Func) []common.Type {
 	args := valueTypes(f.Parameters)
+
+	if f.Conversion != nil {
+		def, err := conversion(f.Conversion, args)
+		if err != nil && known(args) {
+			t.errorf(f.Location, "%v", err)
+		}
+		f.CanFail = def.canFail
+		return def.returns
+	}
 
 	// like in Go, the functions of a package shadow the builtins inside of it
 	isOwn := findFunc(t.file.Package, f.Name) != nil
@@ -977,7 +997,7 @@ func findFunc(pkg *ast.Package, name string) *signature {
 func builtin(name string, args []common.Type) (*signature, error) {
 	switch name {
 	case "print", "println", "eprint", "eprintln":
-		return &signature{returns: []common.Type{}}, noArrays(name, args)
+		return &signature{returns: []common.Type{}}, nil
 
 	case "len":
 		sig := &signature{returns: []common.Type{intType}}
@@ -987,18 +1007,6 @@ func builtin(name string, args []common.Type) (*signature, error) {
 
 		if !args[0].IsArray() && !args[0].Is(stringType) {
 			return sig, fmt.Errorf("argument 1 of len must be an array or string, not %v", args[0].Print())
-		}
-
-		return sig, nil
-
-	case "parseInt":
-		sig := &signature{returns: []common.Type{intType}, canFail: true}
-		if len(args) != 1 {
-			return sig, fmt.Errorf("parseInt takes 1 argument, not %v", len(args))
-		}
-
-		if !args[0].Is(stringType) {
-			return sig, fmt.Errorf("argument 1 of parseInt must be of type string, not %v", args[0].Print())
 		}
 
 		return sig, nil
@@ -1033,13 +1041,35 @@ func builtin(name string, args []common.Type) (*signature, error) {
 	return nil, nil
 }
 
-// noArrays is for the print functions, an array would show up as its length followed by its elements.
-func noArrays(name string, args []common.Type) error {
-	for i, arg := range args {
-		if arg.IsArray() {
-			return fmt.Errorf("argument %v of %v can't be of type %v", i+1, name, arg.Print())
-		}
+// conversion returns the signature of a conversion like int(s) to the type to. Every type
+// converts to itself and to a string, and a string parses into the others, which can fail.
+// An array converts element by element. An int and a bool don't convert into each other:
+// is 0 true like an exit code, or false like in C?
+func conversion(to common.Type, args []common.Type) (*signature, error) {
+	failed := &signature{returns: unknownTypes}
+
+	if len(args) != 1 {
+		return failed, fmt.Errorf("%v takes 1 argument, not %v", to.Print(), len(args))
 	}
 
-	return nil
+	from, fromEl, toEl := args[0], args[0], to
+	if from.IsArray() && to.IsArray() {
+		fromEl, toEl = from.(*common.ArrayType).ElementType, to.(*common.ArrayType).ElementType
+	}
+
+	sig := &signature{returns: []common.Type{to}}
+
+	switch {
+	case from.IsArray() != to.IsArray() || !isOneOf(fromEl, []common.Type{stringType, intType, boolType}):
+		return failed, fmt.Errorf("can't convert %v to %v", from.Print(), to.Print())
+
+	case fromEl.Is(toEl) || toEl.Is(stringType):
+		return sig, nil
+
+	case fromEl.Is(stringType):
+		sig.canFail = true
+		return sig, nil
+	}
+
+	return failed, fmt.Errorf("can't convert %v to %v", from.Print(), to.Print())
 }

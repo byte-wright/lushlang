@@ -21,9 +21,15 @@ Its in no way optimized and quite rudimentary.
   - a string plus an int or bool takes its text: `"n=" + n`. Only a string on the left
     does that, `1 + 2 + "x"` is an error, `"n=" + 1 + 2` is `n=12` and
     `"n=" + (1 + 2)` is `n=3`
-  - `n = try parseInt(s)` reads an int: an optional `+` or `-` and decimal digits, a
-    leading 0 doesn't make it octal. Anything else, also a number outside of the 64-bit
-    range, is an [error](#errors)
+  - conversions have the name of the type: `string(n)`, `int(s)`, `bool(s)`, and
+    `[]string(ports)` converts an array element by element. Every type converts to a
+    string and to itself, an int and a bool don't convert into each other. Only reading a
+    string can fail, so `n = try int(s)` needs `try` or `catch` and `string(n)` doesn't,
+    see [Errors](#errors)
+  - `int(s)` reads an optional `+` or `-` and decimal digits, a leading 0 doesn't make it
+    octal. Anything else, also a number outside of the 64-bit range, is an error. `bool(s)`
+    only reads `true` and `false`. For an array, the error has the index of the element:
+    `index 2: "x" is not an int`
   - strings are UTF-8: `len`, indexes and slices count characters (Unicode code points),
     whatever the user's locale. Bytes that aren't valid UTF-8 count as one character each.
     This needs a UTF-8 locale on the system, which nearly every system has. Without one,
@@ -41,7 +47,8 @@ Its in no way optimized and quite rudimentary.
   - `return` outside of functions ends the script with exit code 0
   - `println(a, b)` writes its arguments to stdout with a space between them and a newline
     at the end, `print(a, b)` does the same without the newline. `eprintln` and `eprint`
-    write to stderr
+    write to stderr. An array looks like in Go, `[1 2 3]`, so `["a b"]` and `["a", "b"]`
+    look the same
   - environment variables as `$NAME`, the script's arguments as `args()`
   - commands with `cmd`, see [Commands](#commands)
   - names start with a lowercase letter or `_`, so there's one way to write them
@@ -108,7 +115,7 @@ rejects a call that does neither, and a `try` or `catch` on a function that can'
     statement needs a block that ends with `return`, `fail`, `break` or `continue`
   - `err` only exists in the block, like a loop variable, and `_` ignores it
   - a global of a package can't call a function that can fail
-  - errors come from `fail`, `parseInt` and `cmd`. An index out of range still ends the script
+  - errors come from `fail`, conversions of strings and `cmd`. An index out of range still ends the script
     with exit code 2
 
 Commands
@@ -204,6 +211,7 @@ Std
 
   - `split` splits at every separator, so `split("a,", ",")` is `["a", ""]`. An empty
     separator splits into the characters
+  - `join` takes a `[]string`, other arrays convert first: `join([]string(ports), ", ")`
   - `trimSpace` removes spaces, tabs, newlines, `\r`, `\v` and `\f`. `toUpper` and `toLower`
     only change the ASCII letters, `é` stays as it is
 

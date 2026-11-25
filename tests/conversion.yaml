@@ -34,11 +34,11 @@ tests:
     expected: |
       count=3
 
-  - name: parseInt valid
+  - name: int of a valid string
     description: an optional sign and decimal digits, leading zeros don't make it octal
     code: |
       for s in ["0", "-0", "+0", "42", "-42", "+42", "007", "-007", "08", "0009223372036854775807", "9223372036854775807", "-9223372036854775808"] {
-        n = try parseInt(s)
+        n = try int(s)
         println(s, n)
       }
     expected: |
@@ -55,11 +55,11 @@ tests:
       9223372036854775807 9223372036854775807
       -9223372036854775808 -9223372036854775808
 
-  - name: parseInt invalid
+  - name: int of an invalid string
     description: anything else, also an int out of range, is an error and runs nothing
     code: |
       for s in ["", "-", "+", "-+5", " 5", "5 ", "5\n", "1_000", "0x10", "1e3", "٣", "9223372036854775808", "-9223372036854775809", "99999999999999999999", "$(echo hi >&2)", "a[$(echo pwned >&2)]", "*"] {
-        n = parseInt(s) catch err {
+        n = int(s) catch err {
           println("[" + err + "]")
           continue
         }
@@ -85,21 +85,21 @@ tests:
       ["a[$(echo pwned >&2)]" is not an int]
       ["*" is not an int]
 
-  - name: parseInt result is a plain int
+  - name: int of a string is a plain int
     description: the result works in arithmetic and comparisons like a literal
     code: |
-      a = try parseInt("08")
-      b = try parseInt("-007")
+      a = try int("08")
+      b = try int("-007")
       println(a * 2, b + 1, a == 8, b < 0, "b=" + b)
     expected: |
       16 -6 true true b=-7
 
-  - name: parseInt of arguments
+  - name: int of arguments
     args: ["12", "x", "30"]
     code: |
       sum = 0
       for a in args() {
-        n = parseInt(a) catch err {
+        n = int(a) catch err {
           println("skipped:", err)
           continue
         }
@@ -110,11 +110,11 @@ tests:
       skipped: "x" is not an int
       sum=42
 
-  - name: parseInt with try at the top level
+  - name: int with try at the top level
     description: the message goes to stderr and the script ends with exit code 1
     code: |
-      println(try parseInt("7") + 1)
-      n = try parseInt("seven")
+      println(try int("7") + 1)
+      n = try int("seven")
       println("not reached", n)
     expected: |
       8
@@ -122,20 +122,20 @@ tests:
       "seven" is not an int
     exit: 1
 
-  - name: parseInt keeps the old value on a failure
+  - name: int keeps the old value on a failure
     code: |
       port = 8080
-      port = parseInt("x") catch _ {
+      port = int("x") catch _ {
       }
       println(port)
     expected: |
       8080
 
-  - name: parseInt in the C locale
+  - name: int in the C locale
     env: [LC_ALL=C]
     code: |
       for s in ["123", "٣", "1€"] {
-        n = parseInt(s) catch err {
+        n = int(s) catch err {
           println(err)
           continue
         }
@@ -145,3 +145,86 @@ tests:
       123 123
       "٣" is not an int
       "1€" is not an int
+
+  - name: conversions that can't fail
+    description: everything converts to a string and to its own type
+    code: |
+      s = string(-3) + string(true) + string("x")
+      println(s, string(len("abc")), int(5), bool(false))
+      a = []string([1, 2])
+      a[0] = "one"
+      println(a, []string([true]), []int([7]), []string([]int))
+    expected: |
+      -3truex 3 5 false
+      [one 2] [true] [7] []
+
+  - name: an array conversion is a copy
+    code: |
+      a = ["1", "2"]
+      b = []string(a)
+      c = try []int(a)
+      b[0] = "x"
+      c[1] = 9
+      println(a, b, c)
+    expected: |
+      [1 2] [x 2] [1 9]
+
+  - name: bool of a string
+    description: only the texts string gives, true and false
+    code: |
+      for s in ["true", "false", "True", "TRUE", "1", "0", "t", "", " true", "true\n"] {
+        b = bool(s) catch err {
+          println("[" + err + "]")
+          continue
+        }
+        println(s, b, !b)
+      }
+    expected: |
+      true true false
+      false false true
+      ["True" is not a bool]
+      ["TRUE" is not a bool]
+      ["1" is not a bool]
+      ["0" is not a bool]
+      ["t" is not a bool]
+      ["" is not a bool]
+      [" true" is not a bool]
+      ["true
+      " is not a bool]
+
+  - name: arrays of strings
+    description: the error has the index of the element
+    code: |
+      println(try []int(["1", "-2", "007"]), try []bool(["true", "false"]), try []int([]string))
+      _ = []int(["1", "x"]) catch err {
+        println(err)
+      }
+      _ = []int(["9223372036854775808"]) catch err {
+        println(err)
+      }
+      b = []bool(["true", "yes"]) catch err {
+        println(err)
+        return
+      }
+    expected: |
+      [1 -2 7] [true false] []
+      index 1: "x" is not an int
+      index 0: "9223372036854775808" is out of the int range
+      index 1: "yes" is not a bool
+
+  - name: array conversion with try at the top level
+    code: |
+      n = try []int(["1", "2", "three"])
+      println("not reached", n)
+    stderr: |
+      index 2: "three" is not an int
+    exit: 1
+
+  - name: join of an int array
+    code: |
+      import "strings"
+
+      ports = [80, 443]
+      println(strings.join([]string(ports), ", "))
+    expected: |
+      80, 443

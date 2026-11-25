@@ -354,7 +354,17 @@ func (b *bash) atom(a bcode.Atom) string {
 		return "${!L_i}"
 
 	// the str helpers return in L_ret0, it's safe to read because bcode assigns
-	// every Len, Index, Slice and Chars to a variable right away
+	// every Len, Index, Slice, Chars and Convert to a variable right away
+	case *bcode.Convert:
+		// ints and bools are already text
+		if at.To.IsArray() || !at.Value.Type().IsArray() {
+			return b.atom(at.Value)
+		}
+
+		b.useFunc("formatArray")
+		b.print(`lsh__formatArray "${` + at.Value.Name + `[@]}"`)
+		return `"$L_ret0"`
+
 	case *bcode.Chars:
 		b.useFunc("strChars")
 		b.print("lsh__strChars " + b.atom(at.Value))

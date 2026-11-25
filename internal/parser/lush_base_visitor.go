@@ -112,6 +112,10 @@ func (v *BaseLushVisitor) VisitFunc(ctx *FuncContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseLushVisitor) VisitConversion(ctx *ConversionContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseLushVisitor) VisitVar(ctx *VarContext) interface{} {
 	return v.VisitChildren(ctx)
 }

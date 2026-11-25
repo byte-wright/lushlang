@@ -184,24 +184,46 @@ tests:
       c = append()
       d = append(1, 2)
       e = append([1], 2, "x")
-      println("a", [1, 2])
-      p = try parseInt()
-      p = try parseInt(5)
-      p = try parseInt("1", "2")
-      print(["a"])
-      eprintln(1, [true])
+      p = try parseInt("1")
     errors:
       - "typeerrors/builtin arguments.lsh:1:5: len takes 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh:2:5: argument 1 of len must be an array or string, not int"
       - "typeerrors/builtin arguments.lsh:3:5: append takes at least 1 argument, not 0"
       - "typeerrors/builtin arguments.lsh:4:5: argument 1 of append must be an array, not int"
       - "typeerrors/builtin arguments.lsh:5:5: argument 3 of append must be of type int, not string"
-      - "typeerrors/builtin arguments.lsh:6:1: argument 2 of println can't be of type []int"
-      - "typeerrors/builtin arguments.lsh:7:9: parseInt takes 1 argument, not 0"
-      - "typeerrors/builtin arguments.lsh:8:9: argument 1 of parseInt must be of type string, not int"
-      - "typeerrors/builtin arguments.lsh:9:9: parseInt takes 1 argument, not 2"
-      - "typeerrors/builtin arguments.lsh:10:1: argument 1 of print can't be of type []string"
-      - "typeerrors/builtin arguments.lsh:11:1: argument 2 of eprintln can't be of type []bool"
+      - "typeerrors/builtin arguments.lsh:6:9: function parseInt not found"
+  - name: conversion arguments
+    description: an int and a bool don't convert into each other, an array only into an array
+    code: |
+      a = int()
+      b = string(1, 2)
+      c = int(true)
+      d = bool(1)
+      e = []int(1)
+      f = string([1])
+      g = []bool([1])
+      h = []int(["1"], ["2"])
+    errors:
+      - "typeerrors/conversion arguments.lsh:1:5: int takes 1 argument, not 0"
+      - "typeerrors/conversion arguments.lsh:2:5: string takes 1 argument, not 2"
+      - "typeerrors/conversion arguments.lsh:3:5: can't convert bool to int"
+      - "typeerrors/conversion arguments.lsh:4:5: can't convert int to bool"
+      - "typeerrors/conversion arguments.lsh:5:5: can't convert int to []int"
+      - "typeerrors/conversion arguments.lsh:6:5: can't convert []int to string"
+      - "typeerrors/conversion arguments.lsh:7:5: can't convert []int to []bool"
+      - "typeerrors/conversion arguments.lsh:8:5: []int takes 1 argument, not 2"
+  - name: conversion errors are not checked further
+    description: a value with an error gives no follow-up errors, not even for try
+    code: |
+      a = try int(true)
+      b = string(nope) catch _ {
+        return
+      }
+      c = a + 1
+      d = b - 1
+    errors:
+      - "typeerrors/conversion errors are not checked further.lsh:1:9: can't convert bool to int"
+      - "typeerrors/conversion errors are not checked further.lsh:2:12: variable 'nope' is not defined"
   - name: return values
     code: |
       func one() int {

@@ -37,6 +37,9 @@ bcode.Slice type:
 bcode.Len type:
   len(@{.Parameter})
 
+bcode.Convert type:
+  ${.To.Print}(@{.Value})
+
 bcode.EnvVarValue type:
   $${.Name}
 

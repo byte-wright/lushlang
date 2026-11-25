@@ -122,7 +122,7 @@ tests:
     description: on a failure the variables keep their values
     code: |
       func parse(s string) int, bool, error {
-        n = parseInt(s) catch _ {
+        n = int(s) catch _ {
           fail("not a number: " + s)
         }
         return n, n > 0
@@ -145,7 +145,7 @@ tests:
   - name: catch block that ends the script
     code: |
       func parse(s string) int, error {
-        n = parseInt(s) catch _ {
+        n = int(s) catch _ {
           fail("not a number: " + s)
         }
         return n
@@ -247,7 +247,7 @@ tests:
   - name: global assigned with catch
     code: |
       func parse(s string) int, error {
-        n = parseInt(s) catch _ {
+        n = int(s) catch _ {
           fail("not a number")
         }
         return n
@@ -414,14 +414,39 @@ tests:
       - "errors/call without try.lsh:10:3: f can fail, call it with try or catch the error"
       - "errors/call without try.lsh:11:12: fallible.positive can fail, call it with try or catch the error"
 
-  - name: parseInt without try
+  - name: conversion without try
     code: |
-      n = parseInt("1")
-      m, ok = parseInt("2")
+      n = int("1")
+      m, ok = int("2")
     errors:
-      - "errors/parseInt without try.lsh:1:5: parseInt can fail, call it with try or catch the error"
-      - "errors/parseInt without try.lsh:2:9: parseInt can fail, call it with try or catch the error"
-      - "errors/parseInt without try.lsh:2:1: Wrong number of expressions"
+      - "errors/conversion without try.lsh:1:5: int(string) can fail, call it with try or catch the error"
+      - "errors/conversion without try.lsh:2:9: int(string) can fail, call it with try or catch the error"
+      - "errors/conversion without try.lsh:2:1: Wrong number of expressions"
+
+  - name: try and catch on a conversion
+    description: only the conversions from a string can fail
+    code: |
+      func f(s string) int, bool {
+        return try int(s), try bool(s)
+      }
+
+      a = try string(1)
+      b = []string([1]) catch _ {
+        return
+      }
+      c = try int("1") catch _ {
+        return
+      }
+      d = try int(2)
+      e = []int(["1"])
+    errors:
+      - "errors/try and catch on a conversion.lsh:2:14: try in function f, which can't fail: add error to its results or catch the error"
+      - "errors/try and catch on a conversion.lsh:2:26: try in function f, which can't fail: add error to its results or catch the error"
+      - "errors/try and catch on a conversion.lsh:5:9: string(int) can't fail, it needs no try"
+      - "errors/try and catch on a conversion.lsh:6:19: []string([]int) can't fail, there is no error to catch"
+      - "errors/try and catch on a conversion.lsh:9:9: the error of int(string) can't go on with try and be caught, remove one"
+      - "errors/try and catch on a conversion.lsh:12:9: int(int) can't fail, it needs no try"
+      - "errors/try and catch on a conversion.lsh:13:5: []int([]string) can fail, call it with try or catch the error"
 
   - name: try on a call that can't fail
     code: |

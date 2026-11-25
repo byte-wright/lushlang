@@ -86,6 +86,9 @@ type LushVisitor interface {
 	// Visit a parse tree produced by LushParser#func.
 	VisitFunc(ctx *FuncContext) interface{}
 
+	// Visit a parse tree produced by LushParser#conversion.
+	VisitConversion(ctx *ConversionContext) interface{}
+
 	// Visit a parse tree produced by LushParser#var.
 	VisitVar(ctx *VarContext) interface{}
 

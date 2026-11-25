@@ -343,7 +343,14 @@ func (c *Compiler) evalExpression(block *Block, exp ast.Expression) []Value {
 			return c.evalCall(block, x)
 		}
 
+		if x.Conversion != nil && !x.CanFail {
+			return []Value{c.convert(block, c.evalExpression(block, x.Parameters[0])[0], x.Conversion)}
+		}
+
 		switch x.Name {
+		case "print", "println", "eprint", "eprintln":
+			return c.evalPrint(block, x)
+
 		case "args":
 			return []Value{block.setTmp(&ArgsValue{})}
 
@@ -645,11 +652,55 @@ func (c *Compiler) newCall(block *Block, x *ast.Func) *Func {
 		Try:       x.Try,
 		Location:  x.Location,
 	}
+	if x.Conversion != nil {
+		f.Name = parseFunc(x.Conversion)
+	}
 	for _, p := range x.Parameters {
 		f.Parameters = append(f.Parameters, c.evalExpression(block, p)...)
 	}
 
 	return f
+}
+
+// parseFunc is the builtin that parses a string or the elements of a []string into to, only
+// these conversions can fail
+func parseFunc(to common.Type) string {
+	array, isArray := to.(*common.ArrayType)
+	if isArray {
+		return parseFunc(array.ElementType) + "s"
+	}
+
+	if to.Is(&common.BasicType{Type: common.Int}) {
+		return "parseInt"
+	}
+
+	return "parseBool"
+}
+
+func (c *Compiler) convert(block *Block, val Value, to common.Type) Value {
+	if val.Type().Is(to) {
+		return val
+	}
+
+	return block.setTmp(&Convert{Value: block.asVar(val), To: to})
+}
+
+// evalPrint passes an array as its text, like [1 2 3]
+func (c *Compiler) evalPrint(block *Block, x *ast.Func) []Value {
+	f := &Func{Name: x.Name, Location: x.Location}
+
+	for _, p := range x.Parameters {
+		for _, val := range c.evalExpression(block, p) {
+			if val.Type().IsArray() {
+				val = c.convert(block, val, &common.BasicType{Type: common.String})
+			}
+			f.Parameters = append(f.Parameters, val)
+		}
+	}
+
+	block.add(f)
+
+	return nil
 }
 
 func (c *Compiler) evalIfStatement(block *Block, ifst *ast.If) {
